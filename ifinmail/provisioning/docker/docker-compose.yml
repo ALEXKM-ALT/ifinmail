@@ -97,8 +97,10 @@ services:
   # --- Reverse Proxy ---
   nginx:
     image: nginx:stable-alpine
+    environment:
+      - MAIL_HOSTNAME=${MAIL_HOSTNAME:-mail.example.com}
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d
       - certbot_certs:/etc/letsencrypt:ro
       - ./nginx/www:/var/www/certbot:ro
     ports:
@@ -106,7 +108,7 @@ services:
       - "443:443"
     depends_on:
       - api
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    command: "/bin/sh -c 'sed \"s|__SSL_CERT_HOSTNAME__|${MAIL_HOSTNAME}|g\" /etc/nginx/conf.d/ifinmail.conf > /etc/nginx/conf.d/ifinmail.conf.rendered && mv /etc/nginx/conf.d/ifinmail.conf.rendered /etc/nginx/conf.d/ifinmail.conf && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     restart: unless-stopped
 
 volumes:

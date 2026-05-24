@@ -12,19 +12,21 @@ source "$PROVISIONING_DIR/.env"
 set +a
 
 DOMAIN="${DOMAIN:?DOMAIN must be set in .env}"
+MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.$DOMAIN}"
 EMAIL="${ADMIN_EMAIL:-admin@$DOMAIN}"
 CERTBOT_WWW="$PROVISIONING_DIR/docker/nginx/www"
 CERTBOT_CERTS="$PROVISIONING_DIR/docker/certs"
 
 echo "Obtaining TLS certificate for: $DOMAIN"
+echo "Mail hostname: $MAIL_HOSTNAME"
 echo "Contact email: $EMAIL"
 
 # Ensure nginx is serving ACME challenges
 echo "Ensuring nginx is running for ACME challenges..."
-docker compose -f "$PROVISIONING_DIR/docker/docker-compose.yml" up -d nginx 2>/dev/null || true
+docker compose --env-file "$PROVISIONING_DIR/.env" -f "$PROVISIONING_DIR/docker/docker-compose.yml" up -d nginx 2>/dev/null || true
 sleep 2
 
-# Obtain certificate via standalone (port 80 must be open)
+# Obtain certificate via webroot
 echo "Running certbot..."
 docker run --rm \
     -v "$CERTBOT_WWW:/var/www/certbot" \
@@ -36,14 +38,14 @@ docker run --rm \
     --agree-tos \
     -m "$EMAIL" \
     -d "$DOMAIN" \
-    -d "mail.$DOMAIN"
+    -d "$MAIL_HOSTNAME"
 
 if [ $? -eq 0 ]; then
     echo "Certificate obtained successfully!"
-    echo "Certificate stored at: $CERTBOT_CERTS/live/$DOMAIN/"
+    echo "Certificate stored at: $CERTBOT_CERTS/live/$MAIL_HOSTNAME/"
 
     # Restart nginx to pick up new cert
-    docker compose -f "$PROVISIONING_DIR/docker/docker-compose.yml" restart nginx
+    docker compose --env-file "$PROVISIONING_DIR/.env" -f "$PROVISIONING_DIR/docker/docker-compose.yml" restart nginx
 
     echo ""
     echo "Auto-renewal (run via cron monthly):"

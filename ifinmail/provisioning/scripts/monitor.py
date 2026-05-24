@@ -129,8 +129,9 @@ def check_delivery_rate() -> Dict[str, Any]:
 
 def check_cert_expiry() -> Dict[str, Any]:
     """Check TLS certificate expiration."""
+    mail_hostname = os.getenv("MAIL_HOSTNAME", "mail.example.com")
     cert_paths = [
-        "/etc/letsencrypt/live/mail.example.com/fullchain.pem",
+        f"/etc/letsencrypt/live/{mail_hostname}/fullchain.pem",
     ]
     results = {}
     for path in cert_paths:

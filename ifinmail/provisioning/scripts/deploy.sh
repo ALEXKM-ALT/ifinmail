@@ -49,38 +49,58 @@ set -a
 source "$PROVISIONING_DIR/.env"
 set +a
 
+# Validate required environment variables
+REQUIRED_VARS=(DOMAIN POSTGRES_ADMIN_PASSWORD DOVECOT_DB_PASSWORD POSTFIX_DB_PASSWORD SECRET_KEY)
+MISSING=false
+for var in "${REQUIRED_VARS[@]}"; do
+    value="${!var:-}"
+    if [ -z "$value" ] || [[ "$value" == change_me* ]] || [[ "$value" == dev_* ]]; then
+        echo "  ERROR: Required environment variable $var is not set or uses a placeholder value."
+        MISSING=true
+    fi
+ done
+if [ "$MISSING" = true ]; then
+    echo "  Exiting. Update $PROVISIONING_DIR/.env with real values."
+    exit 1
+fi
+
+MAIL_DOMAIN="${MAIL_DOMAIN:-${DOMAIN}}"
+MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.${DOMAIN}}"
+
 # --- 3. Generate DKIM keys ---
 echo "[3/7] Checking DKIM keys..."
-if [ ! -f "$DOCKER_DIR/dkim/default.key" ]; then
-    SELECTOR="${DKIM_SELECTOR:-default}"
-    DOMAIN="${DOMAIN:-example.com}"
+SELECTOR="${DKIM_SELECTOR:-default}"
+DOMAIN="${DOMAIN:-example.com}"
+DKIM_KEY_PATH="$DOCKER_DIR/dkim/${SELECTOR}.${DOMAIN}.key"
+DKIM_PUB_PATH="${DKIM_KEY_PATH%.key}.pub"
+if [ ! -f "$DKIM_KEY_PATH" ]; then
     mkdir -p "$DOCKER_DIR/dkim"
-    openssl genrsa -out "$DOCKER_DIR/dkim/${SELECTOR}.${DOMAIN}.key" 2048
-    openssl rsa -in "$DOCKER_DIR/dkim/${SELECTOR}.${DOMAIN}.key" -pubout -out "$DOCKER_DIR/dkim/${SELECTOR}.${DOMAIN}.pub"
-    chmod 600 "$DOCKER_DIR/dkim/${SELECTOR}.${DOMAIN}.key"
+    openssl genrsa -out "$DKIM_KEY_PATH" 2048
+    openssl rsa -in "$DKIM_KEY_PATH" -pubout -out "$DKIM_PUB_PATH"
+    chmod 600 "$DKIM_KEY_PATH"
     echo "  DKIM key pair generated for $SELECTOR._domainkey.$DOMAIN"
     echo ""
     echo "  === DNS RECORD TO ADD ==="
     echo "  Name:   $SELECTOR._domainkey.$DOMAIN"
     echo "  Type:   TXT"
     printf "  Value:  v=DKIM1; k=rsa; p="
-    grep -v "^-" "$DOCKER_DIR/dkim/${SELECTOR}.${DOMAIN}.pub" | tr -d '\n'
+    grep -v "^-" "$DKIM_PUB_PATH" | tr -d '\n'
     echo ""
     echo "  ========================"
     echo ""
 else
-    echo "  DKIM keys already exist."
+    echo "  DKIM key pair already exists at $DKIM_KEY_PATH."
 fi
 
 # --- 4. Build images ---
 echo "[4/7] Building Docker images..."
 cd "$DOCKER_DIR"
-docker compose build --pull
+docker compose --env-file "$PROVISIONING_DIR/.env" build --pull
 echo "  Images built."
 
 # --- 5. Start stack ---
 echo "[5/7] Starting ifinmail stack..."
-docker compose up -d
+docker compose --env-file "$PROVISIONING_DIR/.env" up -d
 echo "  Stack starting..."
 
 # --- 6. Wait for healthy services ---
