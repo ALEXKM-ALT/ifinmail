@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Domain Configuration - MailCore Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#7c839b",
+                        "on-secondary-fixed": "#00174b",
+                        "on-tertiary-fixed": "#002113",
+                        "background": "#f7f9fb",
+                        "secondary-container": "#316bf3",
+                        "surface-tint": "#565e74",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "on-surface": "#191c1e",
+                        "tertiary": "#000000",
+                        "on-primary-fixed": "#131b2e",
+                        "primary-fixed-dim": "#bec6e0",
+                        "tertiary-container": "#002113",
+                        "primary-container": "#131b2e",
+                        "surface-dim": "#d8dadc",
+                        "primary": "#000000",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e0e3e5",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#dae2fd",
+                        "on-tertiary-container": "#009668",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-background": "#191c1e",
+                        "inverse-primary": "#bec6e0",
+                        "inverse-surface": "#2d3133",
+                        "on-surface-variant": "#45464d",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline-variant": "#c6c6cd",
+                        "secondary": "#0051d5",
+                        "secondary-fixed": "#dbe1ff",
+                        "outline": "#76777d",
+                        "surface": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed": "#6ffbbe",
+                        "inverse-on-surface": "#eff1f3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "section-gap": "40px",
+                        "sidebar-width": "280px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "container-max-width": "1280px",
+                        "stack-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .sidebar-active-stripe {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: #316bf3;
+        }
+        .record-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width z-50 bg-primary-container border-r border-outline-variant flex flex-col py-8">
+<div class="px-gutter mb-8">
+<h1 class="text-headline-sm font-headline-sm font-bold text-on-secondary-container">MailCore Admin</h1>
+<p class="text-on-primary-container font-label-md text-label-md opacity-70">v2.4.0-stable</p>
+</div>
+<nav class="flex-1 flex flex-col">
+<!-- General Settings -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">General Settings</span>
+</a>
+<!-- Domain Config - ACTIVE -->
+<a class="flex items-center gap-stack-gap bg-secondary-container text-on-secondary-container border-l-[3px] border-secondary px-gutter py-3 w-full transition-transform duration-100 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="dns" style="font-variation-settings: 'FILL' 1;">dns</span>
+<span class="font-label-md text-label-md">Domain Config</span>
+</a>
+<!-- Security/SSL -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+<span class="font-label-md text-label-md">Security/SSL</span>
+</a>
+<!-- Spam Filtering -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+<span class="font-label-md text-label-md">Spam Filtering</span>
+</a>
+<!-- Logs -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="font-label-md text-label-md">Logs</span>
+</a>
+<!-- User Management -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="manage_accounts">manage_accounts</span>
+<span class="font-label-md text-label-md">User Management</span>
+</a>
+</nav>
+<div class="px-gutter mt-auto flex items-center gap-3">
+<div class="w-10 h-10 bg-on-primary-fixed-variant rounded-full flex items-center justify-center text-white font-bold">SA</div>
+<div class="overflow-hidden">
+<p class="font-label-md text-label-md text-on-secondary-container truncate">System Administrator</p>
+<p class="text-[10px] text-on-primary-container">admin@mailcore.local</p>
+</div>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 right-0 left-sidebar-width h-16 z-40 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-gutter">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-semibold text-primary">Server Console</span>
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container border border-outline-variant rounded text-body-md focus:ring-2 focus:ring-secondary-container outline-none transition-all" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-surface-container-lowest"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings_power">settings_power</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width pt-16 min-h-screen">
+<div class="max-w-container-max-width mx-auto p-gutter space-y-gutter">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Domain Configuration</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage active mail domains, DNS records, and transport settings.</p>
+</div>
+<button class="bg-secondary px-6 py-2.5 text-white font-label-md text-label-md rounded flex items-center gap-2 hover:bg-opacity-90 transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                    Add New Domain
+                </button>
+</div>
+<!-- Domain Table -->
+<div class="bg-white border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm text-primary">Active Domains</h3>
+<div class="flex gap-2">
+<button class="p-1 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="filter_list">filter_list</span></button>
+<button class="p-1 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="refresh">refresh</span></button>
+</div>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container text-outline font-label-md text-label-md uppercase tracking-wider">
+<th class="px-6 py-3 border-b border-outline-variant font-semibold">Domain Name</th>
+<th class="px-6 py-3 border-b border-outline-variant font-semibold">Status</th>
+<th class="px-6 py-3 border-b border-outline-variant font-semibold">MX Status</th>
+<th class="px-6 py-3 border-b border-outline-variant font-semibold">Transport</th>
+<th class="px-6 py-3 border-b border-outline-variant font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-body-md divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-4 font-semibold text-primary">mail.example.com</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim shadow-[0_0_8px_rgba(78,222,163,0.6)]"></span>
+<span class="text-on-tertiary-container font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 flex items-center gap-1.5 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+                                Verified
+                            </td>
+<td class="px-6 py-4 text-on-surface-variant">Local Delivery</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-secondary font-label-md text-[11px] px-2 py-1 border border-outline-variant rounded hover:bg-secondary-fixed transition-colors">Manage DNS</button>
+<button class="text-on-surface font-label-md text-[11px] px-2 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors">Transport Rules</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group bg-surface-container-lowest">
+<td class="px-6 py-4 font-semibold text-primary">corp.internal</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse shadow-[0_0_8px_rgba(49,107,243,0.6)]"></span>
+<span class="text-secondary font-medium">Pending DNS</span>
+</div>
+</td>
+<td class="px-6 py-4 flex items-center gap-1.5 text-error">
+<span class="material-symbols-outlined text-[18px]" data-icon="error">error</span>
+                                Misconfigured
+                            </td>
+<td class="px-6 py-4 text-on-surface-variant">Relay (smarthost)</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-secondary font-label-md text-[11px] px-2 py-1 border border-outline-variant rounded hover:bg-secondary-fixed transition-colors">Manage DNS</button>
+<button class="text-on-surface font-label-md text-[11px] px-2 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors">Transport Rules</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-4 font-semibold text-primary">dev.testing.io</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline opacity-40"></span>
+<span class="text-outline font-medium">Suspended</span>
+</div>
+</td>
+<td class="px-6 py-4 flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-[18px]" data-icon="help">help</span>
+                                Unknown
+                            </td>
+<td class="px-6 py-4 text-on-surface-variant">Disabled</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-secondary font-label-md text-[11px] px-2 py-1 border border-outline-variant rounded hover:bg-secondary-fixed transition-colors">Manage DNS</button>
+<button class="text-on-surface font-label-md text-[11px] px-2 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors">Transport Rules</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- DNS & Routing Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- DNS Records Panel -->
+<div class="lg:col-span-2 bg-white border border-outline-variant rounded-lg flex flex-col shadow-sm">
+<div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">DNS Records: mail.example.com</h3>
+<p class="text-label-md text-outline font-label-md mt-0.5">Last validated: 4 mins ago</p>
+</div>
+<button class="flex items-center gap-1 text-secondary font-label-md text-label-md border border-secondary px-3 py-1.5 rounded hover:bg-secondary-fixed transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="task_alt">task_alt</span>
+                            Re-validate All
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<!-- Record Item MX -->
+<div class="border border-outline-variant rounded overflow-hidden">
+<div class="bg-surface-container-low px-4 py-2 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<span class="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded">MX</span>
+<span class="font-label-md text-label-md text-primary">Priority 10</span>
+</div>
+<span class="flex items-center gap-1 text-on-tertiary-container font-label-md text-[11px]">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified">verified</span> Verified
+                                </span>
+</div>
+<div class="p-4 flex items-center justify-between gap-4">
+<code class="text-code-md font-code-md text-on-surface-variant truncate">mx1.mailcore-cloud.net</code>
+<button class="text-outline hover:text-primary transition-colors flex items-center gap-1" onclick="navigator.clipboard.writeText('mx1.mailcore-cloud.net')">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Record Item SPF -->
+<div class="border border-outline-variant rounded overflow-hidden">
+<div class="bg-surface-container-low px-4 py-2 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<span class="bg-on-primary-fixed-variant text-white text-[10px] font-bold px-1.5 py-0.5 rounded">TXT</span>
+<span class="font-label-md text-label-md text-primary">SPF Record</span>
+</div>
+<span class="flex items-center gap-1 text-on-tertiary-container font-label-md text-[11px]">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified">verified</span> Verified
+                                </span>
+</div>
+<div class="p-4 flex items-center justify-between gap-4">
+<code class="text-code-md font-code-md text-on-surface-variant truncate">v=spf1 include:_spf.mailcore.local ~all</code>
+<button class="text-outline hover:text-primary transition-colors flex items-center gap-1" onclick="navigator.clipboard.writeText('v=spf1 include:_spf.mailcore.local ~all')">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Record Item DKIM -->
+<div class="border border-outline-variant rounded overflow-hidden border-l-4 border-l-error">
+<div class="bg-surface-container-low px-4 py-2 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<span class="bg-on-primary-fixed-variant text-white text-[10px] font-bold px-1.5 py-0.5 rounded">TXT</span>
+<span class="font-label-md text-label-md text-primary">DKIM (Selector: mc1)</span>
+</div>
+<span class="flex items-center gap-1 text-error font-label-md text-[11px]">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span> Issue Detected
+                                </span>
+</div>
+<div class="p-4 flex items-center justify-between gap-4 bg-error-container/20">
+<code class="text-code-md font-code-md text-on-surface-variant truncate">v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...</code>
+<button class="text-outline hover:text-primary transition-colors flex items-center gap-1" onclick="navigator.clipboard.writeText('MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...')">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<div class="px-4 py-2 bg-error-container text-on-error-container font-label-md text-[11px]">
+                                Public key mismatch. Please update your DNS with the value above.
+                            </div>
+</div>
+</div>
+</div>
+<!-- Mail Routing / Transport Panel -->
+<div class="bg-white border border-outline-variant rounded-lg flex flex-col shadow-sm">
+<div class="px-6 py-4 border-b border-outline-variant">
+<h3 class="font-headline-sm text-headline-sm text-primary">Mail Routing</h3>
+</div>
+<div class="p-6 space-y-6">
+<!-- Catch-all -->
+<div class="space-y-stack-gap">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-primary">Catch-all Address</label>
+<span class="text-tertiary-fixed-dim bg-tertiary-container px-2 py-0.5 rounded text-[10px] font-bold uppercase">Active</span>
+</div>
+<div class="relative">
+<input class="w-full border border-outline-variant rounded px-3 py-2 text-body-md bg-surface-container-low focus:ring-2 focus:ring-secondary-container transition-all" type="email" value="admin@example.com"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-[18px]" data-icon="mail">mail</span>
+</div>
+</div>
+<div class="border-t border-outline-variant pt-6"></div>
+<!-- Smart Host -->
+<div class="space-y-stack-gap">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-primary">Remote Smart Host</label>
+<div class="w-8 h-4 bg-outline-variant rounded-full relative cursor-pointer">
+<div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full transition-transform translate-x-4 bg-secondary"></div>
+</div>
+</div>
+<p class="text-body-md text-on-surface-variant">Relay outbound mail through an external SMTP gateway.</p>
+<div class="space-y-2 mt-2">
+<input class="w-full border border-outline-variant rounded px-3 py-2 text-body-md focus:ring-2 focus:ring-secondary-container transition-all" placeholder="smtp.relay.com:587" type="text"/>
+<div class="flex gap-2">
+<input class="w-1/2 border border-outline-variant rounded px-3 py-1.5 text-body-md focus:ring-2 focus:ring-secondary-container transition-all" placeholder="Username" type="text"/>
+<input class="w-1/2 border border-outline-variant rounded px-3 py-1.5 text-body-md focus:ring-2 focus:ring-secondary-container transition-all" placeholder="Password" type="password"/>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2.5 border border-secondary text-secondary font-label-md text-label-md rounded hover:bg-secondary transition-colors hover:text-white">
+                            Save Transport Config
+                        </button>
+</div>
+</div>
+</div>
+<!-- Health & Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter pb-gutter">
+<!-- Total Domains -->
+<div class="bg-white border border-outline-variant p-6 rounded-lg shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container rounded flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[32px]" data-icon="language">language</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline">Total Domains</p>
+<p class="text-headline-md font-headline-md text-primary">12</p>
+</div>
+</div>
+<!-- DNS Health Score -->
+<div class="bg-white border border-outline-variant p-6 rounded-lg shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-on-tertiary-container/10 rounded flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined text-[32px]" data-icon="health_and_safety">health_and_safety</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline">DNS Health Score</p>
+<p class="text-headline-md font-headline-md text-on-tertiary-container">94%</p>
+</div>
+</div>
+<!-- Active Relays -->
+<div class="bg-white border border-outline-variant p-6 rounded-lg shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container rounded flex items-center justify-center text-on-primary-fixed-variant">
+<span class="material-symbols-outlined text-[32px]" data-icon="alt_route">alt_route</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline">Active Relays</p>
+<p class="text-headline-md font-headline-md text-primary">04</p>
+</div>
+</div>
+<!-- Transport Latency -->
+<div class="bg-white border border-outline-variant p-6 rounded-lg shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container rounded flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[32px]" data-icon="timer">timer</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline">Transport Latency</p>
+<p class="text-headline-md font-headline-md text-primary">14ms</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- System Overlay Background -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-40">
+<div class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px]"></div>
+</div>
+<script>
+        // Simple micro-interaction for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+
+        // Search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('w-96');
+            searchInput.parentElement.classList.remove('w-80');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('w-96');
+            searchInput.parentElement.classList.add('w-80');
+        });
+    </script>
+</body></html>

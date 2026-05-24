@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Management &amp; Access Control - MailCore Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#f7f9fb",
+                    "primary-container": "#131b2e",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "inverse-surface": "#2d3133",
+                    "outline": "#76777d",
+                    "on-background": "#191c1e",
+                    "secondary-container": "#316bf3",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "tertiary-container": "#002113",
+                    "surface-container-high": "#e6e8ea",
+                    "on-error": "#ffffff",
+                    "on-tertiary-container": "#009668",
+                    "error-container": "#ffdad6",
+                    "on-surface": "#191c1e",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e0e3e5",
+                    "tertiary-fixed": "#6ffbbe",
+                    "background": "#f7f9fb",
+                    "primary": "#000000",
+                    "surface-tint": "#565e74",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "outline-variant": "#c6c6cd",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#dae2fd",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-primary-fixed": "#131b2e",
+                    "on-secondary-fixed": "#00174b",
+                    "on-secondary-container": "#fefcff",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#45464d",
+                    "tertiary": "#000000",
+                    "on-primary-container": "#7c839b",
+                    "inverse-primary": "#bec6e0",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary": "#0051d5",
+                    "primary-fixed-dim": "#bec6e0",
+                    "surface-container": "#eceef0",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary-fixed": "#002113",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "container-max-width": "1280px",
+                    "stack-gap": "12px",
+                    "sidebar-width": "280px",
+                    "section-gap": "40px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "code-md": ["jetbrainsMono"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #f7f9fb; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            vertical-align: middle;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .status-active { background-color: #10b981; }
+        .status-locked { background-color: #ef4444; }
+        .status-suspended { background-color: #94a3b8; }
+        .status-syncing { background-color: #316bf3; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Navigation Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width z-50 bg-primary-container border-r border-outline-variant flex flex-col py-8">
+<div class="px-gutter mb-8">
+<div class="text-headline-sm font-headline-sm font-bold text-on-primary-container">MailCore Admin</div>
+<div class="font-label-md text-label-md text-on-primary-container opacity-60">v2.4.0-stable</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">General Settings</span>
+</a>
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dns">dns</span>
+<span class="font-label-md text-label-md">Domain Config</span>
+</a>
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+<span class="font-label-md text-label-md">Security/SSL</span>
+</a>
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+<span class="font-label-md text-label-md">Spam Filtering</span>
+</a>
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="font-label-md text-label-md">Logs</span>
+</a>
+<a class="flex items-center gap-stack-gap bg-secondary-container text-on-secondary-container border-l-[3px] border-secondary px-gutter py-3 w-full active:scale-[0.98] transition-transform duration-100" href="#">
+<span class="material-symbols-outlined" data-icon="manage_accounts">manage_accounts</span>
+<span class="font-label-md text-label-md">User Management</span>
+</a>
+</nav>
+<div class="px-gutter mt-auto pt-8 border-t border-on-primary-fixed-variant/20">
+<div class="flex items-center gap-3">
+<img alt="System Administrator" class="w-10 h-10 rounded-lg object-cover" data-alt="A professional corporate headshot of a male system administrator in a clean-cut blue shirt, looking confident and focused. The background is a blurred high-tech server room with soft blue lighting, emphasizing a modern institutional precision aesthetic. The image is crisp, professional, and well-lit with neutral tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhHUqOC2fz0-ZGX5OaulHJ6mHVZGmgLQp_xBy2vOkPWBl_rNIBYOp5zsZnonTl1nx0RuSN9QS_2QkIRe3kki6abQq1_I6KvRMA9JsqqcKN6FGAEgkYbSFvf5_O1JjxfcBgd4i3QoxZTQF5JAJb-jzbx0IbE8-5QeWEJs9mglhhrHhv9ZUIPQxd6XUO5j_J4bi2Lh7pe50TC-7RDDJLgcj0kruGzJha2ouN6dt1nx7o2GW8_Ne_yKyg2NPil8dxfFL8RTP5cLuEFJE"/>
+<div class="overflow-hidden">
+<p class="text-on-secondary-container font-semibold truncate">Admin User</p>
+<p class="text-on-primary-container text-xs opacity-60 truncate">Root Administrator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top AppBar -->
+<header class="fixed top-0 right-0 left-[280px] h-16 z-40 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-gutter">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute inset-y-0 left-3 flex items-center text-outline">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 w-80 text-sm focus:ring-2 focus:ring-secondary-container" placeholder="Search accounts, roles, or logs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings_power</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<span class="font-label-md text-label-md text-primary font-semibold">Server Console</span>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-sidebar-width pt-16 min-h-screen">
+<div class="max-w-container-max-width mx-auto p-gutter">
+<!-- Page Header -->
+<div class="mb-section-gap">
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">User Management &amp; Access Control</h1>
+<p class="text-on-surface-variant font-body-md max-w-3xl">
+                    Configure administrative privileges, manage user lifecycle, and monitor active sessions across the MailCore infrastructure. Ensure institutional compliance through granular role assignments.
+                </p>
+</div>
+<!-- Security Summary Cards (Bento-ish Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-section-gap">
+<div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-lg flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant">TOTAL USERS</span>
+<span class="material-symbols-outlined text-secondary opacity-40">group</span>
+</div>
+<div class="text-headline-md font-headline-md">1,248</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-lg flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant">ACTIVE ROLES</span>
+<span class="material-symbols-outlined text-secondary opacity-40">rule</span>
+</div>
+<div class="text-headline-md font-headline-md">12</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-lg flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant">FAILED LOGINS (24H)</span>
+<span class="material-symbols-outlined text-error opacity-40">gpp_maybe</span>
+</div>
+<div class="text-headline-md font-headline-md text-error">42</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-lg flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant">MFA ADOPTION</span>
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant opacity-40">verified_user</span>
+</div>
+<div class="text-headline-md font-headline-md">98.2%</div>
+</div>
+</div>
+<!-- Top Action Bar & Main Content Split -->
+<div class="flex flex-col lg:flex-row gap-gutter">
+<!-- Left: User Table -->
+<div class="flex-1 space-y-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+<div class="px-gutter py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/30">
+<h2 class="font-headline-sm text-headline-sm">Administrator Directory</h2>
+<div class="flex gap-2">
+<button class="px-4 py-2 border border-outline-variant text-on-surface font-label-md rounded-lg flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span> Export List
+                                </button>
+<button class="px-4 py-2 bg-secondary text-on-secondary font-label-md rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors">
+<span class="material-symbols-outlined text-[18px]">person_add</span> Add New User
+                                </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-gutter py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Name &amp; Identity</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Role</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Last Login</th>
+<th class="px-gutter py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A detailed portrait of a senior system engineer in a professional office setting. The person is wearing minimalist glasses and a dark polo shirt. The lighting is bright and architectural, reflecting a professional institutional style with a focus on precision and technical expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChfeTZWwe8dKU8VoFleMXLd7WqOhbabcI7Wl5xBCWHDhJM9WHt3ZshEurtCxBRFSzxB76qMq8izKFCL0q4v7qt_U-TNYukGyWhbRwsqX6jUtWWgRZM1Icf4OuG2hDiXjbIgoa6M1dffWwpwqOdXkbdzzDiUCgAOsan7m6HDgxE04q-rqFTvl9ioRsC0FFPlKoWDA9ZV8B5GE3FH_1T_9NKGJZ2E6aroeQymy8bOa4xnZ9WTsUjQ61OqSbwTR760ve8R9uqoJaDoEE"/>
+<div>
+<div class="font-semibold text-primary">Marcus Thorne</div>
+<div class="text-xs text-outline font-code-md">m.thorne@mailcore.internal</div>
+</div>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-primary-container text-primary-fixed text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tight">Super Admin</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<span class="status-dot status-active"></span>
+<span class="text-sm">Active</span>
+</div>
+</td>
+<td class="px-4 py-4 text-sm text-outline">2 mins ago</td>
+<td class="px-gutter py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-secondary"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1 hover:text-secondary"><span class="material-symbols-outlined text-[18px]">lock_reset</span></button>
+<button class="p-1 hover:text-error"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A portrait of a female security analyst in a modern, clean-mode workspace. She is wearing a professional charcoal blazer. The background consists of soft white walls and glass partitions, conveying a sense of institutional security and organizational clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAKX4yc4Iew4wIii9DXIevVqH30zv4kj4M6Z5gm4Zrmetyl-7dKlKxdYD4sYDVpboLgh06Vvn49s1I6UPQAoXu7ZbwT6Fj8kKnfyhLv1gXqO5zfSTqrDuL--4EEYfLZZ74ourd5NOgTZ_EMAA42hnBsoIURtk-dX5H0gWQaeppZhfx832Q6ksHECXexNrYGt2FQnV86oXxxJ7TdkZT3xfh0zPHnGfpbsk-LAjp5nmvxrHZIHR6FtermXBxt17YqF8KiXj-SRZy1bc"/>
+<div>
+<div class="font-semibold text-primary">Elena Rodriguez</div>
+<div class="text-xs text-outline font-code-md">e.rodriguez@mailcore.internal</div>
+</div>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-secondary-fixed text-on-secondary-fixed text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tight">Security Lead</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<span class="status-dot status-syncing"></span>
+<span class="text-sm">Processing</span>
+</div>
+</td>
+<td class="px-4 py-4 text-sm text-outline">14 hours ago</td>
+<td class="px-gutter py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-secondary"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1 hover:text-secondary"><span class="material-symbols-outlined text-[18px]">lock_reset</span></button>
+<button class="p-1 hover:text-error"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A studio portrait of a support staff member with a friendly but professional expression. The background is a flat, neutral gray. The lighting is soft and even, highlighting the technical stability and institutional precision of the brand's visual identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAS2FTUVi_7_wHydBCvfjhVcYrswZxNLVVhpCHVs3OpkFVHxGwel8tPnTUcCNUoiphrMIVv5LsPFWFUsxShNcaCBjPuGBZ_08k9yA67siP0jdMPS3MAajmURhI69eGDjLEi45gZKhB1y8AhgQkvEH3mKEu_BlilhvK_Qh6ig25utC_IWvYcwxPd0Nw1mAXJI-TVwlH8GDVmkFJCiZkwKcgdTPD4trDh8jlBly5EvKj8ERRJ6TwjT6du9U7mwRga9MR9lnNXD9pYh9Y"/>
+<div>
+<div class="font-semibold text-primary">James Chen</div>
+<div class="text-xs text-outline font-code-md">j.chen@mailcore.internal</div>
+</div>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-high text-on-surface-variant text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tight">Support</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<span class="status-dot status-locked"></span>
+<span class="text-sm">Locked</span>
+</div>
+</td>
+<td class="px-4 py-4 text-sm text-outline">3 days ago</td>
+<td class="px-gutter py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-secondary"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1 hover:text-secondary"><span class="material-symbols-outlined text-[18px]">lock_reset</span></button>
+<button class="p-1 hover:text-error"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-gutter py-3 bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
+<span class="text-xs text-on-surface-variant font-label-md">Showing 3 of 1,248 users</span>
+<div class="flex gap-1">
+<button class="p-1 border border-outline-variant rounded hover:bg-surface-container-high"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 border border-outline-variant rounded hover:bg-surface-container-high"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Side Panels -->
+<div class="w-full lg:w-80 space-y-gutter">
+<!-- Role Management Card -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Role Overview</h3>
+<button class="text-secondary hover:underline text-[10px] font-bold">ROLE EDITOR</button>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+<div>
+<p class="font-semibold text-sm">Super Admin</p>
+<p class="text-xs text-outline">Full system access</p>
+</div>
+<span class="bg-primary-container text-white text-[10px] px-2 py-0.5 rounded-full">4</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+<div>
+<p class="font-semibold text-sm">Security Lead</p>
+<p class="text-xs text-outline">Firewall &amp; SSL mgmt</p>
+</div>
+<span class="bg-secondary-container text-white text-[10px] px-2 py-0.5 rounded-full">8</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+<div>
+<p class="font-semibold text-sm">Support Staff</p>
+<p class="text-xs text-outline">Basic user management</p>
+</div>
+<span class="bg-surface-container-high text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full">32</span>
+</div>
+</div>
+</section>
+<!-- Active Sessions -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-4">Live Administrator Sessions</h3>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+<div>
+<p class="text-sm font-semibold">Marcus Thorne</p>
+<p class="text-[11px] text-outline font-code-md">192.168.1.45 • 42m duration</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+<div>
+<p class="text-sm font-semibold">Elena Rodriguez</p>
+<p class="text-[11px] text-outline font-code-md">10.0.0.12 • 1h 12m duration</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-2 border-t border-outline-variant text-[10px] text-secondary font-bold hover:bg-surface-container-low transition-colors text-center">VIEW ALL LOGINS</button>
+</section>
+</div>
+</div>
+<!-- Contextual Information / Help Section -->
+<div class="mt-section-gap grid grid-cols-1 md:grid-cols-2 gap-gutter opacity-80">
+<div class="flex gap-4 p-6 border border-outline-variant rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-secondary">info</span>
+<div>
+<h4 class="font-semibold text-sm mb-1">Administrative Auditing</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed">All changes made to user accounts are logged in the global security registry. These logs are immutable and can be exported for annual compliance reviews.</p>
+</div>
+</div>
+<div class="flex gap-4 p-6 border border-outline-variant rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant">security</span>
+<div>
+<h4 class="font-semibold text-sm mb-1">MFA Enforcement Policy</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed">The current security policy mandates Multi-Factor Authentication for all accounts with "Super Admin" and "Security Lead" roles. Ensure users have hardware tokens ready.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions for table rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SPAN') {
+                    console.log('Row clicked for user details');
+                }
+            });
+        });
+
+        // Search highlight effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-[1.02]');
+            searchInput.parentElement.classList.add('transition-transform');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-[1.02]');
+        });
+    </script>
+</body></html>

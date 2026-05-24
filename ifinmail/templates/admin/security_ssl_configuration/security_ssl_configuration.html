@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Security &amp; SSL Configuration - MailCore Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .custom-shadow {
+            box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.08);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed": "#131b2e",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "on-error": "#ffffff",
+                      "secondary": "#0051d5",
+                      "on-secondary-fixed-variant": "#003ea8",
+                      "outline": "#76777d",
+                      "inverse-primary": "#bec6e0",
+                      "surface-variant": "#e0e3e5",
+                      "surface-dim": "#d8dadc",
+                      "inverse-on-surface": "#eff1f3",
+                      "secondary-fixed": "#dbe1ff",
+                      "on-tertiary-fixed": "#002113",
+                      "tertiary": "#000000",
+                      "surface-bright": "#f7f9fb",
+                      "on-background": "#191c1e",
+                      "surface-container": "#eceef0",
+                      "inverse-surface": "#2d3133",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#dae2fd",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "on-tertiary": "#ffffff",
+                      "primary": "#000000",
+                      "on-tertiary-container": "#009668",
+                      "surface-tint": "#565e74",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-secondary-container": "#fefcff",
+                      "background": "#f7f9fb",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#6ffbbe",
+                      "tertiary-container": "#002113",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "surface-container-low": "#f2f4f6",
+                      "surface-container-high": "#e6e8ea",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#c6c6cd",
+                      "secondary-container": "#316bf3",
+                      "primary-container": "#131b2e",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed": "#00174b",
+                      "on-surface": "#191c1e",
+                      "on-primary-container": "#7c839b",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-surface-variant": "#45464d",
+                      "surface": "#f7f9fb",
+                      "primary-fixed-dim": "#bec6e0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max-width": "1280px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "sidebar-width": "280px",
+                      "stack-gap": "12px",
+                      "section-gap": "40px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "code-md": ["jetbrainsMono"]
+              },
+              "fontSize": {
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-surface overflow-x-hidden">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width z-50 bg-primary-container border-r border-outline-variant flex flex-col py-8">
+<div class="px-gutter mb-10">
+<span class="text-headline-sm font-headline-sm font-bold text-on-primary-container">MailCore Admin</span>
+<p class="font-label-md text-label-md text-on-primary-container opacity-60">v2.4.0-stable</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- General Settings -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">General Settings</span>
+</a>
+<!-- Domain Config -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dns">dns</span>
+<span class="font-label-md text-label-md">Domain Config</span>
+</a>
+<!-- Security/SSL (ACTIVE) -->
+<a class="flex items-center gap-stack-gap bg-secondary-container text-on-secondary-container border-l-[3px] border-secondary px-gutter py-3 w-full scale-[0.98] transition-transform duration-100" href="#">
+<span class="material-symbols-outlined" data-icon="security" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="font-label-md text-label-md">Security/SSL</span>
+</a>
+<!-- Spam Filtering -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+<span class="font-label-md text-label-md">Spam Filtering</span>
+</a>
+<!-- Logs -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="font-label-md text-label-md">Logs</span>
+</a>
+<!-- User Management -->
+<a class="flex items-center gap-stack-gap text-on-primary-container opacity-50 px-gutter py-3 w-full hover:bg-on-primary-fixed-variant hover:opacity-100 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="manage_accounts">manage_accounts</span>
+<span class="font-label-md text-label-md">User Management</span>
+</a>
+</nav>
+<div class="px-gutter mt-auto flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">SA</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-primary-container">System Administrator</span>
+<span class="font-body-md text-[10px] text-on-primary-container opacity-50 uppercase tracking-tighter">Root Access</span>
+</div>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 right-0 left-[280px] h-16 z-40 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-gutter">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-semibold text-primary">Security Configuration</span>
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container w-64" placeholder="Search parameters..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-stack-gap">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings_power">settings_power</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<img alt="Admin Profile" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A professional close-up headshot of a system administrator in a high-tech corporate environment. The background features blurred server racks with soft blue and white LED indicators. The aesthetic is clean and institutional, with bright, balanced lighting emphasizing clarity and technical precision. The subject maintains a focused and dependable expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFwDnbpAHCEOu0PHRLPcdfLWl1F_9lLeGAbXfmRzMPxc6v1XmB1J0aoq4paaftefm8T9JycoBqZ8GWsi0E4JFfBU8Pk_n3JW4-c_n4nOZ35tSFqyf4ZjKk0sHBsfrNfKIfHbaeZZClHaFRuxMITSvwbk07UgdBcCDgGp5zy2G8Fe0wwtufeRVvwaI3b8_E_XVf5kgvQosfPpUPIsK9yyqAp9Y-gLMuOMGwhxOGCyAN0wjulkAxqVtbPfhNcBHnSYqB7pI-DSOur-E"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[280px] mt-16 p-gutter max-w-container-max-width mx-auto">
+<!-- Header Section & Global Actions -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-section-gap gap-stack-gap">
+<div class="space-y-1">
+<h1 class="font-headline-lg text-headline-lg text-primary">Security &amp; SSL</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Manage server certificates, encryption protocols, and access control policies.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2.5 rounded-lg border border-outline-variant font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors">
+                    Cancel
+                </button>
+<button class="px-6 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:bg-on-secondary-fixed-variant shadow-sm active:scale-95 transition-all">
+                    Save Changes
+                </button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- SSL Certificate Card (7 Cols) -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 custom-shadow relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-on-tertiary-container"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">SSL Certificate</h3>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+<span class="font-label-md text-label-md text-on-tertiary-container uppercase tracking-widest">Active &amp; Trusted</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-tertiary-container text-4xl" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="grid grid-cols-2 gap-y-6 mb-8">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Common Name</p>
+<p class="font-code-md text-code-md bg-surface-container px-2 py-1 rounded inline-block">mx1.mailcore.io</p>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Issuer</p>
+<p class="font-body-md text-body-md font-semibold">Let's Encrypt</p>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Expiry Date</p>
+<p class="font-body-md text-body-md text-error flex items-center gap-1 font-semibold">
+                            Oct 14, 2024
+                            <span class="material-symbols-outlined text-sm" data-icon="event_available">event_available</span>
+</p>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Key Strength</p>
+<p class="font-body-md text-body-md">RSA 4096-bit</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-3 pt-6 border-t border-outline-variant">
+<button class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded font-label-md text-label-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]" data-icon="autorenew">autorenew</span> Renew Certificate
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface rounded font-label-md text-label-md hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="upload">upload</span> Upload New Key
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-on-surface rounded font-label-md text-label-md hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="description">description</span> Download CSR
+                    </button>
+</div>
+</div>
+<!-- Encryption Protocols (5 Cols) -->
+<div class="col-span-12 lg:col-span-5 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 custom-shadow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-6">Encryption Protocols</h3>
+<div class="space-y-6">
+<!-- TLS 1.3 -->
+<div class="flex items-center justify-between">
+<div>
+<p class="font-body-md text-body-md font-bold">TLS 1.3</p>
+<p class="font-label-md text-label-md text-on-tertiary-container">Recommended for production</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<!-- TLS 1.2 -->
+<div class="flex items-center justify-between">
+<div>
+<p class="font-body-md text-body-md font-bold">TLS 1.2</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Legacy client compatibility</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<!-- SSL 3.0 -->
+<div class="flex items-center justify-between opacity-60">
+<div>
+<p class="font-body-md text-body-md font-bold">SSL 3.0</p>
+<p class="font-label-md text-label-md text-error font-semibold">Deprecated / Highly Insecure</p>
+</div>
+<label class="relative inline-flex items-center cursor-not-allowed">
+<input class="sr-only peer" disabled="" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-dim rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+<div class="mt-8 p-4 bg-surface-container-low border-l-4 border-secondary rounded">
+<p class="font-label-md text-label-md text-on-surface-variant italic">
+                        "Enforcing TLS 1.3 will improve performance and security but may disconnect very old mail clients (pre-2018)."
+                    </p>
+</div>
+</div>
+<!-- IP Whitelisting (8 Cols) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden custom-shadow">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">IP Whitelisting</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Addresses granted bypass for all security policies.</p>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-on-primary-fixed text-on-primary rounded font-label-md text-label-md hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span> Add IP
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">IP Address</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Label</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Last Access</th>
+<th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-code-md text-code-md text-secondary">192.168.1.45</td>
+<td class="px-6 py-4 font-body-md text-body-md">Primary Admin Office</td>
+<td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">2 mins ago</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-code-md text-code-md text-secondary">45.78.231.10</td>
+<td class="px-6 py-4 font-body-md text-body-md">Cloud Backup Node</td>
+<td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">4 hours ago</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-code-md text-code-md text-secondary">2001:0db8:85a3...</td>
+<td class="px-6 py-4 font-body-md text-body-md">Developer Home (IPv6)</td>
+<td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">1 day ago</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Brute-Force Protection (4 Cols) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 custom-shadow">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-secondary" data-icon="lock_reset">lock_reset</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Brute-Force</h3>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Max Login Attempts</label>
+<div class="flex items-center gap-3">
+<input class="flex-1 accent-secondary" max="20" min="3" type="range" value="5"/>
+<span class="font-code-md text-code-md bg-secondary-fixed px-3 py-1 rounded text-on-secondary-fixed">5</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Lockout Duration</label>
+<select class="w-full border border-outline-variant rounded-lg p-2 font-body-md focus:ring-2 focus:ring-secondary-container focus:outline-none bg-surface-container-lowest">
+<option>15 Minutes</option>
+<option selected="">30 Minutes</option>
+<option>1 Hour</option>
+<option>24 Hours (Extreme)</option>
+</select>
+</div>
+<div class="flex items-center gap-3 p-4 bg-error-container rounded-lg">
+<span class="material-symbols-outlined text-on-error-container" data-icon="warning">warning</span>
+<p class="font-label-md text-label-md text-on-error-container">Currently 14 suspicious IPs blocked in the last hour.</p>
+</div>
+<button class="w-full py-2 border-2 border-secondary text-secondary font-label-md text-label-md rounded hover:bg-secondary hover:text-on-secondary transition-all font-bold">
+                        View Blocked History
+                    </button>
+</div>
+</div>
+</div>
+<!-- Footer Visual Reference -->
+<div class="mt-section-gap pt-gutter border-t border-outline-variant flex flex-col items-center justify-center">
+<p class="font-label-md text-label-md text-on-surface-variant opacity-50 mb-4 uppercase">System Visual Audit</p>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-on-tertiary-container shadow-[0_0_8px_rgba(0,150,104,0.5)]"></div>
+<span class="font-label-md text-[10px] text-on-surface-variant">Active Service</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-error shadow-[0_0_8px_rgba(186,26,26,0.5)]"></div>
+<span class="font-label-md text-[10px] text-on-surface-variant">Security Alert</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-secondary animate-pulse"></div>
+<span class="font-label-md text-[10px] text-on-surface-variant">Syncing Nodes</span>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions for sliders and toggles
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const valueSpan = e.target.nextElementSibling;
+                if(valueSpan) valueSpan.innerText = e.target.value;
+            });
+        });
+
+        // Toggle active states for navigation (simulated)
+        const navItems = document.querySelectorAll('nav a');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                navItems.forEach(i => {
+                    i.classList.remove('bg-secondary-container', 'text-on-secondary-container', 'border-l-[3px]', 'border-secondary', 'scale-[0.98]');
+                    i.classList.add('text-on-primary-container', 'opacity-50');
+                });
+                item.classList.add('bg-secondary-container', 'text-on-secondary-container', 'border-l-[3px]', 'border-secondary', 'scale-[0.98]');
+                item.classList.remove('opacity-50');
+            });
+        });
+    </script>
+</body></html>
