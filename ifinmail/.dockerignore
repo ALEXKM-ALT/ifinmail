@@ -62,6 +62,20 @@ provisioning/docker/init-db.sh
 # === Provisioning scripts (not needed in app image) ===
 provisioning/scripts/
 
+# === Node (if any frontend tooling) ===
+node_modules/
+
+# === Backup files ===
+*.tar.gz
+*.tar.gz.gpg
+*.gpg
+backups/
+
+# === Tests & CI ===
+.tox/
+.github/
+
 # === Misc ===
 Makefile
 *.md
+*.mdx

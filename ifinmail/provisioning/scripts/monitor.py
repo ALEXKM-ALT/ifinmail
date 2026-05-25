@@ -5,10 +5,9 @@ Runs as a cron job every 5 minutes. Pushes metrics to Redis for the API to read.
 """
 import subprocess
 import json
-import time
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +16,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
 REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-MAIL_HOSTNAME = os.environ.get("MAIL_HOSTNAME", "mail.ifinsta.online")
+MAIL_HOSTNAME = os.environ.get("MAIL_HOSTNAME", "")
 CERT_DIR = os.path.join(PROJECT_ROOT, "provisioning", "docker", "certs", "live", MAIL_HOSTNAME)
 COMPOSE_FILE = os.path.join(PROJECT_ROOT, "provisioning", "docker", "docker-compose.yml")
 ALERT_WEBHOOK = os.environ.get("MONITOR_ALERT_WEBHOOK", "")
@@ -25,7 +24,7 @@ QUEUE_WARN = int(os.environ.get("MONITOR_QUEUE_WARN", "50"))
 QUEUE_CRITICAL = int(os.environ.get("MONITOR_QUEUE_CRITICAL", "200"))
 
 # Track alert state to avoid repeated notifications
-ALERT_STATE_FILE = "/tmp/ifinmail_monitor_alert_state"
+ALERT_STATE_FILE = os.environ.get("ALERT_STATE_FILE", "/var/lib/ifinmail/alert_state")
 
 try:
     import redis
@@ -93,34 +92,35 @@ def check_postfix_queue() -> Dict[str, Any]:
 
 
 def check_service_status() -> Dict[str, Any]:
-    """Check if all Docker services are running using inspect (not fragile string matching)."""
-    services = ["postgres", "redis", "postfix", "dovecot", "rspamd", "api", "nginx"]
+    """Check if all Docker services are running using docker compose ps."""
+    services = ["postgres", "redis", "postfix", "dovecot", "rspamd", "snappymail", "api", "nginx", "certbot"]
     status = {}
 
-    for name in services:
-        try:
-            result = subprocess.run(
-                ["docker", "inspect", "--format", "{{.State.Status}}", f"ifinmail-{name}-1"],
-                capture_output=True, text=True, timeout=5
-            )
-            state = result.stdout.strip()
-            status[name] = state == "running"
-        except Exception:
-            # Fallback: try docker compose ps
-            try:
-                result = subprocess.run(
-                    _docker_compose_cmd() + ["ps", "--status", "running", "--format", "json", name],
-                    capture_output=True, text=True, timeout=10
-                )
-                status[name] = len(result.stdout.strip()) > 0
-            except Exception:
-                status[name] = False
+    try:
+        result = subprocess.run(
+            _docker_compose_cmd() + ["ps", "--format", "json"],
+            capture_output=True, text=True, timeout=10
+        )
+        running_names = set()
+        for line in result.stdout.strip().split("\n"):
+            if line.strip():
+                try:
+                    entry = json.loads(line)
+                    if entry.get("State") == "running":
+                        running_names.add(entry.get("Service", ""))
+                except json.JSONDecodeError:
+                    pass
+        for name in services:
+            status[name] = name in running_names
+    except Exception:
+        for name in services:
+            status[name] = False
     return status
 
 
 def check_disk_space() -> Dict[str, Any]:
     """Check disk usage."""
-    mounts = ["/", "/var", "/backups"]
+    mounts = os.environ.get("MONITOR_DISK_MOUNTS", "/,/var,/backups").split(",")
     result = {}
     for mount in mounts:
         try:
@@ -142,9 +142,13 @@ def check_disk_space() -> Dict[str, Any]:
 def check_delivery_rate() -> Dict[str, Any]:
     """Calculate delivery rate from Postfix logs (last hour)."""
     try:
+        since_time = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
         result = subprocess.run(
-            _docker_compose_cmd() + ["exec", "-T", "postfix", "grep", "-E", "status=(sent|deferred|bounced)",
-             "/var/log/mail.log"],
+            _docker_compose_cmd() + [
+                "exec", "-T", "postfix",
+                "sh", "-c",
+                f"awk '$1\"T\"$2 >= \"{since_time}\"' /var/log/mail.log | grep -E 'status=(sent|deferred|bounced)'"
+            ],
             capture_output=True, text=True, timeout=10
         )
         lines = result.stdout.strip().split("\n") if result.stdout.strip() else []
@@ -255,6 +259,30 @@ def check_system_resources() -> Dict[str, Any]:
             return {"error": str(e)}
 
 
+def check_backup_freshness() -> Dict[str, Any]:
+    """Check age of the most recent backup."""
+    backup_dir = os.environ.get("BACKUP_DIR", "/backups")
+    try:
+        if not os.path.isdir(backup_dir):
+            return {"status": "WARN", "error": f"backup directory {backup_dir} not found"}
+        backups = sorted(
+            [f for f in os.listdir(backup_dir) if f.startswith("ifinmail_backup_") and (f.endswith(".tar.gz") or f.endswith(".tar.gz.gpg"))],
+            reverse=True,
+        )
+        if not backups:
+            return {"status": "WARN", "error": "no backup files found"}
+        latest = os.path.join(backup_dir, backups[0])
+        age_hours = (datetime.now() - datetime.fromtimestamp(os.path.getmtime(latest))).total_seconds() / 3600
+        max_age = int(os.environ.get("MONITOR_BACKUP_MAX_AGE_HOURS", "25"))
+        if age_hours > max_age:
+            return {"status": "CRITICAL", "latest_backup": backups[0], "age_hours": round(age_hours, 1)}
+        if age_hours > max_age * 0.8:
+            return {"status": "WARN", "latest_backup": backups[0], "age_hours": round(age_hours, 1)}
+        return {"status": "OK", "latest_backup": backups[0], "age_hours": round(age_hours, 1)}
+    except Exception as e:
+        return {"status": "UNKNOWN", "error": str(e)}
+
+
 def send_alert(report: Dict[str, Any]):
     """Send webhook alert if status is CRITICAL and state changed."""
     if not ALERT_WEBHOOK:
@@ -272,7 +300,7 @@ def send_alert(report: Dict[str, Any]):
         # Send alert
         try:
             payload = json.dumps({
-                "text": f":red_circle: ifinmail monitor CRITICAL\n```{json.dumps(report, indent=2)[:1500]}```"
+                "text": f":red_circle: ifinmail monitor CRITICAL\n```\n{json.dumps(report, indent=2)[:1400]}\n```"
             })
             subprocess.run(
                 ["curl", "-fsS", "-X", "POST", "-H", "Content-Type: application/json",
@@ -293,10 +321,15 @@ def send_alert(report: Dict[str, Any]):
         except Exception:
             pass
 
-    # Persist current state
+    # Persist current state (atomic write)
     try:
-        with open(ALERT_STATE_FILE, "w") as f:
+        state_dir = os.path.dirname(ALERT_STATE_FILE)
+        if state_dir:
+            os.makedirs(state_dir, exist_ok=True)
+        tmp_path = f"{ALERT_STATE_FILE}.tmp"
+        with open(tmp_path, "w") as f:
             f.write(overall)
+        os.replace(tmp_path, ALERT_STATE_FILE)
     except Exception:
         pass
 
@@ -304,7 +337,7 @@ def send_alert(report: Dict[str, Any]):
 def run_all_checks() -> Dict[str, Any]:
     """Run all health checks and store in Redis."""
     report = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "postfix_queue": check_postfix_queue(),
         "services": check_service_status(),
         "api_health": check_api_health(),
@@ -312,6 +345,7 @@ def run_all_checks() -> Dict[str, Any]:
         "delivery_rate": check_delivery_rate(),
         "certificates": check_cert_expiry(),
         "system": check_system_resources(),
+        "backups": check_backup_freshness(),
     }
 
     # Determine overall status
@@ -350,8 +384,24 @@ def run_all_checks() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    report = run_all_checks()
-    print(json.dumps(report, indent=2))
+    import fcntl
+    LOCKFILE = "/var/lock/ifinmail_monitor.lock"
+    lock_dir = os.path.dirname(LOCKFILE)
+    if lock_dir:
+        os.makedirs(lock_dir, exist_ok=True)
+    try:
+        lock_fd = os.open(LOCKFILE, os.O_CREAT | os.O_RDWR)
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("Monitor already running, exiting.")
+        sys.exit(0)
+
+    try:
+        report = run_all_checks()
+        print(json.dumps(report, indent=2))
+    finally:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        os.close(lock_fd)
 
     if report["overall"] == "CRITICAL":
         print("\n!!! CRITICAL — check ifinmail services immediately !!!")

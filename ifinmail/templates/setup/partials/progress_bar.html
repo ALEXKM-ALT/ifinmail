@@ -1,0 +1,10 @@
+{# Setup Progress Bar — step stepper for the 4-step setup wizard #}
+{# Usage: {% include "setup/partials/progress_bar.html" with steps=steps current_step="welcome" %} #}
+{# steps is a list of dicts: [{label: "1. Domain", status: "done"}, {label: "2. DNS", status: "active"}, ...] #}
+<div class="ifinmail-setup-progress">
+    {% for step in steps %}
+    <div class="ifinmail-setup-step{% if step.status == 'active' %} ifinmail-setup-step--active{% elif step.status == 'done' %} ifinmail-setup-step--done{% endif %}">
+        {{ step.label }}
+    </div>
+    {% endfor %}
+</div>

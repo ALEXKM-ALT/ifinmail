@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 sql_escape() {
     printf "%s" "$1" | sed "s/'/''/g"
@@ -8,7 +8,7 @@ sql_escape() {
 DOVECOT_PASSWORD="$(sql_escape "${DOVECOT_DB_PASSWORD:?DOVECOT_DB_PASSWORD is required}")"
 POSTFIX_PASSWORD="$(sql_escape "${POSTFIX_DB_PASSWORD:?POSTFIX_DB_PASSWORD is required}")"
 APP_PASSWORD="$(sql_escape "${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}")"
-MAIL_DOMAIN_VALUE="$(sql_escape "${MAIL_DOMAIN:-${DOMAIN:-ifinsta.online}}")"
+MAIL_DOMAIN_VALUE="$(sql_escape "${MAIL_DOMAIN:-${DOMAIN:?DOMAIN or MAIL_DOMAIN is required}}")"
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<SQL
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -86,7 +86,6 @@ BEGIN
     -- Application role (Django — least privilege)
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'ifinmail_app') THEN
         CREATE ROLE ifinmail_app WITH LOGIN PASSWORD '$APP_PASSWORD';
-        PERFORM pg_sleep(0);
     ELSE
         ALTER ROLE ifinmail_app WITH LOGIN PASSWORD '$APP_PASSWORD';
     END IF;

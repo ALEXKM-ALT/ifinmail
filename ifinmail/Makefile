@@ -19,7 +19,7 @@ deploy:
 	python manage.py migrate
 
 # --- Docker targets (provisioning) ---
-DOMAIN ?= ifinsta.online
+DOMAIN ?= $(or $(DOMAIN),)
 COMPOSE_BIN := $(shell if docker compose version >/dev/null 2>&1; then printf 'docker compose'; else printf 'docker-compose'; fi)
 DOCKER_COMPOSE = $(COMPOSE_BIN) --env-file provisioning/.env -f provisioning/docker/docker-compose.yml
 

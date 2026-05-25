@@ -1,0 +1,12 @@
+{# Stats Grid — renders a list of stat cards #}
+{# Usage: {% include "admin/partials/stats_grid.html" with stats=stats %} #}
+<div class="ifinmail-stats-grid">
+    {% for stat in stats %}
+    <div class="ifinmail-stat-card{% if stat.status == 'err' %} ifinmail-stat-card--error{% elif stat.status == 'warn' %} ifinmail-stat-card--warning{% endif %}">
+        <span class="ifinmail-stat-value">{{ stat.value }}</span>
+        <span class="ifinmail-stat-label">{{ stat.label }}</span>
+    </div>
+    {% empty %}
+    <p class="ifinmail-admin-empty">No statistics available.</p>
+    {% endfor %}
+</div>

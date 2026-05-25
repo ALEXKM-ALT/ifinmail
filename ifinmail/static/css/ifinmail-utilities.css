@@ -51,6 +51,53 @@
 .ifinmail-text-center { text-align: center; }
 .ifinmail-text-right { text-align: right; }
 
+/* More gap utilities */
+.ifinmail-gap-1 { gap: var(--ifinmail-space-1); }
+.ifinmail-gap-3 { gap: var(--ifinmail-space-3); }
+.ifinmail-gap-5 { gap: var(--ifinmail-space-5); }
+.ifinmail-gap-10 { gap: var(--ifinmail-space-10); }
+.ifinmail-gap-12 { gap: var(--ifinmail-space-12); }
+
+/* === Spacing (additions) === */
+.ifinmail-p-1 { padding: var(--ifinmail-space-1); }
+.ifinmail-p-3 { padding: var(--ifinmail-space-3); }
+.ifinmail-p-12 { padding: var(--ifinmail-space-12); }
+.ifinmail-pt-4 { padding-top: var(--ifinmail-space-4); }
+.ifinmail-pt-6 { padding-top: var(--ifinmail-space-6); }
+.ifinmail-pb-4 { padding-bottom: var(--ifinmail-space-4); }
+.ifinmail-pb-6 { padding-bottom: var(--ifinmail-space-6); }
+.ifinmail-mr-2 { margin-right: var(--ifinmail-space-2); }
+.ifinmail-mr-4 { margin-right: var(--ifinmail-space-4); }
+.ifinmail-ml-2 { margin-left: var(--ifinmail-space-2); }
+
+/* === Dimensions === */
+.ifinmail-w-full { width: 100%; }
+.ifinmail-h-full { height: 100%; }
+.ifinmail-overflow-auto { overflow: auto; }
+.ifinmail-overflow-hidden { overflow: hidden; }
+
+/* === Typography additions === */
+.ifinmail-text-3xl { font-size: var(--ifinmail-font-size-3xl); }
+.ifinmail-text-mono { font-family: var(--ifinmail-font-mono); }
+.ifinmail-text-uppercase { text-transform: uppercase; letter-spacing: 0.05em; }
+.ifinmail-leading-tight { line-height: var(--ifinmail-line-height-tight); }
+.ifinmail-text-on-surface { color: var(--ifinmail-on-surface); }
+.ifinmail-text-success { color: var(--ifinmail-success); }
+.ifinmail-text-error { color: var(--ifinmail-error); }
+.ifinmail-text-warning { color: var(--ifinmail-warning); }
+
 /* === Visibility === */
 .ifinmail-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .ifinmail-hidden { display: none; }
+
+/* === Cursor === */
+.ifinmail-cursor-pointer { cursor: pointer; }
+
+/* === Responsive display === */
+@media (max-width: 1024px) {
+    .ifinmail-hide-tablet { display: none; }
+}
+@media (max-width: 767px) {
+    .ifinmail-hide-mobile { display: none; }
+    .ifinmail-show-mobile { display: block; }
+}

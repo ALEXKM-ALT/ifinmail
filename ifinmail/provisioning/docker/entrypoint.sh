@@ -3,8 +3,10 @@ set -e
 
 echo "=== ifinmail entrypoint ==="
 
-# Wait for PostgreSQL to be ready
+# Wait for PostgreSQL to be ready (max 30 attempts = 60s)
 echo "Waiting for PostgreSQL..."
+MAX_ATTEMPTS=30
+ATTEMPT=0
 until python - <<'PY' 2>/dev/null
 import os
 import psycopg
@@ -18,7 +20,12 @@ psycopg.connect(
 ).close()
 PY
 do
-    echo "  PostgreSQL not ready, retrying in 2s..."
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+        echo "ERROR: PostgreSQL did not become ready after ${MAX_ATTEMPTS} attempts"
+        exit 1
+    fi
+    echo "  PostgreSQL not ready, retrying in 2s... (attempt $ATTEMPT/$MAX_ATTEMPTS)"
     sleep 2
 done
 echo "  PostgreSQL is ready."
@@ -28,23 +35,15 @@ python manage.py check --deploy
 
 # Apply database migrations
 echo "Running migrations..."
-python manage.py migrate --noinput
+if ! python manage.py migrate --noinput; then
+    echo "ERROR: Database migration failed"
+    exit 1
+fi
 
 # Create superuser if it doesn't exist (idempotent)
 if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
     echo "Ensuring superuser '${DJANGO_SUPERUSER_USERNAME}' exists..."
-    python manage.py shell -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-username = '${DJANGO_SUPERUSER_USERNAME}'
-email = '${DJANGO_SUPERUSER_EMAIL:-admin@example.com}'
-password = '${DJANGO_SUPERUSER_PASSWORD}'
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
-    print('Superuser created.')
-else:
-    print('Superuser already exists.')
-"
+    python manage.py createsuperuser --noinput 2>/dev/null || true
 fi
 
 # Collect static files

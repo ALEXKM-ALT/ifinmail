@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROVISIONING_DIR="$(dirname "$SCRIPT_DIR")"
 DOCKER_DIR="$PROVISIONING_DIR/docker"
 ENV_FILE="$PROVISIONING_DIR/.env"
-DOMAIN="${DOMAIN:-ifinsta.online}"
+DOMAIN="${DOMAIN:?DOMAIN must be set}"
 MAIL_DOMAIN="${MAIL_DOMAIN:-$DOMAIN}"
 MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.$DOMAIN}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@$DOMAIN}"
@@ -21,6 +21,20 @@ die() {
 
 need_cmd() {
     command -v "$1" >/dev/null 2>&1 || die "$1 is required"
+}
+
+normalize_vars() {
+    # Normalize domain to lowercase
+    DOMAIN="$(echo "$DOMAIN" | tr '[:upper:]' '[:lower:]')"
+    # Strip trailing dot (FQDN notation)
+    DOMAIN="${DOMAIN%.}"
+    MAIL_DOMAIN="$(echo "$MAIL_DOMAIN" | tr '[:upper:]' '[:lower:]')"
+    MAIL_DOMAIN="${MAIL_DOMAIN%.}"
+    # Validate DKIM_SELECTOR: only lowercase letters, digits, hyphens
+    if ! echo "$DKIM_SELECTOR" | grep -qE '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'; then
+        echo "WARNING: DKIM_SELECTOR '$DKIM_SELECTOR' is not a valid DNS label. Using 'default'."
+        DKIM_SELECTOR="default"
+    fi
 }
 
 detect_compose() {
@@ -38,14 +52,20 @@ rand_b64() {
     openssl rand -base64 "$1" | tr -d '\n'
 }
 
+rand_urlsafe() {
+    openssl rand -base64 "$1" | tr '+/' '-_' | tr -d '=\n'
+}
+
 ensure_env() {
     if [ -f "$ENV_FILE" ]; then
+        # Strip Windows CRLF line endings if present
+        sed -i 's/\r$//' "$ENV_FILE" 2>/dev/null || true
         set -a
         # shellcheck disable=SC1090
         source "$ENV_FILE"
         set +a
 
-        DOMAIN="${DOMAIN:-ifinsta.online}"
+        DOMAIN="${DOMAIN:?DOMAIN must be set}"
         MAIL_DOMAIN="${MAIL_DOMAIN:-$DOMAIN}"
         MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.$DOMAIN}"
         ADMIN_EMAIL="${ADMIN_EMAIL:-admin@$DOMAIN}"
@@ -55,6 +75,9 @@ ensure_env() {
         grep -q '^MAIL_HOSTNAME=' "$ENV_FILE" || echo "MAIL_HOSTNAME=$MAIL_HOSTNAME" >> "$ENV_FILE"
         grep -q '^ADMIN_EMAIL=' "$ENV_FILE" || echo "ADMIN_EMAIL=$ADMIN_EMAIL" >> "$ENV_FILE"
         grep -q '^DKIM_SELECTOR=' "$ENV_FILE" || echo "DKIM_SELECTOR=$DKIM_SELECTOR" >> "$ENV_FILE"
+        grep -q '^BACKUP_GPG_PASSPHRASE=' "$ENV_FILE" || echo "BACKUP_GPG_PASSPHRASE=$(rand_b64 32)" >> "$ENV_FILE"
+        grep -q '^RSPAMD_CONTROLLER_PASSWORD=' "$ENV_FILE" || echo "RSPAMD_CONTROLLER_PASSWORD=$(rand_b64 24)" >> "$ENV_FILE"
+        normalize_vars
         return
     fi
 
@@ -69,22 +92,25 @@ ADMIN_EMAIL=$ADMIN_EMAIL
 COREDNS_IP=127.0.0.1
 
 POSTGRES_ADMIN_PASSWORD=$(rand_b64 36)
-APP_DB_PASSWORD=$(rand_b64 24)
+APP_DB_PASSWORD=$(rand_urlsafe 24)
 DOVECOT_DB_PASSWORD=$(rand_b64 36)
 POSTFIX_DB_PASSWORD=$(rand_b64 36)
 
 SECRET_KEY=$(rand_b64 48)
-DJANGO_ALLOWED_HOSTS=$DOMAIN,$MAIL_HOSTNAME
+DJANGO_ALLOWED_HOSTS=$DOMAIN,$MAIL_HOSTNAME,api,localhost,127.0.0.1
 
 REDIS_HOST=redis
 REDIS_PORT=6379
-REDIS_PASSWORD=$(rand_b64 24)
+REDIS_PASSWORD=$(rand_urlsafe 24)
+
+RSPAMD_CONTROLLER_PASSWORD=$(rand_b64 24)
 
 DKIM_SELECTOR=$DKIM_SELECTOR
 
 BACKUP_RETENTION_DAYS=30
 BACKUP_ENCRYPT=true
-BACKUP_GPG_RECIPIENT=${BACKUP_GPG_RECIPIENT:-ifinmail-backup@ifinsta.online}
+BACKUP_GPG_RECIPIENT=${BACKUP_GPG_RECIPIENT:-ifinmail-backup@$DOMAIN}
+BACKUP_GPG_PASSPHRASE=$(rand_b64 32)
 
 MONITOR_QUEUE_WARN=50
 MONITOR_QUEUE_CRITICAL=200
@@ -139,7 +165,7 @@ ensure_bootstrap_cert() {
 
     if [ ! -s "$cert" ] || [ ! -s "$key" ]; then
         echo "Creating bootstrap self-signed TLS certificate for $MAIL_HOSTNAME..."
-        openssl req -x509 -nodes -newkey rsa:2048 -days 7 \
+        openssl req -x509 -nodes -newkey rsa:2048 -days 30 \
             -subj "/CN=$MAIL_HOSTNAME" \
             -addext "subjectAltName=DNS:$DOMAIN,DNS:$MAIL_HOSTNAME" \
             -keyout "$key" \
@@ -151,6 +177,33 @@ ensure_bootstrap_cert() {
         echo "Generating Dovecot DH parameters..."
         openssl dhparam -out "$dh" 2048 >/dev/null 2>&1
     fi
+}
+
+ensure_mta_sts() {
+    local www_dir="$DOCKER_DIR/nginx/www"
+    local policy_file="$www_dir/.well-known/mta-sts.json"
+    local policy_dir
+    policy_dir="$(dirname "$policy_file")"
+
+    mkdir -p "$policy_dir"
+
+    # Write policy body without id, then compute stable id from content hash
+    cat > "$policy_file" <<INNEREOF
+{
+  "version": "STSv1",
+  "mode": "testing",
+  "mx": ["$MAIL_HOSTNAME"],
+  "max_age": 1209600
+}
+INNEREOF
+
+    local mta_sts_id
+    mta_sts_id="$(sha256sum "$policy_file" 2>/dev/null | cut -d' ' -f1 | head -c 16 || date +%Y%m%dT%H%M%SZ)"
+
+    echo "MTA-STS policy created in TESTING mode (id: $mta_sts_id)"
+    echo "  After verifying TLS delivery for 2+ weeks, change mode to 'enforce' in:"
+    echo "  $policy_file"
+    echo "  Update the _mta-sts DNS TXT record with the new id after changes."
 }
 
 ensure_dkim() {
@@ -180,10 +233,18 @@ EOF
 }
 
 ensure_backup_gpg_key() {
-    local gpg_key_id="${BACKUP_GPG_RECIPIENT:-ifinmail-backup@ifinsta.online}"
+    local gpg_key_id="${BACKUP_GPG_RECIPIENT:-ifinmail-backup@$DOMAIN}"
+    local gpg_pass="${BACKUP_GPG_PASSPHRASE:-}"
+
     if gpg --list-keys "$gpg_key_id" >/dev/null 2>&1; then
         echo "GPG backup key already exists: $gpg_key_id"
         return
+    fi
+
+    if [ -z "$gpg_pass" ]; then
+        echo "WARNING: BACKUP_GPG_PASSPHRASE not set. Generating passphrase..."
+        gpg_pass="$(rand_b64 32)"
+        echo "BACKUP_GPG_PASSPHRASE=$gpg_pass" >> "$ENV_FILE"
     fi
 
     echo "Generating GPG backup key ($gpg_key_id)..."
@@ -195,12 +256,12 @@ Key-Usage: encrypt
 Name-Real: ifinmail Backup
 Name-Email: $gpg_key_id
 Expire-Date: 0
-%no-protection
+Passphrase: $gpg_pass
 %commit
 %echo Done
 GPGBATCH
 
-    gpg --batch --gen-key /tmp/gpg-batch.txt 2>/dev/null
+    gpg --batch --pinentry-mode=loopback --passphrase "$gpg_pass" --gen-key /tmp/gpg-batch.txt 2>/dev/null
     rm -f /tmp/gpg-batch.txt
 
     if gpg --list-keys "$gpg_key_id" >/dev/null 2>&1; then
@@ -236,6 +297,25 @@ print_dns() {
     local dkim_value
     dkim_value="$(grep -v '^-' "$pub_path" | tr -d '\n')"
 
+    # Split DKIM public key into 255-char chunks for DNS TXT record compliance.
+    # First chunk includes the prefix, subsequent chunks are pure key material.
+    local prefix="v=DKIM1; k=rsa; p="
+    local prefix_len=${#prefix}
+    local chunk_size=$((255 - prefix_len))
+    local dkim_chunks=""
+    local remaining="$dkim_value"
+    local first=true
+    while [ -n "$remaining" ]; do
+        if $first; then
+            dkim_chunks="${dkim_chunks}\"${prefix}${remaining:0:$chunk_size}\""
+            remaining="${remaining:$chunk_size}"
+            first=false
+        else
+            dkim_chunks="${dkim_chunks} \"${remaining:0:255}\""
+            remaining="${remaining:255}"
+        fi
+    done
+
     cat <<EOF
 
 ifinmail is provisioned for $DOMAIN.
@@ -244,15 +324,64 @@ DNS records to publish:
   A      $DOMAIN                  <this server IPv4>
   A      $MAIL_HOSTNAME           <this server IPv4>
   MX     $DOMAIN                  10 $MAIL_HOSTNAME.
-  TXT    $DOMAIN                  "v=spf1 mx -all"
-  TXT    _dmarc.$DOMAIN           "v=DMARC1; p=quarantine; rua=mailto:postmaster@$DOMAIN"
-  TXT    $DKIM_SELECTOR._domainkey.$DOMAIN "v=DKIM1; k=rsa; p=$dkim_value"
+  TXT    $DOMAIN                  "v=spf1 mx ~all"
+  TXT    _dmarc.$DOMAIN           "v=DMARC1; p=none; rua=mailto:postmaster@$DOMAIN"
+  TXT    $DKIM_SELECTOR._domainkey.$DOMAIN $dkim_chunks
+  TXT    _mta-sts.$DOMAIN          "v=STSv1; id=$(sha256sum "$DOCKER_DIR/nginx/www/.well-known/mta-sts.json" 2>/dev/null | cut -d' ' -f1 | head -c 16 || date +%Y%m%dT%H%M%SZ)"
+  A      mta-sts.$DOMAIN           <this server IPv4>
+  PTR    <this server IPv4>       $MAIL_HOSTNAME   (set at your VPS provider — not DNS host)
+  AAAA   $DOMAIN                  <this server IPv6>  (if available)
+  AAAA   $MAIL_HOSTNAME           <this server IPv6>  (if available)
+
+Reverse DNS (PTR) is critical for mail deliverability. Without it, many
+providers (Gmail, Outlook) will reject or spam-folder your messages.
+Set reverse DNS for your server's IPv4 address to point to $MAIL_HOSTNAME
+through your VPS provider's control panel — not your DNS host.
+
+After DNS is configured, verify with:
+  dig +short MX $DOMAIN
+  dig +short -x <your-server-ip>
+  dig +short TXT $DKIM_SELECTOR._domainkey.$DOMAIN
 
 Useful commands:
   make ps
   make logs
   make down
 EOF
+}
+
+preflight_checks() {
+    echo "Running pre-flight checks..."
+
+    # Check available disk space (need ~2GB for images + data)
+    local available_kb
+    available_kb="$(df "$PROVISIONING_DIR" | awk 'NR==2 {print $4}')"
+    if [ "${available_kb:-0}" -lt 2097152 ]; then
+        echo "WARNING: Less than 2GB disk space available. Builds may fail."
+    fi
+
+    # Check available RAM (need ~1GB for building and running)
+    if [ -f /proc/meminfo ]; then
+        local mem_avail_kb
+        mem_avail_kb="$(awk '/MemAvailable/ {print $2}' /proc/meminfo)"
+        if [ "${mem_avail_kb:-0}" -lt 1048576 ]; then
+            echo "WARNING: Less than 1GB RAM available. Services may be OOM-killed."
+        fi
+    fi
+
+    # Check if Docker daemon is running
+    if ! docker info >/dev/null 2>&1; then
+        die "Docker daemon is not running. Start it with: systemctl start docker"
+    fi
+
+    # Check if required ports are already in use
+    for port in 25 80 143 443 465 587 993; do
+        if ss -tlnp 2>/dev/null | grep -q ":${port} "; then
+            echo "WARNING: Port $port is already in use. The stack may fail to bind."
+        fi
+    done
+
+    echo "Pre-flight checks complete."
 }
 
 main() {
@@ -270,15 +399,17 @@ main() {
     # shellcheck disable=SC1090
     source "$ENV_FILE"
     set +a
-    DOMAIN="${DOMAIN:-ifinsta.online}"
+    DOMAIN="${DOMAIN:?DOMAIN must be set}"
     MAIL_DOMAIN="${MAIL_DOMAIN:-$DOMAIN}"
     MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.$DOMAIN}"
     ADMIN_EMAIL="${ADMIN_EMAIL:-admin@$DOMAIN}"
     DKIM_SELECTOR="${DKIM_SELECTOR:-default}"
+    normalize_vars
     validate_env
-
+    preflight_checks
     ensure_directories
     ensure_bootstrap_cert
+    ensure_mta_sts
     ensure_dkim
     ensure_backup_gpg_key
 
@@ -294,6 +425,9 @@ main() {
 
     obtain_certificate
     (cd "$DOCKER_DIR" && "${COMPOSE[@]}" restart postfix dovecot nginx)
+
+    echo "Starting certbot auto-renewal service..."
+    (cd "$DOCKER_DIR" && "${COMPOSE[@]}" --profile certbot up -d certbot) || true
 
     echo "Current service status:"
     (cd "$DOCKER_DIR" && "${COMPOSE[@]}" ps)

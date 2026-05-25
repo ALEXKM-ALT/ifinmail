@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+# ifinmail bootstrap.sh — one-command setup from fresh Ubuntu/Debian VPS to running mail server.
+# Usage: curl -sSL https://raw.githubusercontent.com/ifinmail/ifinmail/main/provisioning/scripts/bootstrap.sh | bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_URL="${REPO_URL:-https://github.com/ifinmail/ifinmail.git}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/ifinmail}"
+
+die() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+need_cmd() {
+    command -v "$1" >/dev/null 2>&1 || die "$1 is required"
+}
+
+rand_urlsafe() {
+    openssl rand -base64 "$1" | tr '+/' '-_' | tr -d '=\n'
+}
+
+banner() {
+    echo "======================================"
+    echo "  ifinmail — Bootstrap Installer"
+    echo "======================================"
+}
+
+check_os() {
+    if [ ! -f /etc/os-release ]; then
+        die "Unsupported OS. Ubuntu 22.04+ or Debian 12+ required."
+    fi
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    case "$ID" in
+        ubuntu)
+            if [ "${VERSION_ID%.*}" -lt 22 ]; then
+                die "Ubuntu 22.04 or newer required (found $VERSION_ID)."
+            fi
+            ;;
+        debian)
+            if [ "${VERSION_ID%.*}" -lt 12 ]; then
+                die "Debian 12 or newer required (found $VERSION_ID)."
+            fi
+            ;;
+        *)
+            die "Unsupported OS: $ID. Ubuntu 22.04+ or Debian 12+ required."
+            ;;
+    esac
+    echo "Detected: $PRETTY_NAME"
+}
+
+install_docker() {
+    echo "Installing Docker..."
+
+    if command -v docker >/dev/null 2>&1; then
+        echo "  Docker already installed: $(docker --version)"
+        return
+    fi
+
+    # Remove old versions if present
+    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
+        apt-get remove -y "$pkg" >/dev/null 2>&1 || true
+    done
+
+    apt-get update -qq
+    apt-get install -y -qq ca-certificates curl
+
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+
+    # shellcheck disable=SC1091
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+
+    apt-get update -qq
+    apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    echo "  Docker installed: $(docker --version)"
+}
+
+install_tools() {
+    echo "Installing system tools..."
+    local missing=()
+
+    command -v openssl >/dev/null 2>&1 || missing+=(openssl)
+    command -v gpg >/dev/null 2>&1 || missing+=(gpg)
+    command -v git >/dev/null 2>&1 || missing+=(git)
+    command -v curl >/dev/null 2>&1 || missing+=(curl)
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        apt-get update -qq
+        apt-get install -y -qq "${missing[@]}"
+    fi
+
+    echo "  All system tools available."
+}
+
+clone_or_update() {
+    if [ -d "$INSTALL_DIR/.git" ]; then
+        echo "Updating existing ifinmail repository..."
+        (cd "$INSTALL_DIR" && git pull --ff-only)
+    else
+        echo "Cloning ifinmail repository to $INSTALL_DIR..."
+        git clone "$REPO_URL" "$INSTALL_DIR"
+    fi
+}
+
+run_setup() {
+    if [ -f "$INSTALL_DIR/provisioning/scripts/setup-wizard.sh" ]; then
+        echo ""
+        bash "$INSTALL_DIR/provisioning/scripts/setup-wizard.sh"
+    else
+        echo "Setup wizard not found — running provision.sh interactively."
+        read -rp "Enter your domain (e.g., example.com): " DOMAIN
+        export DOMAIN
+        (cd "$INSTALL_DIR" && make provision DOMAIN="$DOMAIN")
+        return
+    fi
+}
+
+verify_stack() {
+    echo ""
+    echo "Verifying stack health..."
+    sleep 5
+
+    local compose_bin
+    if docker compose version >/dev/null 2>&1; then
+        compose_bin="docker compose"
+    else
+        compose_bin="docker-compose"
+    fi
+
+    local compose_cmd="$compose_bin --env-file $INSTALL_DIR/provisioning/.env -f $INSTALL_DIR/provisioning/docker/docker-compose.yml"
+
+    $compose_cmd ps 2>/dev/null || {
+        echo "WARNING: Could not read container status. Run 'make ps' to check."
+        return
+    }
+
+    echo ""
+    echo "Testing API health endpoint..."
+    sleep 3
+    if curl -fsS http://localhost:8000/health/ >/dev/null 2>&1; then
+        echo "  API: OK"
+    else
+        echo "  API: waiting (may still be starting up)"
+    fi
+}
+
+run_noninteractive() {
+    local env_file="$INSTALL_DIR/provisioning/.env"
+    local domain="${DOMAIN:?DOMAIN is required for non-interactive mode}"
+    local mail_hostname="${MAIL_HOSTNAME:-mail.$domain}"
+    local admin_email="${ADMIN_EMAIL:-admin@$domain}"
+    local admin_user="${ADMIN_USERNAME:-admin}"
+
+    echo "Non-interactive mode — generating .env from environment variables..."
+
+    umask 077
+    cat > "$env_file" <<EOF
+# ifinmail environment — generated by bootstrap.sh --non-interactive on $(date -Iseconds)
+# WARNING: this file contains secrets. Do not commit to version control.
+
+# --- Domain ---
+DOMAIN=$domain
+MAIL_DOMAIN=$domain
+MAIL_HOSTNAME=$mail_hostname
+ADMIN_EMAIL=$admin_email
+
+# --- CoreDNS (reserved for future DNS server integration) ---
+COREDNS_IP=127.0.0.1
+
+# --- PostgreSQL ---
+POSTGRES_ADMIN_PASSWORD=$(openssl rand -base64 36 | tr -d '\n')
+APP_DB_PASSWORD=$(rand_urlsafe 24)
+DOVECOT_DB_PASSWORD=$(openssl rand -base64 36 | tr -d '\n')
+POSTFIX_DB_PASSWORD=$(openssl rand -base64 36 | tr -d '\n')
+
+# --- Django ---
+SECRET_KEY=$(openssl rand -base64 48 | tr -d '\n')
+DJANGO_ALLOWED_HOSTS=$domain,$mail_hostname,api,localhost,127.0.0.1
+
+# --- Redis ---
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=$(rand_urlsafe 24)
+
+RSPAMD_CONTROLLER_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')
+
+# --- DKIM ---
+DKIM_SELECTOR=default
+
+# --- Django superuser ---
+DJANGO_SUPERUSER_USERNAME=$admin_user
+DJANGO_SUPERUSER_EMAIL=$admin_email
+DJANGO_SUPERUSER_PASSWORD=$(openssl rand -base64 16 | tr -d '\n')
+
+# --- Backup ---
+BACKUP_RETENTION_DAYS=30
+BACKUP_ENCRYPT=true
+BACKUP_GPG_RECIPIENT=ifinmail-backup@$domain
+BACKUP_GPG_PASSPHRASE=$(openssl rand -base64 32 | tr -d '\n')
+
+# --- Monitor thresholds ---
+MONITOR_QUEUE_WARN=50
+MONITOR_QUEUE_CRITICAL=200
+MONITOR_CERT_WARN_DAYS=30
+MONITOR_CERT_CRITICAL_DAYS=7
+
+# --- Security ---
+CSRF_TRUSTED_ORIGINS=https://$domain,https://$mail_hostname
+AXES_FAILURE_LIMIT=5
+SECURE_HSTS_SECONDS=3600
+EOF
+
+    echo "  Configuration saved to: $env_file"
+
+    # Source env and run provision
+    set -a
+    # shellcheck disable=SC1090
+    source "$env_file"
+    set +a
+
+    echo ""
+    echo "=== Running provision script ==="
+    cd "$INSTALL_DIR"
+    DOMAIN="$domain" provisioning/scripts/provision.sh
+}
+
+main() {
+    local non_interactive=false
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --non-interactive)
+                non_interactive=true
+                shift
+                ;;
+            -h|--help)
+                echo "Usage: bootstrap.sh [--non-interactive]"
+                echo ""
+                echo "Options:"
+                echo "  --non-interactive  Skip the setup wizard. Requires DOMAIN env var."
+                echo "                     Optional: MAIL_HOSTNAME, ADMIN_EMAIL, ADMIN_USERNAME"
+                echo ""
+                exit 0
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    banner
+
+    # Require root for package installation
+    if [ "$(id -u)" -ne 0 ]; then
+        die "This script must be run as root. Try: curl ... | sudo bash"
+    fi
+
+    check_os
+    install_docker
+    install_tools
+    clone_or_update
+
+    if $non_interactive; then
+        run_noninteractive
+    else
+        echo ""
+        echo "=== Running setup wizard ==="
+        run_setup
+    fi
+
+    verify_stack
+
+    echo ""
+    echo "======================================"
+    echo "  ifinmail bootstrap complete!"
+    echo "======================================"
+    echo ""
+    echo "  Directory: $INSTALL_DIR"
+    echo "  Manage:    cd $INSTALL_DIR && make ps"
+    echo "  Logs:      cd $INSTALL_DIR && make logs"
+    echo ""
+}
+
+main "$@"

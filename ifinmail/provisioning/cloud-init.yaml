@@ -1,0 +1,78 @@
+#cloud-config
+# ifinmail one-click deploy — cloud-init configuration for Ubuntu 22.04+ / Debian 12+
+#
+# Usage examples:
+#   DigitalOcean: paste this into "User data" when creating a Droplet
+#   Hetzner Cloud: paste into "Cloud config" when creating a server
+#   AWS EC2: paste into "User data" (requires Ubuntu AMI)
+#   Linode: paste into "User data" when creating a Linode
+#
+# Set these environment variables before pasting or use the defaults below:
+#   DOMAIN=example.com ADMIN_EMAIL=admin@example.com
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - openssl
+  - git
+
+write_files:
+  - path: /etc/sysctl.d/99-ifinmail.conf
+    content: |
+      # ifinmail mail server tuning
+      net.core.somaxconn = 1024
+      net.ipv4.tcp_max_syn_backlog = 1024
+      net.ipv4.ip_local_port_range = 1024 65000
+      fs.file-max = 65535
+      fs.inotify.max_user_instances = 8192
+      fs.inotify.max_user_watches = 524288
+
+runcmd:
+  # Apply sysctl tuning
+  - sysctl --system
+
+  # Install Docker
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update -qq
+  - apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+  # Enable and start Docker
+  - systemctl enable docker
+  - systemctl start docker
+
+  # Clone and bootstrap ifinmail
+  - |
+    DOMAIN="${DOMAIN:-example.com}"
+    ADMIN_EMAIL="${ADMIN_EMAIL:-admin@$DOMAIN}"
+    export DOMAIN ADMIN_EMAIL
+    curl -sSL https://raw.githubusercontent.com/ifinmail/ifinmail/main/provisioning/scripts/bootstrap.sh | bash -s -- --non-interactive
+
+  # Print access info
+  - |
+    DOMAIN="${DOMAIN:-example.com}"
+    MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.$DOMAIN}"
+    echo ""
+    echo "============================================"
+    echo "  ifinmail deployment complete!"
+    echo "============================================"
+    echo ""
+    echo "  Admin panel: https://$MAIL_HOSTNAME/admin/"
+    echo "  Webmail:     https://$MAIL_HOSTNAME/webmail/"
+    echo ""
+    echo "  Check logs:  tail -f /var/log/cloud-init-output.log"
+    echo "============================================"
+
+# Reboot to apply all kernel settings and ensure Docker is fully up
+power_state:
+  mode: reboot
+  message: ifinmail deployment complete — rebooting to finalize
+  timeout: 30
+  condition: true

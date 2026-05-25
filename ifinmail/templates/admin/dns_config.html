@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}DNS Configuration — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-admin-layout">
+  {% include "admin/partials/admin_sidebar.html" with active_section="dns" %}
+  <section class="ifinmail-admin-content">
+  <div class="ifinmail-dns-config" style="max-width:800px;padding:0;">
+  <h1 class="ifinmail-admin-title">DNS Configuration</h1>
+
+  <div class="ifinmail-dns-info">
+    <p>Configure DNS records automatically for <strong>{{ domain }}</strong>.
+       Your server is at <strong>{{ server_ip }}</strong>.</p>
+  </div>
+
+  {% if messages %}
+  <div class="ifinmail-dns-messages">
+    {% for msg in messages %}
+      <div class="ifinmail-dns-message ifinmail-dns-message--{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="ifinmail-dns-providers">
+    {% for p in providers %}
+    <div class="ifinmail-dns-provider-card" id="provider-{{ p.id }}">
+      <h3 class="ifinmail-dns-provider-name">{{ p.id|title }}</h3>
+      <p class="ifinmail-dns-provider-help">Requires: {{ p.label }}.
+        <a href="https://ifinmail.dev/docs/dns#{{ p.id }}" target="_blank" rel="noopener">How to get yours</a>
+      </p>
+      <form class="ifinmail-dns-form" data-provider="{{ p.id }}" onsubmit="return configureDNS(event, '{{ p.id }}')">
+        {% csrf_token %}
+        <input type="hidden" name="provider" value="{{ p.id }}">
+        <input type="hidden" name="domain" value="{{ domain }}">
+
+        {% if p.id == "porkbun" %}
+          <input type="password" name="api_key" placeholder="API Key" class="ifinmail-input" required>
+          <input type="password" name="secret_key" placeholder="Secret Key" class="ifinmail-input" required>
+        {% else %}
+          <input type="password" name="api_token" placeholder="API Token" class="ifinmail-input" required>
+        {% endif %}
+
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Auto-Configure DNS</button>
+      </form>
+      <div class="ifinmail-dns-status" id="status-{{ p.id }}"></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="ifinmail-admin-section">
+    <h2 class="ifinmail-admin-section-title">Current DNS Status</h2>
+    <div class="ifinmail-dns-check-grid" id="dns-check-results">
+      {% if dns_status %}
+        {% for rtype, rdata in dns_status.items %}
+        <div class="ifinmail-dns-check ifinmail-dns-check--{{ rdata.status }}">
+          <span class="ifinmail-dns-check-type">{{ rtype|upper }}</span>
+          <span class="ifinmail-dns-check-detail">{{ rdata.detail }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="ifinmail-admin-empty">Run auto-configuration or check back after configuring DNS manually.</p>
+      {% endif %}
+    </div>
+    <button class="ifinmail-btn" onclick="refreshDNSStatus()" style="margin-top: 12px;">Refresh Status</button>
+  </div>
+
+  <div class="ifinmail-admin-section">
+    <h2 class="ifinmail-admin-section-title">Manual DNS Records</h2>
+    <p>If you prefer to configure DNS yourself, create these records with your DNS provider:</p>
+    <table class="ifinmail-setup-table">
+      <tr><td><strong>A</strong></td><td>{{ domain }}</td><td>{{ server_ip }}</td></tr>
+      <tr><td><strong>A</strong></td><td>mail.{{ domain }}</td><td>{{ server_ip }}</td></tr>
+      <tr><td><strong>A</strong></td><td>mta-sts.{{ domain }}</td><td>{{ server_ip }}</td></tr>
+      <tr><td><strong>MX</strong></td><td>{{ domain }}</td><td>10 mail.{{ domain }}</td></tr>
+      <tr><td><strong>TXT</strong></td><td>{{ domain }}</td><td>"v=spf1 mx -all"</td></tr>
+      <tr><td><strong>TXT</strong></td><td>_dmarc.{{ domain }}</td><td>"v=DMARC1; p=quarantine; rua=mailto:postmaster@{{ domain }}"</td></tr>
+      <tr><td><strong>TXT</strong></td><td>_mta-sts.{{ domain }}</td><td>"v=STSv1; id=20260501T000000Z"</td></tr>
+      <tr><td><strong>TXT</strong></td><td>default._domainkey.{{ domain }}</td><td>"v=DKIM1; k=rsa; p=..."</td></tr>
+    </table>
+  </div>
+</div>
+  </section>
+</div>
+
+<script>
+function configureDNS(event, provider) {
+    event.preventDefault();
+    const form = event.target;
+    const statusEl = document.getElementById('status-' + provider);
+    statusEl.innerHTML = '<p class="ifinmail-dns-progress">Configuring DNS records...</p>';
+
+    const formData = new FormData(form);
+    fetch('/dns/configure/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': formData.get('csrfmiddlewaretoken')},
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            statusEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--ok">' +
+                '<p>' + data.message + '</p>' +
+                '<ul>' + data.records_created.map(r => '<li>' + r + '</li>').join('') + '</ul>' +
+                '</div>';
+            refreshDNSStatus();
+        } else {
+            statusEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err">' +
+                '<p>Error: ' + data.message + '</p>' +
+                (data.records_failed ? '<ul>' + data.records_failed.map(r => '<li>' + r + '</li>').join('') + '</ul>' : '') +
+                '</div>';
+        }
+    })
+    .catch(err => {
+        statusEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Request failed: ' + err.message + '</p></div>';
+    });
+    return false;
+}
+
+function refreshDNSStatus() {
+    const el = document.getElementById('dns-check-results');
+    el.innerHTML = '<p class="ifinmail-dns-progress">Checking...</p>';
+    const domain = document.querySelector('input[name="domain"]').value;
+    fetch('/dns/status/?domain=' + encodeURIComponent(domain))
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                el.innerHTML = '<p class="ifinmail-admin-empty">Error: ' + data.error + '</p>';
+                return;
+            }
+            let html = '';
+            for (const [rtype, rdata] of Object.entries(data.records)) {
+                html += '<div class="ifinmail-dns-check ifinmail-dns-check--' + rdata.status + '">' +
+                    '<span class="ifinmail-dns-check-type">' + rtype.toUpperCase() + '</span>' +
+                    '<span class="ifinmail-dns-check-detail">' + (rdata.detail || '') + '</span>' +
+                    '</div>';
+            }
+            el.innerHTML = html;
+        })
+        .catch(err => {
+            el.innerHTML = '<p class="ifinmail-admin-empty">Check failed: ' + err.message + '</p>';
+        });
+}
+</script>
+{% endblock %}

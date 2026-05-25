@@ -1,7 +1,7 @@
 /**
  * <ifinmail-message-card> — reusable message card component.
  * Uses Shadow DOM for encapsulation. No framework.
- * GitHub-style: border-centric, no shadows, no transitions.
+ * Institutional Precision design: border-centric, flat-plus elevation.
  */
 class IfinmailMessageCard extends HTMLElement {
     constructor() {
@@ -29,9 +29,9 @@ class IfinmailMessageCard extends HTMLElement {
         const unread = this.hasAttribute('unread');
         const selected = this.hasAttribute('selected');
 
-        const unreadBg = unread ? 'var(--ifinmail-bg-secondary, #f6f8fa)' : 'transparent';
-        const selectedBg = selected ? 'var(--ifinmail-primary-light, #ddf4ff)' : unreadBg;
-        const leftBorder = unread ? '3px solid var(--ifinmail-primary, #0969da)' : '3px solid transparent';
+        const unreadBg = unread ? 'var(--ifinmail-bg-secondary, #eceef0)' : 'transparent';
+        const selectedBg = selected ? 'var(--ifinmail-secondary-fixed-dim, #b4c5ff)' : unreadBg;
+        const leftBorder = unread ? '3px solid var(--ifinmail-secondary, #0051d5)' : '3px solid transparent';
         const paddingLeft = unread
             ? 'calc(var(--ifinmail-space-4, 1rem) - 3px)'
             : 'var(--ifinmail-space-4, 1rem)';
@@ -44,23 +44,23 @@ class IfinmailMessageCard extends HTMLElement {
                     grid-template-rows: auto auto;
                     gap: 0 var(--ifinmail-space-3, 0.75rem);
                     padding: var(--ifinmail-space-3, 0.75rem) ${paddingLeft};
-                    border-bottom: 1px solid var(--ifinmail-border-light, #d8dee4);
+                    border-bottom: 1px solid var(--ifinmail-outline-variant, #c6c6cd);
                     border-left: ${leftBorder};
                     cursor: pointer;
                     background: ${selectedBg};
                 }
                 :host(:hover) {
-                    background: var(--ifinmail-bg-secondary, #f6f8fa);
+                    background: var(--ifinmail-bg-secondary, #eceef0);
                 }
                 :host([selected]:hover) {
-                    background: var(--ifinmail-primary-light, #ddf4ff);
+                    background: var(--ifinmail-secondary-fixed-dim, #b4c5ff);
                 }
                 .checkbox {
                     grid-row: 1 / -1;
                     align-self: center;
                     width: 16px;
                     height: 16px;
-                    accent-color: var(--ifinmail-primary, #0969da);
+                    accent-color: var(--ifinmail-secondary, #0051d5);
                     flex-shrink: 0;
                     cursor: pointer;
                 }
@@ -79,7 +79,7 @@ class IfinmailMessageCard extends HTMLElement {
                 }
                 .snippet {
                     grid-column: 2;
-                    color: var(--ifinmail-text-muted, #8b949e);
+                    color: var(--ifinmail-text-muted, #76777d);
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
@@ -90,7 +90,7 @@ class IfinmailMessageCard extends HTMLElement {
                     grid-column: 3;
                     justify-self: end;
                     font-size: 0.75rem;
-                    color: var(--ifinmail-text-muted, #8b949e);
+                    color: var(--ifinmail-text-muted, #76777d);
                 }
             </style>
             <input type="checkbox" class="checkbox" aria-label="Select message">

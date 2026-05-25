@@ -1,0 +1,31 @@
+"""Tests for domains models and services."""
+from django.test import TestCase
+
+from .models import DKIMKey, Domain
+from .services import DomainService
+
+
+class DomainModelTests(TestCase):
+    def test_domain_str(self):
+        domain = Domain(name="example.com")
+        self.assertEqual(str(domain), "example.com")
+
+    def test_domain_meta(self):
+        self.assertEqual(Domain._meta.db_table, "domains")
+        self.assertFalse(Domain._meta.managed)
+
+    def test_domain_ordering(self):
+        self.assertEqual(Domain._meta.ordering, ["name"])
+
+
+class DKIMKeyModelTests(TestCase):
+    def test_dkim_meta(self):
+        self.assertEqual(DKIMKey._meta.db_table, "dkim_keys")
+        self.assertFalse(DKIMKey._meta.managed)
+
+
+class DomainServiceTests(TestCase):
+    def test_get_domain_stats_empty(self):
+        stats = DomainService.get_domain_stats()
+        if stats:
+            self.assertEqual(stats["total"], 0)

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-login-container">
+  <div class="ifinmail-login-card">
+    <h1>{{ brand.name }}</h1>
+    {% if error %}
+      <div class="ifinmail-login-error">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="{% url 'accounts:login' %}">
+      {% csrf_token %}
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" required autofocus autocomplete="email">
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required autocomplete="current-password">
+      <button type="submit" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full">Sign In</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

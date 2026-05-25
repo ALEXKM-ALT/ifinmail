@@ -37,16 +37,18 @@ echo "Ensuring nginx is running for ACME challenges..."
 sleep 2
 
 ISSUER="$(openssl x509 -in "$LIVE_DIR/fullchain.pem" -noout -issuer 2>/dev/null || true)"
+BACKUP_DIR=""
 if [ -n "$ISSUER" ] && [[ "$ISSUER" != *"Let's Encrypt"* ]]; then
+    echo "Backing up self-signed certificate before requesting Let's Encrypt..."
+    BACKUP_DIR="$(mktemp -d)"
+    cp -a "$LIVE_DIR" "$BACKUP_DIR/" 2>/dev/null || true
     rm -rf "$LIVE_DIR" "$CERTBOT_CERTS/archive/$MAIL_HOSTNAME" "$CERTBOT_CERTS/renewal/$MAIL_HOSTNAME.conf"
 fi
 
-# Obtain certificate via webroot
-echo "Running certbot..."
-if docker run --rm \
-    -v "$CERTBOT_WWW:/var/www/certbot" \
-    -v "$CERTBOT_CERTS:/etc/letsencrypt" \
-    certbot/certbot certonly \
+# Obtain certificate via webroot using the containerized certbot service
+echo "Running certbot via compose..."
+if "${COMPOSE[@]}" run --rm certbot \
+    certonly \
     --webroot \
     --webroot-path /var/www/certbot \
     --non-interactive \
@@ -54,7 +56,10 @@ if docker run --rm \
     --cert-name "$MAIL_HOSTNAME" \
     -m "$EMAIL" \
     -d "$MAIL_HOSTNAME" \
-    -d "$DOMAIN"; then
+    -d "$DOMAIN" \
+    -d "mta-sts.$DOMAIN"; then
+    # Clean up self-signed backup on success
+    rm -rf "$BACKUP_DIR" 2>/dev/null || true
     if [ ! -s "$LIVE_DIR/dh.pem" ]; then
         openssl dhparam -out "$LIVE_DIR/dh.pem" 2048
     fi
@@ -65,9 +70,17 @@ if docker run --rm \
     "${COMPOSE[@]}" restart nginx
 
     echo ""
-    echo "Auto-renewal (run via cron monthly):"
-    echo "  docker run --rm -v $CERTBOT_WWW:/var/www/certbot -v $CERTBOT_CERTS:/etc/letsencrypt certbot/certbot renew"
+    echo "Auto-renewal is handled by the certbot service:"
+    echo "  docker compose --profile certbot up -d certbot"
 else
+    # Restore self-signed cert on failure
+    if [ -n "${BACKUP_DIR:-}" ] && [ -d "$BACKUP_DIR" ]; then
+        local_live="$(basename "$LIVE_DIR")"
+        mkdir -p "$LIVE_DIR"
+        cp -a "$BACKUP_DIR/$local_live/"* "$LIVE_DIR/" 2>/dev/null || true
+        rm -rf "$BACKUP_DIR" 2>/dev/null || true
+        echo "Restored self-signed certificate."
+    fi
     echo "ERROR: Certificate issuance failed."
     echo "Check that:"
     echo "  1. DNS for $DOMAIN points to this server"

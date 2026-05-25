@@ -44,6 +44,21 @@ ufw allow 993/tcp comment 'IMAPS (Dovecot)'
 # Optional: monitoring web UI (only if needed externally)
 # ufw allow 11334/tcp comment 'Rspamd web UI'
 
+# Docker bypasses ufw by adding its own iptables rules.
+# Add DOCKER-USER rules to block Docker-proxied ports on public interfaces.
+echo "Adding Docker iptables guard rules..."
+PUBLIC_IFACE="$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'dev \K\S+' || echo eth0)"
+if [ -n "$PUBLIC_IFACE" ]; then
+    # DOCKER-USER chain is persistent (Docker doesn't overwrite it)
+    iptables -I DOCKER-USER 1 -i "$PUBLIC_IFACE" -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || true
+    iptables -I DOCKER-USER 2 -i "$PUBLIC_IFACE" -p tcp -m multiport \
+        --dports 25,80,143,443,465,587,993 -j ACCEPT 2>/dev/null || true
+    iptables -I DOCKER-USER 3 -i "$PUBLIC_IFACE" -p tcp -j DROP 2>/dev/null || true
+    echo "  Docker-proxied ports on $PUBLIC_IFACE: only mail/web ports allowed."
+    echo "  Save with: iptables-save > /etc/iptables/rules.v4"
+    echo "  Or install iptables-persistent for automatic restore on reboot."
+fi
+
 # Enable the firewall
 echo ""
 echo "Rules to be applied:"

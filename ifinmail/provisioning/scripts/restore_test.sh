@@ -6,8 +6,18 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TEST_DIR="/tmp/ifinmail_restore_test"
+TEST_DIR="/backups/ifinmail_restore_test_$$"
 COMPOSE_FILE="${PROJECT_ROOT}/provisioning/docker/docker-compose.yml"
+ENV_FILE="${PROJECT_ROOT}/provisioning/.env"
+
+# Load .env for GPG passphrase
+if [ -f "$ENV_FILE" ]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    set +a
+fi
+GPG_PASSPHRASE="${BACKUP_GPG_PASSPHRASE:-}"
 
 echo "=== ifinmail Restore Test ==="
 mkdir -p "$TEST_DIR"
@@ -20,7 +30,7 @@ fi
 
 if [ -z "$LATEST" ]; then
     echo "ERROR: No backups found in /backups/"
-    rm -rf "$TEST_DIR"
+    rm -rf "$TEST_DIR" 2>/dev/null || true
     exit 1
 fi
 
@@ -30,8 +40,8 @@ echo "Testing restore from: $LATEST (size: $(du -h "$LATEST" | cut -f1))"
 if [[ "$LATEST" == *.gpg ]]; then
     echo "  Backup is GPG encrypted, decrypting..."
     DECRYPTED="${LATEST%.gpg}"
-    if ! gpg --yes --decrypt --output "$DECRYPTED" "$LATEST" 2>/dev/null; then
-        echo "ERROR: Failed to decrypt backup (GPG key missing?)"
+    if ! gpg --yes --pinentry-mode=loopback --passphrase "$GPG_PASSPHRASE" --decrypt --output "$DECRYPTED" "$LATEST" 2>/dev/null; then
+        echo "ERROR: Failed to decrypt backup (GPG key missing or wrong passphrase?)"
         rm -rf "$TEST_DIR"
         exit 1
     fi

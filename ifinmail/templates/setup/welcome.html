@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Setup — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-setup-wizard">
+  <div class="ifinmail-setup-progress">
+    <div class="ifinmail-setup-step ifinmail-setup-step--active">1. Domain</div>
+    <div class="ifinmail-setup-step">2. DNS</div>
+    <div class="ifinmail-setup-step">3. Account</div>
+    <div class="ifinmail-setup-step">4. Done</div>
+  </div>
+
+  <div class="ifinmail-setup-card">
+    <h1 class="ifinmail-admin-title">Welcome to {{ brand.name }}</h1>
+    <p class="ifinmail-setup-description">
+      You're about to set up your own email server. You'll need a domain name you own
+      (like <strong>example.com</strong>). We'll handle the rest.
+    </p>
+
+    <form method="post" action="{% url 'accounts:setup_advance' %}">
+      {% csrf_token %}
+      <input type="hidden" name="current_step" value="welcome">
+
+      <label class="ifinmail-setup-label" for="domain">Your domain name</label>
+      <input type="text" id="domain" name="domain" class="ifinmail-input"
+             placeholder="example.com" value="{{ domain }}" autofocus>
+      <p class="ifinmail-setup-hint">Enter the domain you want to send and receive email from.</p>
+
+      <div class="ifinmail-setup-actions">
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Next: Configure DNS</button>
+        <button type="submit" name="skip" value="1" class="ifinmail-btn ifinmail-btn--ghost">Skip for now</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

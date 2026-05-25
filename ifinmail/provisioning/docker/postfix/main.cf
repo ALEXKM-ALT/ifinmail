@@ -91,5 +91,5 @@ smtpd_soft_error_limit = 10
 smtpd_hard_error_limit = 20
 
 # --- Debugging ---
-debug_peer_level = 2
-debug_peer_list = 
+debug_peer_level = 0
+debug_peer_list =

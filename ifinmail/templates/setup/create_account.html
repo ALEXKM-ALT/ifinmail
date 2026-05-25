@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-setup-wizard">
+  <div class="ifinmail-setup-progress">
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">1. Domain</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">2. DNS</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--active">3. Account</div>
+    <div class="ifinmail-setup-step">4. Done</div>
+  </div>
+
+  <div class="ifinmail-setup-card">
+    <h1 class="ifinmail-admin-title">Create Your Email Account</h1>
+    <p class="ifinmail-setup-description">
+      This will be your first mailbox. You'll use this address to log in and send email.
+    </p>
+
+    <form method="post" action="{% url 'accounts:setup_advance' %}">
+      {% csrf_token %}
+      <input type="hidden" name="current_step" value="account">
+
+      <label class="ifinmail-setup-label" for="email">Email address</label>
+      <input type="email" id="email" name="email" class="ifinmail-input"
+             placeholder="you@{{ domain }}" autofocus>
+
+      <label class="ifinmail-setup-label" for="password">Password</label>
+      <input type="password" id="password" name="password" class="ifinmail-input"
+             placeholder="Choose a strong password" minlength="8">
+
+      <p class="ifinmail-setup-hint">Use at least 8 characters. You can add more accounts later from the admin panel.</p>
+
+      <div class="ifinmail-setup-actions">
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Create Account</button>
+        <button type="submit" name="skip" value="1" class="ifinmail-btn ifinmail-btn--ghost">Skip for now</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

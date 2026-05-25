@@ -3,7 +3,7 @@
  * Caches: CSS, JS, images, and previously-read messages.
  * Does NOT cache: POST requests, auth tokens, sensitive data.
  */
-const CACHE_NAME = 'ifinmail-v0.2.0';
+const CACHE_NAME = 'ifinmail-v0.3.0';
 const STATIC_ASSETS = [
     '/',
     '/offline',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
     '/static/css/ifinmail-layout.css',
     '/static/css/ifinmail-components.css',
     '/static/js/ifinmail-api.js',
+    '/static/js/ifinmail-theme.js',
     '/static/js/mail-inbox.js',
     '/static/js/components/ifinmail-message-card.js',
 ];

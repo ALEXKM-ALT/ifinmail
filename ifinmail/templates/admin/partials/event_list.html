@@ -1,0 +1,12 @@
+{# Event List — renders activity events with severity borders #}
+{# Usage: {% include "admin/partials/event_list.html" with events=events %} #}
+<div class="ifinmail-event-list">
+    {% for event in events %}
+    <div class="ifinmail-event-item ifinmail-event-item--{{ event.severity }}">
+        <span class="ifinmail-event-time ifinmail-text-xs ifinmail-text-muted">{{ event.time }}</span>
+        <span class="ifinmail-event-description">{{ event.description }}</span>
+    </div>
+    {% empty %}
+    <p class="ifinmail-admin-empty">No recent events.</p>
+    {% endfor %}
+</div>

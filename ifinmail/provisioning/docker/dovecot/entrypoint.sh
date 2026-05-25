@@ -5,7 +5,7 @@ sed_escape() {
     printf "%s" "$1" | sed 's/[|&]/\\&/g'
 }
 
-: "${DOVECOT_DB_PASSWORD:=dovecot_password_change_me}"
+DOVECOT_DB_PASSWORD="${DOVECOT_DB_PASSWORD:?DOVECOT_DB_PASSWORD is required}"
 
 DOVECOT_DB_PASSWORD_ESC="$(sed_escape "$DOVECOT_DB_PASSWORD")"
 sed "s|__DOVECOT_DB_PASSWORD__|$DOVECOT_DB_PASSWORD_ESC|g" \

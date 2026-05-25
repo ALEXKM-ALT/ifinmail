@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#0051d5"/>
+  <text x="256" y="290" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="200" font-weight="700" fill="white">i</text>
+  <text x="256" y="390" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="48" font-weight="500" fill="rgba(255,255,255,0.8)">MAIL</text>
+</svg>

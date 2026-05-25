@@ -1,67 +1,199 @@
-/* ifinmail Design Tokens
-   Single source of truth for all colors, typography, spacing, and borders.
-   GitHub Primer-inspired — border-centric, no shadows, no transitions.
+/* ifinmail Design Tokens — "Institutional Precision"
+   Material Design 3 token system with Slate Navy + Action Blue.
    All custom properties prefixed with --ifinmail- */
 
 :root {
-    /* === Accent === */
-    --ifinmail-primary: #0969da;
-    --ifinmail-primary-hover: #0550ae;
-    --ifinmail-primary-light: #ddf4ff;
+    /* === Surface / Background === */
+    --ifinmail-surface: #f7f9fb;
+    --ifinmail-surface-dim: #d8dadc;
+    --ifinmail-surface-bright: #f7f9fb;
+    --ifinmail-surface-container-lowest: #ffffff;
+    --ifinmail-surface-container-low: #f2f4f6;
+    --ifinmail-surface-container: #eceef0;
+    --ifinmail-surface-container-high: #e6e8ea;
+    --ifinmail-surface-container-highest: #e0e3e5;
+    --ifinmail-on-surface: #191c1e;
+    --ifinmail-on-surface-variant: #45464d;
+    --ifinmail-inverse-surface: #2d3133;
+    --ifinmail-inverse-on-surface: #eff1f3;
+    --ifinmail-outline: #76777d;
+    --ifinmail-outline-variant: #c6c6cd;
 
-    /* === Backgrounds === */
-    --ifinmail-bg: #ffffff;
-    --ifinmail-bg-secondary: #f6f8fa;
-    --ifinmail-bg-tertiary: #eaeef2;
+    /* === Primary (Slate Navy — sidebar / structural nav) === */
+    --ifinmail-primary: #000000;
+    --ifinmail-on-primary: #ffffff;
+    --ifinmail-primary-container: #131b2e;
+    --ifinmail-on-primary-container: #7c839b;
+    --ifinmail-inverse-primary: #bec6e0;
+    --ifinmail-primary-fixed: #dae2fd;
+    --ifinmail-primary-fixed-dim: #bec6e0;
+    --ifinmail-on-primary-fixed: #131b2e;
+    --ifinmail-on-primary-fixed-variant: #3f465c;
 
-    /* === Text === */
-    --ifinmail-text: #1f2328;
-    --ifinmail-text-secondary: #656d76;
-    --ifinmail-text-muted: #8b949e;
+    /* === Secondary (Action Blue — CTAs, active states, selections) === */
+    --ifinmail-secondary: #0051d5;
+    --ifinmail-on-secondary: #ffffff;
+    --ifinmail-secondary-container: #316bf3;
+    --ifinmail-on-secondary-container: #fefcff;
+    --ifinmail-secondary-fixed: #dbe1ff;
+    --ifinmail-secondary-fixed-dim: #b4c5ff;
+    --ifinmail-on-secondary-fixed: #00174b;
+    --ifinmail-on-secondary-fixed-variant: #003ea8;
 
-    /* === Borders === */
-    --ifinmail-border-light: #d8dee4;
-    --ifinmail-border: #d0d7de;
-    --ifinmail-border-hover: #afb8c1;
-    --ifinmail-border-strong: #8b949e;
+    /* === Tertiary (Green accent) === */
+    --ifinmail-tertiary: #000000;
+    --ifinmail-on-tertiary: #ffffff;
+    --ifinmail-tertiary-container: #002113;
+    --ifinmail-on-tertiary-container: #009668;
+    --ifinmail-tertiary-fixed: #6ffbbe;
+    --ifinmail-tertiary-fixed-dim: #4edea3;
+    --ifinmail-on-tertiary-fixed: #002113;
+    --ifinmail-on-tertiary-fixed-variant: #005236;
 
-    /* === Semantic colors === */
+    /* === Error / Danger === */
+    --ifinmail-error: #ba1a1a;
+    --ifinmail-on-error: #ffffff;
+    --ifinmail-error-container: #ffdad6;
+    --ifinmail-on-error-container: #93000a;
+
+    /* === Success === */
     --ifinmail-success: #1a7f37;
-    --ifinmail-success-light: #dafbe1;
-    --ifinmail-danger: #cf222e;
-    --ifinmail-danger-light: #ffebe9;
+    --ifinmail-success-container: #dafbe1;
+    --ifinmail-on-success-container: #002105;
+
+    /* === Warning === */
     --ifinmail-warning: #9a6700;
-    --ifinmail-warning-light: #fff8c5;
+    --ifinmail-warning-container: #fff8c5;
+    --ifinmail-on-warning-container: #2d2000;
+
+    /* === Backward-compat aliases (old Primer-era names → new tokens) === */
+    --ifinmail-bg: var(--ifinmail-surface-container-lowest);
+    --ifinmail-bg-secondary: var(--ifinmail-surface-container);
+    --ifinmail-bg-tertiary: var(--ifinmail-surface-container-high);
+    --ifinmail-text: var(--ifinmail-on-surface);
+    --ifinmail-text-secondary: var(--ifinmail-on-surface-variant);
+    --ifinmail-text-muted: var(--ifinmail-outline);
+    --ifinmail-border-light: var(--ifinmail-outline-variant);
+    --ifinmail-border: var(--ifinmail-outline-variant);
+    --ifinmail-border-hover: var(--ifinmail-outline);
+    --ifinmail-border-strong: var(--ifinmail-outline);
+    --ifinmail-primary-hover: var(--ifinmail-secondary);
+    --ifinmail-primary-light: var(--ifinmail-secondary-fixed-dim);
+    --ifinmail-danger: var(--ifinmail-error);
+    --ifinmail-danger-light: var(--ifinmail-error-container);
+    --ifinmail-success-light: var(--ifinmail-success-container);
+    --ifinmail-warning-light: var(--ifinmail-warning-container);
 
     /* === Typography === */
-    --ifinmail-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-    --ifinmail-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    --ifinmail-font-size-xs: 0.75rem;
-    --ifinmail-font-size-sm: 0.875rem;
-    --ifinmail-font-size-base: 0.875rem;
-    --ifinmail-font-size-lg: 1rem;
-    --ifinmail-font-size-xl: 1.25rem;
-    --ifinmail-font-size-2xl: 1.5rem;
+    --ifinmail-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --ifinmail-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular,
+        'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    --ifinmail-font-size-xs: 0.75rem;      /* 12px */
+    --ifinmail-font-size-sm: 0.875rem;     /* 14px — labels, body */
+    --ifinmail-font-size-base: 1rem;       /* 16px — body-lg, inputs */
+    --ifinmail-font-size-lg: 1.125rem;     /* 18px — section titles */
+    --ifinmail-font-size-xl: 1.25rem;      /* 20px — headline-sm */
+    --ifinmail-font-size-2xl: 1.5rem;      /* 24px — headline-md */
+    --ifinmail-font-size-3xl: 1.875rem;    /* 30px — headline-lg */
     --ifinmail-font-weight-normal: 400;
     --ifinmail-font-weight-medium: 500;
     --ifinmail-font-weight-semibold: 600;
     --ifinmail-font-weight-bold: 700;
     --ifinmail-line-height: 1.6;
+    --ifinmail-line-height-tight: 1.25;
 
-    /* === Spacing === */
-    --ifinmail-space-1: 0.25rem;
-    --ifinmail-space-2: 0.5rem;
-    --ifinmail-space-3: 0.75rem;
-    --ifinmail-space-4: 1rem;
-    --ifinmail-space-6: 1.5rem;
-    --ifinmail-space-8: 2rem;
-    --ifinmail-space-10: 2.5rem;
-    --ifinmail-space-12: 3rem;
+    /* === Spacing (8px base rhythm) === */
+    --ifinmail-space-1: 0.25rem;   /* 4px */
+    --ifinmail-space-2: 0.5rem;    /* 8px */
+    --ifinmail-space-3: 0.75rem;   /* 12px */
+    --ifinmail-space-4: 1rem;      /* 16px */
+    --ifinmail-space-5: 1.25rem;   /* 20px */
+    --ifinmail-space-6: 1.5rem;    /* 24px */
+    --ifinmail-space-7: 1.75rem;   /* 28px */
+    --ifinmail-space-8: 2rem;      /* 32px */
+    --ifinmail-space-9: 2.25rem;   /* 36px */
+    --ifinmail-space-10: 2.5rem;   /* 40px */
+    --ifinmail-space-11: 2.75rem;  /* 44px */
+    --ifinmail-space-12: 3rem;     /* 48px */
 
-    /* === Border radii === */
-    --ifinmail-radius-sm: 4px;
-    --ifinmail-radius-md: 6px;
-    --ifinmail-radius-lg: 6px;
+    /* Layout tokens */
+    --ifinmail-sidebar-width: 280px;
+    --ifinmail-sidebar-rail-width: 64px;
+    --ifinmail-container-max-width: 1280px;
+    --ifinmail-gutter: 24px;
+    --ifinmail-margin-mobile: 16px;
+    --ifinmail-stack-gap: 12px;
+    --ifinmail-section-gap: 32px;
+    --ifinmail-header-height: 48px;
+    --ifinmail-footer-height: 32px;
 
-    /* No shadows. No transitions. GitHub-style border-centric design. */
+    /* === Border Radii === */
+    --ifinmail-radius-sm: 0.125rem;    /* 2px */
+    --ifinmail-radius: 0.25rem;        /* 4px — inputs, buttons */
+    --ifinmail-radius-md: 0.375rem;    /* 6px */
+    --ifinmail-radius-lg: 0.5rem;      /* 8px — cards, containers */
+    --ifinmail-radius-xl: 0.75rem;     /* 12px */
+    --ifinmail-radius-full: 9999px;    /* pill — toggles, LEDs */
+
+    /* === Elevation (flat — no box shadows) === */
+    --ifinmail-shadow-none: none;
+    --ifinmail-shadow-sm: none;
+    --ifinmail-shadow-md: none;
+    --ifinmail-shadow-lg: none;
+    --ifinmail-shadow-xl: none;
+
+    /* === Transitions === */
+    --ifinmail-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --ifinmail-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --ifinmail-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* === Focus === */
+    --ifinmail-focus-ring-width: 3px;
+    --ifinmail-focus-ring-color: rgba(0, 81, 213, 0.15);
+}
+
+/* === Dark Mode === */
+[data-theme="dark"] {
+    --ifinmail-surface: #121417;
+    --ifinmail-surface-dim: #0b0d0f;
+    --ifinmail-surface-bright: #373a3c;
+    --ifinmail-surface-container-lowest: #0b0d0f;
+    --ifinmail-surface-container-low: #191c1e;
+    --ifinmail-surface-container: #1d2022;
+    --ifinmail-surface-container-high: #282b2d;
+    --ifinmail-surface-container-highest: #333638;
+    --ifinmail-on-surface: #e0e3e5;
+    --ifinmail-on-surface-variant: #c4c6cf;
+    --ifinmail-outline: #8e9099;
+    --ifinmail-outline-variant: #44474f;
+
+    --ifinmail-primary: #bec6e0;
+    --ifinmail-on-primary: #2d3133;
+    --ifinmail-primary-container: #131b2e;
+    --ifinmail-on-primary-container: #dae2fd;
+
+    --ifinmail-secondary: #b4c5ff;
+    --ifinmail-on-secondary: #00174b;
+    --ifinmail-secondary-container: #003ea8;
+    --ifinmail-on-secondary-container: #dbe1ff;
+
+    --ifinmail-success: #4ade80;
+    --ifinmail-success-container: #14532d;
+    --ifinmail-on-success-container: #dcfce7;
+
+    --ifinmail-warning: #fbbf24;
+    --ifinmail-warning-container: #713f12;
+    --ifinmail-on-warning-container: #fef9c3;
+
+    --ifinmail-error: #ffb4ab;
+    --ifinmail-error-container: #93000a;
+    --ifinmail-on-error-container: #ffdad6;
+
+    --ifinmail-shadow-sm: none;
+    --ifinmail-shadow-md: none;
+    --ifinmail-shadow-lg: none;
+    --ifinmail-shadow-xl: none;
+
+    --ifinmail-focus-ring-color: rgba(180, 197, 255, 0.2);
 }
