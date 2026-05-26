@@ -1,4 +1,5 @@
 {% load static %}
+{% static 'icons/icon-192.svg' as default_icon_url %}
 <!DOCTYPE html>
 <html lang="en" class="ifinmail-shell">
 <head>
@@ -8,9 +9,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="{{ brand.name }}">
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="icon" type="image/svg+xml" href="{{ brand.favicon_url|default:'/static/icons/icon-192.svg' }}">
-    <link rel="apple-touch-icon" href="{{ brand.favicon_url|default:'/static/icons/icon-192.svg' }}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <link rel="icon" type="image/svg+xml" href="{{ brand.favicon_url|default:default_icon_url }}">
+    <link rel="apple-touch-icon" href="{{ brand.favicon_url|default:default_icon_url }}">
     <title>{% block title %}{{ brand.name }}{% endblock %}</title>
     {{ brand.css_overrides }}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,7 +68,7 @@
     {% block scripts %}{% endblock %}
     <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/static/js/service-worker.js');
+        navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
     }
     </script>
 </body>

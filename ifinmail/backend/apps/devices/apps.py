@@ -4,4 +4,4 @@ from django.apps import AppConfig
 class DevicesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'backend.apps.devices'
-    label = 'ifinmail_devices'
+    label = 'devices'

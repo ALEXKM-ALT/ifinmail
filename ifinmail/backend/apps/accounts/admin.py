@@ -10,6 +10,7 @@ class MailUserAdmin(BaseUserAdmin):
     list_filter = ["is_active", "is_staff", "is_superuser"]
     search_fields = ["email"]
     ordering = ["email"]
+    filter_horizontal = []
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
