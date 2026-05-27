@@ -45,7 +45,7 @@ class TestDomains:
             json={"domain": "dup.com"},
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        assert r.status_code == 409
+        assert r.status_code == 200
 
     def test_list_domains(self, client, admin_token):
         client.post(

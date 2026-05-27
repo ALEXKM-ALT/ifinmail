@@ -1,6 +1,7 @@
 import email.utils
 import logging
 import smtplib
+import uuid
 from datetime import UTC, datetime
 from email.message import EmailMessage
 
@@ -371,7 +372,6 @@ async def send_email(
     if req.attachment_ids:
         db.query(Attachment).filter(
             Attachment.id.in_(req.attachment_ids),
-            Attachment.message_id.is_(None),
         ).update({"message_id": msg.id}, synchronize_session=False)
         att_count = db.query(Attachment).filter(Attachment.message_id == msg.id).count()
         if att_count:
@@ -408,15 +408,26 @@ async def send_email(
         db.add(local_msg)
         db.flush()
         if req.attachment_ids and msg.has_attachments:
+            from ifinmail.api.attachments import _storage_dir
+
+            storage_dir = _storage_dir()
             for att_id in req.attachment_ids:
                 att = db.query(Attachment).filter(Attachment.id == att_id).first()
                 if att:
+                    src = storage_dir / att.storage_path
+                    if src.exists():
+                        unique = f"{uuid.uuid4().hex}_{att.filename}"
+                        dest = storage_dir / unique
+                        dest.write_bytes(src.read_bytes())
+                        storage_path = str(unique)
+                    else:
+                        storage_path = att.storage_path
                     copy = Attachment(
                         message_id=local_msg.id,
                         filename=att.filename,
                         content_type=att.content_type,
                         size=att.size,
-                        storage_path=att.storage_path,
+                        storage_path=storage_path,
                     )
                     db.add(copy)
             local_msg.has_attachments = 1
@@ -515,7 +526,6 @@ def patch_message(
     if req.attachment_ids is not None:
         db.query(Attachment).filter(
             Attachment.id.in_(req.attachment_ids),
-            Attachment.message_id.is_(None),
         ).update({"message_id": msg.id}, synchronize_session=False)
         att_count = db.query(Attachment).filter(Attachment.message_id == msg.id).count()
         msg.has_attachments = 1 if att_count else 0

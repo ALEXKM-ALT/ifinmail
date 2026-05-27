@@ -10,3 +10,4 @@ build/
 *.db
 data/attachments/*
 !data/attachments/.gitkeep
+src/data/attachments/*

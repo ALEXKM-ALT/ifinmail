@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func as sa_func
@@ -70,6 +71,7 @@ class MailboxResponse(BaseModel):
     quota_mb: int
     used_mb: int
     enabled: bool
+    plan: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -103,7 +105,7 @@ def create_domain(req: DomainCreate, db: Session = Depends(get_db), _: User = De
     domain_name = req.domain.lower().strip()
     existing = db.query(Domain).filter(Domain.domain == domain_name).first()
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Domain already exists")
+        return JSONResponse(content=DomainResponse.model_validate(existing).model_dump(mode="json"), status_code=200)
     domain = Domain(domain=domain_name)
     db.add(domain)
     db.commit()
@@ -278,7 +280,7 @@ def create_mailbox(req: MailboxCreate, db: Session = Depends(get_db), _: User = 
     existing = db.query(Mailbox).filter(Mailbox.email == req.email).first()
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Mailbox already exists")
-    mailbox = Mailbox(email=req.email, user_id=user.id, quota_mb=req.quota_mb)
+    mailbox = Mailbox(email=req.email, user_id=user.id, quota_mb=req.quota_mb, plan="free")
     db.add(mailbox)
     db.commit()
     db.refresh(mailbox)

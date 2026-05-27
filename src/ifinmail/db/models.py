@@ -52,6 +52,7 @@ class Mailbox(Base):
     quota_mb = Column(Integer, nullable=False, server_default=text("1024"))
     used_mb = Column(Integer, nullable=False, server_default=text("0"))
     enabled = Column(Integer, nullable=False, server_default=text("1"))
+    plan = Column(String(32), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User", back_populates="mailbox")
