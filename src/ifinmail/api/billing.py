@@ -55,7 +55,9 @@ def subscribe(
     if not mailbox:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mailbox not found")
     mailbox.quota_mb = plan["quota_mb"]
+    mailbox.plan = req.plan
     db.commit()
+    db.refresh(mailbox)
     return SubscriptionResponse(
         plan=req.plan,
         quota_mb=mailbox.quota_mb,
@@ -72,11 +74,7 @@ def current_subscription(
     mailbox = db.query(MailboxModel).filter(MailboxModel.user_id == user.id).first()
     if not mailbox:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mailbox not found")
-    current_plan = "free"
-    for pid, p in PLANS.items():
-        if p["quota_mb"] == mailbox.quota_mb:
-            current_plan = pid
-            break
+    current_plan = mailbox.plan or "free"
     return SubscriptionResponse(
         plan=current_plan,
         quota_mb=mailbox.quota_mb,

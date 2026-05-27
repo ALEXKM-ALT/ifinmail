@@ -17,9 +17,12 @@ def start_smtp_server(host: str = "0.0.0.0", port: int = 25) -> None:
     )
     controller.start()
     logger.info("SMTP receiver listening on %s:%s", host, port)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
-        asyncio.get_event_loop().run_forever()
+        loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
         controller.stop()
+        loop.close()

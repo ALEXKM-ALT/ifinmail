@@ -171,7 +171,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db), _: None = stri
     db.add(user)
     db.flush()
 
-    mailbox = Mailbox(email=req.email, user_id=user.id)
+    mailbox = Mailbox(email=req.email, user_id=user.id, plan="free")
     db.add(mailbox)
     db.commit()
 
@@ -233,8 +233,11 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db), _
     if settings.smtp_host:
         try:
             msg = EmailMessage()
-            from_addr = settings.smtp_user.split("@")[-1] if settings.smtp_user else "ifinmail.local"
-            msg["From"] = f"ifinmail <noreply@{from_addr}>"
+            if settings.smtp_user and "@" in settings.smtp_user:
+                domain = settings.smtp_user.split("@")[-1]
+            else:
+                domain = settings.default_domain
+            msg["From"] = f"ifinmail <noreply@{domain}>"
             msg["To"] = req.email
             msg["Subject"] = "Password Reset"
             msg["Message-ID"] = email.utils.make_msgid()

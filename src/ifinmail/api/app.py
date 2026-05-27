@@ -36,10 +36,19 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
     from sqlalchemy import inspect as sa_inspect
 
     inspector = sa_inspect(engine)
-    columns = [c["name"] for c in inspector.get_columns("messages")]
-    if "previous_folder" not in columns:
+    msg_cols = [c["name"] for c in inspector.get_columns("messages")]
+    if "previous_folder" not in msg_cols:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE messages ADD COLUMN previous_folder VARCHAR(32)"))
+            conn.commit()
+    if "labels" not in msg_cols:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE messages ADD COLUMN labels TEXT"))
+            conn.commit()
+    mb_cols = [c["name"] for c in inspector.get_columns("mailboxes")]
+    if "plan" not in mb_cols:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE mailboxes ADD COLUMN plan VARCHAR(32)"))
             conn.commit()
     yield
     engine.dispose()

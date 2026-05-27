@@ -1551,6 +1551,7 @@ async function handleComposeSubmit(e) {
     if (!res.ok) {
       const data = await res.json();
       document.getElementById("composeError").textContent = data.detail || "Failed to send";
+      await doSaveDraft(false);
       return;
     }
     // If editing a draft, delete it
@@ -1562,6 +1563,7 @@ async function handleComposeSubmit(e) {
     showToast("Message sent");
   } catch (err) {
     document.getElementById("composeError").textContent = "Network error";
+    await doSaveDraft(false);
   } finally {
     _composing = false;
     btn.disabled = false;
@@ -1916,13 +1918,15 @@ window.addEventListener("beforeunload", () => {
   const subject = document.getElementById("composeSubject")?.value;
   const body = document.getElementById("composeBody")?.value;
   if (!to && !subject && !body) return;
-  const bodyData = { to: to || "", subject: subject || "", body_text: body || "", draft: true };
+  const bodyData = { to: to || "", subject: subject || "", body_text: body || "" };
   if (_composeAttachmentIds.length) bodyData.attachment_ids = _composeAttachmentIds;
   try {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API}/mail`, false);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    if (state.token) xhr.setRequestHeader("Authorization", `Bearer ${state.token}`);
-    xhr.send(JSON.stringify(bodyData));
+    if (!_composeEditId) bodyData.draft = true;
+    fetch(_composeEditId ? `${API}/mail/${_composeEditId}` : `${API}/mail`, {
+      method: _composeEditId ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json", ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}) },
+      body: JSON.stringify(bodyData),
+      keepalive: true,
+    });
   } catch {}
 });
