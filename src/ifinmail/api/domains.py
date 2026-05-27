@@ -53,7 +53,8 @@ def add_domain(
     existing = db.query(Domain).filter(Domain.domain == domain_name).first()
     if existing:
         if user.is_admin:
-            return JSONResponse(content=DomainResponse.model_validate(existing).model_dump(mode="json"), status_code=200)
+            data = DomainResponse.model_validate(existing).model_dump(mode="json")
+            return JSONResponse(content=data, status_code=200)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Domain already exists")
     domain = Domain(domain=domain_name, verified=0)
     db.add(domain)
