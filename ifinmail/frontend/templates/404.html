@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-error-page">
+  <h1>404</h1>
+  <p>The page you requested could not be found.</p>
+  <div class="ifinmail-error-actions">
+    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Return to Dashboard</a>
+    <button type="button" class="ifinmail-btn" onclick="history.back()">Go Back</button>
+  </div>
+</div>
+{% endblock %}

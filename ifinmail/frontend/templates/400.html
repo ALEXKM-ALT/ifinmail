@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Bad Request — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-error-page">
+  <h1>400</h1>
+  <p>The server could not understand your request due to invalid syntax.</p>
+  <div class="ifinmail-error-actions">
+    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Return to Dashboard</a>
+    <button type="button" class="ifinmail-btn" onclick="history.back()">Go Back</button>
+  </div>
+</div>
+{% endblock %}

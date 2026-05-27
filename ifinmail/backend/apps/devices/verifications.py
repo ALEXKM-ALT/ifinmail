@@ -1,0 +1,1 @@
+"""devices — verifications.py placeholder."""

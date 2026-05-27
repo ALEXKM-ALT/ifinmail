@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Gateway Timeout — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-error-page">
+  <h1>504</h1>
+  <p>The server did not receive a timely response from an upstream server. Please try again later.</p>
+  <p class="ifinmail-error-detail">If this issue persists, please contact support.</p>
+  <div class="ifinmail-error-actions">
+    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Return to Dashboard</a>
+    <button type="button" class="ifinmail-btn" onclick="location.reload()">Retry</button>
+  </div>
+</div>
+{% endblock %}

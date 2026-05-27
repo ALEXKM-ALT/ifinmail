@@ -65,7 +65,7 @@ runcmd:
     echo "============================================"
     echo ""
     echo "  Admin panel: https://$MAIL_HOSTNAME/admin/"
-    echo "  Webmail:     https://$MAIL_HOSTNAME/webmail/"
+    echo "  Nextcloud:   optional companion — install via admin panel"
     echo ""
     echo "  Check logs:  tail -f /var/log/cloud-init-output.log"
     echo "============================================"

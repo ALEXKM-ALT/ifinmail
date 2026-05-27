@@ -1,5 +1,6 @@
 """Mail views for ifinmail."""
 import os
+from xml.sax.saxutils import escape as xml_escape
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -23,21 +24,24 @@ def _get_mail_settings():
 def autoconfig_mozilla(request):
     """Thunderbird / Mozilla autoconfig XML."""
     settings = _get_mail_settings()
+    # EC-34: XML-escape interpolated values to prevent malformed XML
+    d = xml_escape(settings["domain"])
+    h = xml_escape(settings["hostname"])
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <clientConfig version="1.1">
-    <emailProvider id="{settings['domain']}">
-        <domain>{settings['domain']}</domain>
-        <displayName>{settings['domain']} Mail</displayName>
-        <displayShortName>{settings['domain']}</displayShortName>
+    <emailProvider id="{d}">
+        <domain>{d}</domain>
+        <displayName>{d} Mail</displayName>
+        <displayShortName>{d}</displayShortName>
         <incomingServer type="imap">
-            <hostname>{settings['hostname']}</hostname>
+            <hostname>{h}</hostname>
             <port>993</port>
             <socketType>SSL</socketType>
             <authentication>password-cleartext</authentication>
             <username>%EMAILADDRESS%</username>
         </incomingServer>
         <outgoingServer type="smtp">
-            <hostname>{settings['hostname']}</hostname>
+            <hostname>{h}</hostname>
             <port>587</port>
             <socketType>STARTTLS</socketType>
             <authentication>password-cleartext</authentication>
@@ -53,6 +57,8 @@ def autoconfig_mozilla(request):
 def autoconfig_outlook(request):
     """Outlook / Microsoft autodiscover XML."""
     settings = _get_mail_settings()
+    # EC-34: XML-escape interpolated values to prevent malformed XML
+    h = xml_escape(settings["hostname"])
     xml = f'''<?xml version="1.0" encoding="utf-8"?>
 <Autodiscover xmlns="http://schemas.microsoft.com/exchange/autodiscover/responseschema/2006">
   <Response xmlns="http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a">
@@ -61,7 +67,7 @@ def autoconfig_outlook(request):
       <Action>settings</Action>
       <Protocol>
         <Type>IMAP</Type>
-        <Server>{settings['hostname']}</Server>
+        <Server>{h}</Server>
         <Port>993</Port>
         <LoginName>%EMAILADDRESS%</LoginName>
         <SPA>off</SPA>
@@ -69,7 +75,7 @@ def autoconfig_outlook(request):
       </Protocol>
       <Protocol>
         <Type>SMTP</Type>
-        <Server>{settings['hostname']}</Server>
+        <Server>{h}</Server>
         <Port>587</Port>
         <LoginName>%EMAILADDRESS%</LoginName>
         <SPA>off</SPA>

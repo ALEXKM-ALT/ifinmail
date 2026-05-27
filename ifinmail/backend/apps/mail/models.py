@@ -35,6 +35,7 @@ class Alias(models.Model):
         managed = False
         db_table = "aliases"
         verbose_name_plural = "aliases"
+        ordering = ["domain", "source"]
 
     def __str__(self):
         return f"{self.source} → {self.destination}"

@@ -1,6 +1,7 @@
 """Admin dashboard views for ifinmail."""
 import logging
 import os
+import re
 import shutil
 from datetime import datetime, timezone
 
@@ -9,9 +10,11 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.utils import OperationalError
+from django.db.utils import IntegrityError, OperationalError
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 
+from backend.apps.accounts.models import MailUser
 from backend.apps.domains.models import Domain
 from backend.apps.mail.models import Mailbox
 from backend.services.audit import AuditService
@@ -23,9 +26,40 @@ _LETSENCRYPT_DIR = os.environ.get("LETSENCRYPT_DIR", "/etc/letsencrypt")
 _MAIL_VHOSTS_DIR = os.environ.get("MAIL_VHOSTS_DIR", "/var/mail/vhosts")
 _APP_DIR = os.environ.get("APP_DIR", "/app")
 
+# Domain name validation regex (RFC 952 / RFC 1123)
+_DOMAIN_RE = re.compile(
+    r"^(?!-)[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.?$"
+)
+_ALLOWED_HOST_NAMES = tuple(
+    h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()
+)
+
+
+def _validate_domain(name: str) -> str:
+    """Validate and normalize a domain name. Returns empty string if invalid."""
+    if not name or len(name) > 253:
+        return ""
+    # Strip protocol prefix if user accidentally includes it
+    name = re.sub(r"^https?://", "", name.strip().lower())
+    # Strip trailing dot (FQDN notation)
+    name = name.rstrip(".")
+    if _DOMAIN_RE.match(name):
+        return name
+    return ""
+
 
 def _is_staff(user):
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
+    """Check staff status with database revalidation."""
+    if not user.is_authenticated:
+        return False
+    # Re-fetch from DB to catch privilege downgrades mid-session
+    try:
+        user.refresh_from_db(fields=["is_staff", "is_superuser", "is_active"])
+    except Exception:
+        return False
+    if not user.is_active:
+        return False
+    return user.is_staff or user.is_superuser
 
 
 def login_view(request):
@@ -34,17 +68,79 @@ def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "")
+
+        # Check for Axes lockout before attempting auth
+        try:
+            from axes.helpers import get_lockout_message, is_already_locked
+            from axes.conf import settings as axes_settings
+
+            if callable(axes_settings.AXES_LOCKOUT_CALLABLE):
+                credentials = {"username": email, "ip_address": request.META.get("REMOTE_ADDR", "")}
+                if axes_settings.AXES_LOCKOUT_CALLABLE(request, credentials):
+                    error = get_lockout_message() or "Account locked. Try again later."
+                    AuditService.record(
+                        "login_blocked",
+                        user=email,
+                        detail="Account locked by Axes",
+                        severity="warn",
+                    )
+                    return render(request, "admin/login.html", {"error": error})
+            # Backward compat - Axes <6
+            elif is_already_locked(request):
+                error = get_lockout_message(request) or "Account locked. Try again later."
+                AuditService.record(
+                    "login_blocked",
+                    user=email,
+                    detail="Account locked by Axes",
+                    severity="warn",
+                )
+                return render(request, "admin/login.html", {"error": error})
+        except ImportError:
+            pass
+
         user = authenticate(request, username=email, password=password)
         if user is not None:
+            # EC-01: Cycle session key to prevent session fixation
+            request.session.cycle_key()
             login(request, user)
+
+            AuditService.record(
+                "login_success",
+                user=user.email,
+                detail=f"IP: {request.META.get('REMOTE_ADDR', 'unknown')}",
+                severity="info",
+            )
+
             next_url = request.GET.get("next", "")
-            return redirect(next_url or "accounts:dashboard")
+            # EC-05: Validate redirect target to prevent open redirect attacks
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts=_ALLOWED_HOST_NAMES or None,
+            ):
+                return redirect(next_url)
+            return redirect("accounts:dashboard")
+
+        # EC-13: Audit failed login attempt
+        AuditService.record(
+            "login_failed",
+            user=email,
+            detail=f"IP: {request.META.get('REMOTE_ADDR', 'unknown')}",
+            severity="warn",
+        )
         error = "Invalid email or password."
     return render(request, "admin/login.html", {"error": error})
 
 
 def logout_view(request):
-    """Admin logout view."""
+    """Admin logout view — fully flush session to prevent reuse across tabs."""
+    AuditService.record(
+        "logout",
+        user=getattr(request.user, "email", "unknown"),
+        detail="User logged out",
+        severity="info",
+    )
+    # EC-07: Full session flush for all tabs
+    request.session.flush()
     logout(request)
     return redirect("accounts:login")
 
@@ -76,8 +172,6 @@ def _get_stats():
     try:
         with transaction.atomic():
             domain_count = Domain.objects.count()
-            from backend.apps.accounts.models import MailUser
-
             user_count = MailUser.objects.filter(is_active=True).count()
             mailbox_count = Mailbox.objects.count()
     except OperationalError:
@@ -172,7 +266,6 @@ def _get_tls_expiry_days():
             )
             if result.returncode != 0:
                 continue
-            # output format: "notAfter=May 24 12:00:00 2026 GMT"
             date_str = result.stdout.strip().split("=", 1)[1]
             end_date = dt.strptime(date_str, "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
             days = (end_date - dt.now(timezone.utc)).days
@@ -244,6 +337,11 @@ def _get_domains(request):
         qs = Domain.objects.order_by("name")
         paginator = Paginator(qs, 25)
         page_number = request.GET.get("page", 1)
+        # EC-31: Clamp page number to prevent excessive queries
+        try:
+            page_number = min(max(int(page_number), 1), 1000)
+        except (ValueError, TypeError):
+            page_number = 1
         page = paginator.get_page(page_number)
         rows = page.object_list.values_list(
             "name",
@@ -314,6 +412,17 @@ def _get_activity():
     return result
 
 
+# ─── Setup Complete Flag (DB-backed, not session-only) ──────────
+
+
+def _setup_is_complete() -> bool:
+    """Check if setup has been completed (DB-backed flag, EC-11)."""
+    try:
+        return bool(MailUser.objects.filter(is_staff=True, is_active=True).exists())
+    except Exception:
+        return False
+
+
 # ─── Setup Wizard Views ──────────────────────────────────────────────
 
 
@@ -321,7 +430,7 @@ def _get_activity():
 @user_passes_test(_is_staff, login_url="accounts:login")
 def setup_wizard(request):
     """Redirect to the current setup wizard step."""
-    if request.session.get("setup_complete"):
+    if _setup_is_complete():
         return redirect("accounts:dashboard")
     return redirect("accounts:setup_step", step="welcome")
 
@@ -330,7 +439,7 @@ def setup_wizard(request):
 @user_passes_test(_is_staff, login_url="accounts:login")
 def setup_step(request, step):
     """Render a setup wizard step."""
-    if request.session.get("setup_complete"):
+    if _setup_is_complete():
         return redirect("accounts:dashboard")
 
     domain = request.session.get("setup_domain") or os.environ.get("DOMAIN", "")
@@ -368,17 +477,33 @@ def setup_advance(request):
     if request.method != "POST":
         return redirect("accounts:setup_step", step="welcome")
 
+    # Block re-execution if setup is DB-complete
+    if _setup_is_complete():
+        return redirect("accounts:dashboard")
+
     current = request.POST.get("current_step", "welcome")
     skip = request.POST.get("skip", "") == "1"
 
     if current == "welcome":
         domain = request.POST.get("domain", "").strip()
         if domain and not skip:
-            request.session["setup_domain"] = domain
-            # Auto-create domain in DB
+            # EC-42: Validate domain name format before accepting
+            valid_domain = _validate_domain(domain)
+            if not valid_domain:
+                AuditService.record(
+                    "setup_invalid_domain",
+                    user=request.user.email,
+                    detail=f"Rejected invalid domain: {domain}",
+                    severity="warn",
+                )
+                return redirect("accounts:setup_step", step="welcome")
+            request.session["setup_domain"] = valid_domain
+            # EC-21: Wrap get_or_create in atomic transaction to prevent race conditions
             try:
-                from backend.apps.domains.models import Domain
-                Domain.objects.get_or_create(name=domain)
+                with transaction.atomic():
+                    Domain.objects.get_or_create(name=valid_domain)
+            except IntegrityError:
+                logger.warning("Race condition on domain get_or_create for %s", valid_domain)
             except Exception:
                 pass
         next_step = "dns"
@@ -387,7 +512,7 @@ def setup_advance(request):
         if not skip:
             provider = request.POST.get("provider", "")
             request.session["setup_dns_provider"] = provider
-            request.session["setup_dns_token"] = request.POST.get("api_token", "")
+            # EC-12: Do NOT store API tokens in session — they go to DB via dns_configure view
             next_step = "dns-auto" if provider else "account"
         else:
             next_step = "account"
@@ -406,8 +531,8 @@ def setup_advance(request):
         next_step = "done"
 
     elif current == "done":
-        request.session["setup_complete"] = True
-        return redirect("accounts:dashboard")
+        response = redirect("accounts:dashboard")
+        return response
 
     else:
         next_step = "welcome"
@@ -421,7 +546,11 @@ def _setup_server_ip() -> str:
         import requests as req
         resp = req.get(ip_check_url, timeout=5)
         if resp.status_code == 200:
-            return resp.text.strip()
+            ip = resp.text.strip()
+            # EC-43: Detect and warn on private IP addresses
+            if ip.startswith(("10.", "172.", "192.168.", "127.")):
+                logger.warning("Detected private IP %s — DNS records may be wrong", ip)
+            return ip
     except Exception:
         pass
     try:
@@ -434,26 +563,33 @@ def _setup_server_ip() -> str:
 def _create_first_account(email: str, password: str, request):
     """Create the first mailbox and user account during setup."""
     try:
-        from backend.apps.accounts.models import MailUser
-        from backend.apps.domains.models import Domain
-        from backend.apps.mail.models import Mailbox
-        from backend.services.audit import AuditService
-
         local_part, _, domain_name = email.partition("@")
         if not domain_name:
             return
 
-        domain, _ = Domain.objects.get_or_create(name=domain_name)
-        Mailbox.objects.get_or_create(domain=domain, local_part=local_part)
+        # EC-21: Wrap get_or_create in atomic transaction to prevent race conditions
+        with transaction.atomic():
+            domain, _ = Domain.objects.get_or_create(name=domain_name)
+            Mailbox.objects.get_or_create(domain=domain, local_part=local_part)
 
-        if not MailUser.objects.filter(username=email).exists():
-            MailUser.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                is_staff=True,
-            )
+            if not MailUser.objects.filter(username=email).exists():
+                MailUser.objects.create_user(
+                    username=email,
+                    email=email,
+                    password=password,
+                    is_staff=True,
+                )
 
-        AuditService.record("account_created", user=request.user.username, detail=email, severity="info")
+        AuditService.record(
+            "account_created",
+            user=request.user.email,
+            detail=email,
+            severity="info",
+        )
+    except IntegrityError:
+        # EC-21: Handle duplicate key from concurrent get_or_create races
+        logger.warning(
+            "IntegrityError during account creation for %s — likely race condition", email
+        )
     except Exception as e:
         logger.exception("Failed to create first account during setup: %s", e)

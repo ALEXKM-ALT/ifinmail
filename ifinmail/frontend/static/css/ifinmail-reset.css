@@ -1,0 +1,70 @@
+/* ifinmail Reset — minimal, scoped under .ifinmail-shell */
+
+.ifinmail-shell *,
+.ifinmail-shell *::before,
+.ifinmail-shell *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.ifinmail-body {
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-normal);
+    color: var(--ifinmail-text);
+    background: var(--ifinmail-bg);
+    line-height: var(--ifinmail-line-height);
+    -webkit-font-smoothing: antialiased;
+}
+
+.ifinmail-shell a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.ifinmail-shell a:hover {
+    text-decoration: underline;
+}
+
+.ifinmail-shell img,
+.ifinmail-shell svg {
+    display: block;
+    max-width: 100%;
+}
+
+.ifinmail-shell button {
+    font-family: inherit;
+}
+
+.ifinmail-shell input,
+.ifinmail-shell select,
+.ifinmail-shell textarea {
+    font-family: inherit;
+}
+
+/* Smooth scrolling */
+.ifinmail-body {
+    scroll-behavior: smooth;
+    transition: background var(--ifinmail-transition),
+                color var(--ifinmail-transition);
+}
+
+/* Selection styling */
+::selection {
+    background: var(--ifinmail-secondary);
+    color: var(--ifinmail-on-secondary);
+}
+
+/* Respect user motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .ifinmail-body,
+    .ifinmail-body *,
+    .ifinmail-body *::before,
+    .ifinmail-body *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

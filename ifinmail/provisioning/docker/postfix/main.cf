@@ -1,6 +1,7 @@
 # ifinmail Postfix main.cf — virtual mailbox delivery via PostgreSQL + Dovecot LMTP
 
 # --- Identity ---
+compatibility_level = 3.6
 myhostname = __MAIL_HOSTNAME__
 mydomain = __MAIL_DOMAIN__
 myorigin = $mydomain
@@ -91,5 +92,5 @@ smtpd_soft_error_limit = 10
 smtpd_hard_error_limit = 20
 
 # --- Debugging ---
-debug_peer_level = 0
+debug_peer_level = 1
 debug_peer_list =

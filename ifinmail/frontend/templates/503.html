@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Service Unavailable — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-error-page">
+  <h1>503</h1>
+  <p>The service is temporarily unavailable due to maintenance or capacity issues. Please try again shortly.</p>
+  <p class="ifinmail-error-detail">If this issue persists, please contact support.</p>
+  <div class="ifinmail-error-actions">
+    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Return to Dashboard</a>
+    <button type="button" class="ifinmail-btn" onclick="location.reload()">Retry</button>
+  </div>
+</div>
+{% endblock %}

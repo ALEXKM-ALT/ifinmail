@@ -384,6 +384,20 @@ preflight_checks() {
     echo "Pre-flight checks complete."
 }
 
+ensure_kernel_settings() {
+    if [ -r /proc/sys/vm/overcommit_memory ] && [ "$(cat /proc/sys/vm/overcommit_memory)" != "1" ]; then
+        echo "Enabling vm.overcommit_memory=1 for Redis background saves..."
+        sysctl -w vm.overcommit_memory=1 >/dev/null 2>&1 || \
+            echo "WARNING: Could not set vm.overcommit_memory=1; Redis may warn during startup."
+    fi
+
+    if [ -d /etc/sysctl.d ] && [ -w /etc/sysctl.d ]; then
+        cat > /etc/sysctl.d/99-ifinmail.conf <<EOF
+vm.overcommit_memory = 1
+EOF
+    fi
+}
+
 main() {
     echo "======================================"
     echo "  ifinmail production provisioning"
@@ -407,6 +421,7 @@ main() {
     normalize_vars
     validate_env
     preflight_checks
+    ensure_kernel_settings
     ensure_directories
     ensure_bootstrap_cert
     ensure_mta_sts

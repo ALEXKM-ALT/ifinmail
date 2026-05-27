@@ -1,0 +1,1 @@
+"""core — urls.py placeholder."""

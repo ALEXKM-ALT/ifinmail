@@ -24,8 +24,6 @@ RUN chmod +x /entrypoint.sh
 RUN useradd -m -u 1000 -s /bin/bash app && \
     chown -R app:app /app
 
-USER app
-
 EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]

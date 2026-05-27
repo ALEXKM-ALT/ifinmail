@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}DNS Auto-Configuration — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-setup-wizard">
+  <div class="ifinmail-setup-progress">
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">1. Domain</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--active">2. DNS</div>
+    <div class="ifinmail-setup-step">3. Account</div>
+    <div class="ifinmail-setup-step">4. Done</div>
+  </div>
+
+  <div class="ifinmail-setup-card">
+    <h1 class="ifinmail-admin-title">Configuring DNS for {{ domain }}</h1>
+    <p class="ifinmail-setup-description">
+      Setting up DNS records with <strong>{{ dns_provider|title }}</strong>.
+      This may take a minute.
+    </p>
+
+    <div class="ifinmail-dns-check-grid" id="dns-progress">
+      <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-a">
+        <span class="ifinmail-dns-check-type">A</span>
+        <span class="ifinmail-dns-check-detail">Creating A records...</span>
+      </div>
+      <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-mx">
+        <span class="ifinmail-dns-check-type">MX</span>
+        <span class="ifinmail-dns-check-detail">Creating MX record...</span>
+      </div>
+      <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-spf">
+        <span class="ifinmail-dns-check-type">SPF</span>
+        <span class="ifinmail-dns-check-detail">Creating SPF record...</span>
+      </div>
+      <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-dkim">
+        <span class="ifinmail-dns-check-type">DKIM</span>
+        <span class="ifinmail-dns-check-detail">Creating DKIM record...</span>
+      </div>
+      <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-dmarc">
+        <span class="ifinmail-dns-check-type">DMARC</span>
+        <span class="ifinmail-dns-check-detail">Creating DMARC record...</span>
+      </div>
+    </div>
+
+    <div id="dns-result-message" class="ifinmail-mt-4"></div>
+
+    <div class="ifinmail-setup-actions ifinmail-mt-4">
+      <form method="post" action="{% url 'accounts:setup_advance' %}">
+        {% csrf_token %}
+        <input type="hidden" name="current_step" value="dns-auto">
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Continue</button>
+        <button type="submit" name="skip" value="1" class="ifinmail-btn ifinmail-btn--ghost">Skip for now</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var domain = "{{ domain|escapejs }}";
+  var provider = "{{ dns_provider|escapejs }}";
+  if (!domain || !provider) return;
+
+  var checks = ["a", "mx", "spf", "dkim", "dmarc"];
+  var formData = new FormData();
+  formData.append("domain", domain);
+  formData.append("provider", provider);
+
+  fetch('/dns/configure/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+    body: formData
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var resultEl = document.getElementById('dns-result-message');
+    if (data.success) {
+      checks.forEach(function(c) {
+        var el = document.getElementById('check-' + c);
+        if (el) {
+          el.className = 'ifinmail-dns-check ifinmail-dns-check--pass';
+          el.querySelector('.ifinmail-dns-check-detail').textContent = c.toUpperCase() + ' record configured';
+        }
+      });
+      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--ok"><p>All DNS records configured successfully. Propagation may take a few minutes.</p></div>';
+    } else {
+      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Configuration failed: ' + (data.message || 'Unknown error') + '</p></div>';
+    }
+  })
+  .catch(function(err) {
+    document.getElementById('dns-result-message').innerHTML =
+      '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Request failed: ' + err.message + '</p></div>';
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,1 @@
+"""core — preferences.py placeholder."""

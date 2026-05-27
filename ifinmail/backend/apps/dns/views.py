@@ -1,13 +1,14 @@
 """DNS configuration views."""
+import hashlib
 import logging
 import os
 import socket
-from datetime import datetime, timezone
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from backend.apps.dns.models import DNSProviderConfig
@@ -49,7 +50,23 @@ def _build_records(domain: str, server_ip: str) -> list[DNSRecord]:
         except OSError:
             pass
 
-    mta_sts_id = os.environ.get("MTA_STS_ID", datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
+    mta_sts_id = os.environ.get("MTA_STS_ID") or hashlib.sha256(
+        f"mta-sts:{domain}:{mail_hostname}".encode()
+    ).hexdigest()[:16]
+
+    # Build DKIM TXT record value, truncating to 255 chars for a single segment.
+    # Multi-segment DKIM TXT records (split across multiple 255-char quoted strings
+    # within a single record) require provider-specific handling.
+    dkim_txt_prefix = "v=DKIM1; k=rsa; p="
+    dkim_txt_value = dkim_txt_prefix + dkim_value if dkim_value else "v=DKIM1; k=rsa; p=<add-dkim-key>"
+    if len(dkim_txt_value) > 255:
+        max_key_len = 255 - len(dkim_txt_prefix)
+        dkim_txt_value = dkim_txt_prefix + dkim_value[:max_key_len]
+        logger.warning(
+            "DKIM key for %s exceeds 255 chars; truncated to fit single TXT segment. "
+            "Full key requires provider-specific multi-segment DKIM handling.",
+            domain,
+        )
 
     return [
         DNSRecord(type="A", name="@", value=server_ip, ttl=ttl),
@@ -61,7 +78,7 @@ def _build_records(domain: str, server_ip: str) -> list[DNSRecord]:
         DNSRecord(type="TXT", name="_mta-sts", value=f"v=STSv1; id={mta_sts_id}", ttl=ttl),
         DNSRecord(
             type="TXT", name=f"{dkim_selector}._domainkey",
-            value=f"v=DKIM1; k=rsa; p={dkim_value}" if dkim_value else "v=DKIM1; k=rsa; p=<add-dkim-key>",
+            value=dkim_txt_value,
             ttl=ttl,
         ),
     ]
@@ -74,9 +91,29 @@ def _get_server_ip() -> str:
         import requests as req
         resp = req.get(ip_check_url, timeout=5)
         if resp.status_code == 200:
-            return resp.text.strip()
+            ip = resp.text.strip()
+            # Reject private / loopback IPs — they cannot be used for DNS records
+            if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("127."):
+                logger.warning("Detected private IP %s via ipify, trying MAIL_HOSTNAME fallback", ip)
+            elif ip.startswith("172."):
+                parts = ip.split(".")
+                if len(parts) == 4 and 16 <= int(parts[1]) <= 31:
+                    logger.warning("Detected private IP %s via ipify, trying MAIL_HOSTNAME fallback", ip)
+                else:
+                    return ip
+            else:
+                return ip
     except Exception:
         logger.exception("Failed to detect public IP via %s", ip_check_url)
+    # Fallback: resolve the MAIL_HOSTNAME's A record
+    mail_hostname = os.environ.get("MAIL_HOSTNAME")
+    if mail_hostname:
+        try:
+            resolved = socket.gethostbyname(mail_hostname)
+            logger.info("Resolved MAIL_HOSTNAME %s to %s as fallback", mail_hostname, resolved)
+            return resolved
+        except Exception:
+            logger.exception("Failed to resolve MAIL_HOSTNAME %s", mail_hostname)
     try:
         return socket.gethostbyname(socket.gethostname())
     except Exception:
@@ -125,6 +162,7 @@ def _get_dns_status(domain: str) -> dict:
 
 
 @require_POST
+@ensure_csrf_cookie
 @login_required
 @user_passes_test(_is_staff, login_url="accounts:login")
 def dns_configure(request):
@@ -138,7 +176,7 @@ def dns_configure(request):
     cls, fields, _ = PROVIDER_MAP[provider_name]
     creds = {f: request.POST.get(f, "").strip() for f in fields}
     if not all(creds.values()):
-        missing = [f for f, v in creds.items() if not v]
+        missing = [f for f, v in creds.items() if not v.strip()]
         return JsonResponse({"success": False, "message": f"Missing credentials: {', '.join(missing)}"}, status=400)
 
     # Save credentials (overwrite existing for this provider)
@@ -159,6 +197,7 @@ def dns_configure(request):
             "message": result.message,
             "records_created": result.records_created,
             "records_failed": result.records_failed,
+            "propagation_note": "DNS changes may take up to 48 hours to propagate. Verify after a few minutes.",
         })
     except Exception as e:
         logger.exception("DNS configuration failed for %s via %s", domain, provider_name)

@@ -1,5 +1,6 @@
 """DigitalOcean DNS provider."""
 import logging
+import time
 
 import requests
 
@@ -22,12 +23,24 @@ class DigitalOceanProvider:
 
     def _request(self, method: str, path: str, **kwargs) -> dict:
         url = f"{DO_API}{path}"
-        try:
-            resp = self.session.request(method, url, timeout=15, **kwargs)
-            resp.raise_for_status()
-            return resp.json()
-        except requests.RequestException as e:
-            raise RuntimeError(f"DigitalOcean API request failed: {e}") from e
+        max_retries = 3
+        for attempt in range(max_retries + 1):
+            try:
+                resp = self.session.request(method, url, timeout=15, **kwargs)
+                resp.raise_for_status()
+                return resp.json()
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code == 429 and attempt < max_retries:
+                    backoff = 2 ** attempt  # 1s, 2s, 4s
+                    logger.warning(
+                        "DigitalOcean rate limited (429), retrying in %ds (attempt %d/%d)",
+                        backoff, attempt + 1, max_retries,
+                    )
+                    time.sleep(backoff)
+                    continue
+                raise RuntimeError(f"DigitalOcean API request failed: {e}") from e
+            except requests.RequestException as e:
+                raise RuntimeError(f"DigitalOcean API request failed: {e}") from e
 
     def _fetch_records(self, domain: str) -> list[dict]:
         records = []
@@ -44,6 +57,15 @@ class DigitalOceanProvider:
     def configure_domain(self, domain: str, records: list[DNSRecord]) -> DNSResult:
         try:
             existing = self._fetch_records(domain)
+        except RuntimeError as e:
+            if (isinstance(e.__cause__, requests.exceptions.HTTPError)
+                    and e.__cause__.response is not None
+                    and e.__cause__.response.status_code == 404):
+                return DNSResult(
+                    success=False,
+                    message="Domain not configured in DigitalOcean DNS. Add it to DigitalOcean first.",
+                )
+            return DNSResult(success=False, message=str(e))
         except Exception as e:
             return DNSResult(success=False, message=str(e))
 
@@ -111,4 +133,8 @@ class DigitalOceanProvider:
         }
 
     def get_nameservers(self, domain: str) -> list[str]:
-        return ["ns1.digitalocean.com", "ns2.digitalocean.com", "ns3.digitalocean.com"]
+        try:
+            data = self._request("GET", f"/domains/{domain}")
+            return data.get("domain", {}).get("name_servers", [])
+        except Exception:
+            return ["ns1.digitalocean.com", "ns2.digitalocean.com", "ns3.digitalocean.com"]

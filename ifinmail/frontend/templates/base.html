@@ -1,0 +1,76 @@
+{% load static %}
+{% static 'icons/icon-192.svg' as default_icon_url %}
+<!DOCTYPE html>
+<html lang="en" class="ifinmail-shell">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ brand.name }}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <link rel="icon" type="image/svg+xml" href="{{ brand.favicon_url|default:default_icon_url }}">
+    <link rel="apple-touch-icon" href="{{ brand.favicon_url|default:default_icon_url }}">
+    <title>{% block title %}{{ brand.name }}{% endblock %}</title>
+    {{ brand.css_overrides|safe }}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap">
+    <link rel="stylesheet" href="{% static 'css/ifinmail-variables.css' %}">
+    <link rel="stylesheet" href="{% static 'css/ifinmail-reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/ifinmail-utilities.css' %}">
+    <link rel="stylesheet" href="{% static 'css/ifinmail-layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/ifinmail-components.css' %}">
+    <script>
+    (function(){
+        var theme = localStorage.getItem('ifinmail-theme');
+        if (!theme) {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body class="ifinmail-body{% block body_class %}{% endblock %}">
+    <header class="ifinmail-header">
+        <div class="ifinmail-header-brand">
+            <a href="{% url 'accounts:dashboard' %}" class="ifinmail-logo">
+                {% if brand.logo_url %}
+                <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" width="22" height="22" class="ifinmail-logo-img">
+                {% else %}
+                {{ brand.logo_svg|safe }}
+                {% endif %}{{ brand.name }}
+            </a>
+        </div>
+        <nav class="ifinmail-header-nav">
+            <a href="{% url 'mail:inbox' %}" class="ifinmail-nav-link">Mail</a>
+            <a href="{% url 'accounts:dashboard' %}" class="ifinmail-nav-link">Admin</a>
+            <button id="ifinmail-theme-toggle" class="ifinmail-btn ifinmail-btn--ghost ifinmail-btn--sm ifinmail-theme-toggle" type="button" aria-label="Toggle dark mode"></button>
+            <script>!function(){var e=document.getElementById('ifinmail-theme-toggle');e&&(e.innerHTML=document.documentElement.hasAttribute('data-theme')?'\u2600':'\u263E')}();</script>
+        </nav>
+        <div class="ifinmail-header-user">
+            <span class="ifinmail-user-email">{% block user_email %}{{ request.user.email|default:"" }}{% endblock %}</span>
+        </div>
+    </header>
+
+    <main class="ifinmail-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="ifinmail-footer">
+        <p>{{ brand.name }} &mdash; {{ brand.tagline }}</p>
+    </footer>
+
+    <script src="{% static 'js/ifinmail-theme.js' %}"></script>
+    {% block scripts %}{% endblock %}
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+    }
+    </script>
+</body>
+</html>

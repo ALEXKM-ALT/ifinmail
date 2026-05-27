@@ -1,0 +1,1 @@
+"""core — assistant.py placeholder."""

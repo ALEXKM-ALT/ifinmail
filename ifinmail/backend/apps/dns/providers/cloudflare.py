@@ -1,5 +1,6 @@
 """Cloudflare DNS provider — API v4."""
 import logging
+import time
 
 import requests
 
@@ -23,17 +24,29 @@ class CloudflareProvider:
 
     def _request(self, method: str, path: str, **kwargs) -> dict:
         url = f"{CF_API_BASE}{path}"
-        try:
-            resp = self.session.request(method, url, timeout=15, **kwargs)
-            resp.raise_for_status()
-            data = resp.json()
-            if not data.get("success"):
-                errors = data.get("errors", [])
-                msg = "; ".join(e.get("message", "unknown") for e in errors)
-                raise RuntimeError(f"Cloudflare API error: {msg}")
-            return data
-        except requests.RequestException as e:
-            raise RuntimeError(f"Cloudflare API request failed: {e}") from e
+        max_retries = 3
+        for attempt in range(max_retries + 1):
+            try:
+                resp = self.session.request(method, url, timeout=15, **kwargs)
+                resp.raise_for_status()
+                data = resp.json()
+                if not data.get("success"):
+                    errors = data.get("errors", [])
+                    msg = "; ".join(e.get("message", "unknown") for e in errors)
+                    raise RuntimeError(f"Cloudflare API error: {msg}")
+                return data
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code == 429 and attempt < max_retries:
+                    backoff = 2 ** attempt  # 1s, 2s, 4s
+                    logger.warning(
+                        "Cloudflare rate limited (429), retrying in %ds (attempt %d/%d)",
+                        backoff, attempt + 1, max_retries,
+                    )
+                    time.sleep(backoff)
+                    continue
+                raise RuntimeError(f"Cloudflare API request failed: {e}") from e
+            except requests.RequestException as e:
+                raise RuntimeError(f"Cloudflare API request failed: {e}") from e
 
     def _get_zone_id(self, domain: str) -> str:
         data = self._request("GET", "/zones", params={"name": domain, "status": "active"})
@@ -54,6 +67,8 @@ class CloudflareProvider:
             if not data.get("result_info", {}).get("total_count", 0) > page * 100:
                 break
             page += 1
+            if page > 50:
+                break
         return existing
 
     def _normalize_name(self, name: str, domain: str) -> str:

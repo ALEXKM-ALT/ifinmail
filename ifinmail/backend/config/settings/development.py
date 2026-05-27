@@ -28,6 +28,6 @@ if os.environ.get('USE_SQLITE') or not os.environ.get('DB_HOST'):
         }
     }
 
-LOGIN_REDIRECT_URL = '/admin/dashboard/'
-LOGIN_URL = '/admin/login/'
-LOGOUT_REDIRECT_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+LOGIN_URL = '/accounts/login/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'

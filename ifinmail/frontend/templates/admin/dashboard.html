@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-admin-layout">
+    {% include "admin/partials/admin_sidebar.html" with active_section="overview" %}
+
+    <section class="ifinmail-admin-content">
+        <h1 class="ifinmail-admin-title">Platform Overview</h1>
+
+        <!-- Stats Cards -->
+        <div class="ifinmail-stats-grid">
+            {% for stat in stats %}
+            <div class="ifinmail-stat-card{% if stat.status == 'err' %} ifinmail-stat-card--error{% elif stat.status == 'warn' %} ifinmail-stat-card--warning{% endif %}">
+                <span class="ifinmail-stat-value">{{ stat.value }}</span>
+                <span class="ifinmail-stat-label">{{ stat.label }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Services Health -->
+        <div class="ifinmail-admin-section" id="services">
+            <h2 class="ifinmail-admin-section-title">Service Health</h2>
+            <div class="ifinmail-services-grid">
+                {% for key, svc in services.items %}
+                <div class="ifinmail-service-card ifinmail-service-card--{{ svc.status }}">
+                    <span class="ifinmail-service-name">{{ svc.label }}</span>
+                    <span class="ifinmail-service-status">{{ svc.detail }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- DNS Health Summary -->
+        <div class="ifinmail-admin-section" id="domains">
+            <h2 class="ifinmail-admin-section-title">DNS Health by Domain</h2>
+            <div class="ifinmail-domain-health-list">
+                {% for domain in domains %}
+                <div class="ifinmail-domain-health">
+                    <span class="ifinmail-domain-health-name ifinmail-font-semibold">{{ domain.name }}</span>
+
+                    <div class="ifinmail-domain-health-checks">
+                        {% for check in domain.checks %}
+                        <span class="ifinmail-health-indicator ifinmail-health-indicator--{{ check.status }}"
+                              title="{{ check.message }}">
+                            {{ check.check|upper }}
+                        </span>
+                        {% endfor %}
+                    </div>
+
+                    {% if domain.warnings %}
+                    <div class="ifinmail-domain-health-warnings">
+                        {% for warning in domain.warnings %}
+                        <p class="ifinmail-admin-warning">{{ warning }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="ifinmail-admin-empty">No domains configured. <a href="/manage-panel/domains/domain/add/">Add your first domain</a>.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Email Setup Guide -->
+        <div class="ifinmail-admin-section">
+            <h2 class="ifinmail-admin-section-title">Email Client Settings</h2>
+            <div class="ifinmail-setup-guide">
+                <p>Use these settings to configure your email client:</p>
+                <table class="ifinmail-setup-table">
+                    <tr><td><strong>IMAP Server</strong></td><td>{{ mail_hostname }}</td><td>Port 993, SSL/TLS</td></tr>
+                    <tr><td><strong>SMTP Server</strong></td><td>{{ mail_hostname }}</td><td>Port 587, STARTTLS</td></tr>
+                    <tr><td><strong>Username</strong></td><td colspan="2">Your full email address</td></tr>
+                    <tr><td><strong>Password</strong></td><td colspan="2">Your mail account password</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Deliverability Check -->
+        <div class="ifinmail-admin-section" id="deliverability">
+            <h2 class="ifinmail-admin-section-title">Deliverability Check</h2>
+            <p class="ifinmail-admin-empty ifinmail-text-left">
+                Run a comprehensive check to make sure your emails reach inboxes, not spam folders.
+            </p>
+            <button class="ifinmail-btn ifinmail-btn--primary" onclick="runDeliverabilityCheck()">
+                Check Deliverability
+            </button>
+            <div id="deliverability-results" class="ifinmail-mt-4"></div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="ifinmail-admin-section" id="activity">
+            <h2 class="ifinmail-admin-section-title">Recent Activity</h2>
+            <div class="ifinmail-event-list">
+                {% for event in events %}
+                <div class="ifinmail-event-item ifinmail-event-item--{{ event.severity }}">
+                    <span class="ifinmail-event-time ifinmail-text-xs ifinmail-text-muted">{{ event.time }}</span>
+                    <span class="ifinmail-event-description">{{ event.description }}</span>
+                </div>
+                {% empty %}
+                <p class="ifinmail-admin-empty">No recent events.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function runDeliverabilityCheck() {
+    var el = document.getElementById('deliverability-results');
+    el.innerHTML = '<p class="ifinmail-dns-progress">Running deliverability checks...</p>';
+
+    fetch('/health/deliverability/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var checks = {
+                'dns_propagation': 'DNS Propagation',
+                'blacklists': 'Blacklist Check',
+                'reverse_dns': 'Reverse DNS',
+                'port25': 'Port 25',
+                'tls': 'TLS Certificate'
+            };
+            var html = '<div class="ifinmail-dns-check-grid">';
+            for (var key in checks) {
+                if (!checks.hasOwnProperty(key)) continue;
+                var check = data[key] || {};
+                var status = check.status || 'warn';
+                var statusClass = status === 'pass' ? 'pass' : (status === 'fail' ? 'fail' : 'unchecked');
+                html += '<div class="ifinmail-dns-check ifinmail-dns-check--' + statusClass + '">' +
+                    '<div>' +
+                    '<span class="ifinmail-dns-check-type">' + checks[key] + '</span>' +
+                    '<br><span class="ifinmail-dns-check-detail">' + (check.detail || '') + '</span>' +
+                    '</div>' +
+                    '<span class="ifinmail-health-indicator ifinmail-health-indicator--' + statusClass + '">' + status.toUpperCase() + '</span>' +
+                    '</div>';
+                if (check.fix) {
+                    html += '<div class="ifinmail-deliverability-fix">Fix: ' + check.fix + '</div>';
+                }
+            }
+            html += '</div>';
+            el.innerHTML = html;
+        })
+        .catch(function(err) {
+            el.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Check failed: ' + err.message + '</p></div>';
+        });
+}
+</script>
+{% endblock %}

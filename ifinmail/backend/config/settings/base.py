@@ -21,6 +21,13 @@ INSTALLED_APPS = [
     "corsheaders",
     "axes",
 
+    # ifinmail core (cross-cutting foundation)
+    "backend.apps.core.apps.CoreConfig",
+    "backend.apps.core.storage.apps.StorageConfig",
+
+    # ifinmail services (audit trail, etc.)
+    "backend.services.apps.ServicesConfig",
+
     # ifinmail apps
     "backend.apps.accounts.apps.AccountsConfig",
     "backend.apps.devices.apps.DevicesConfig",
@@ -30,6 +37,9 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = "accounts.MailUser"
+LOGIN_REDIRECT_URL = "/accounts/dashboard/"
+LOGIN_URL = "/accounts/login/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -55,7 +65,7 @@ ROOT_URLCONF = "backend.config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "frontend" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -102,7 +112,7 @@ USE_I18N = os.environ.get("USE_I18N", "True").lower() == "true"
 USE_TZ = os.environ.get("USE_TZ", "True").lower() == "true"
 
 STATIC_URL = os.environ.get("STATIC_URL", "/static/")
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"]
 STATIC_ROOT = Path(os.environ.get("STATIC_ROOT", BASE_DIR / "staticfiles"))
 
 MEDIA_URL = os.environ.get("MEDIA_URL", "/media/")

@@ -28,11 +28,20 @@ CREATE TABLE IF NOT EXISTS domains (
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL,
+    password VARCHAR(128) NOT NULL DEFAULT '',
     password_hash VARCHAR(512),
+    last_login TIMESTAMPTZ,
     is_active BOOLEAN DEFAULT TRUE,
+    is_staff BOOLEAN DEFAULT FALSE,
+    is_superuser BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(email)
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(128) NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_staff BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superuser BOOLEAN DEFAULT FALSE;
 
 CREATE TABLE IF NOT EXISTS mailboxes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -47,7 +56,8 @@ CREATE TABLE IF NOT EXISTS aliases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     domain_id UUID REFERENCES domains(id) ON DELETE CASCADE,
     source VARCHAR(128) NOT NULL,
-    destination VARCHAR(255) NOT NULL
+    destination VARCHAR(255) NOT NULL,
+    UNIQUE(domain_id, source, destination)
 );
 
 CREATE TABLE IF NOT EXISTS dkim_keys (
@@ -67,6 +77,19 @@ CREATE INDEX IF NOT EXISTS idx_domains_name ON domains(name);
 CREATE INDEX IF NOT EXISTS idx_domains_verified ON domains(verified);
 CREATE INDEX IF NOT EXISTS idx_mailboxes_lookup ON mailboxes(domain_id, local_part);
 CREATE INDEX IF NOT EXISTS idx_aliases_lookup ON aliases(domain_id, source);
+CREATE INDEX IF NOT EXISTS idx_aliases_destination ON aliases(destination);
+
+-- EC-26: Ensure email unique constraint exists idempotently
+DO \$\$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'users_email_key' AND conrelid = 'users'::regclass
+    ) THEN
+        ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
+    END IF;
+END;
+\$\$;
 
 DO \$\$
 BEGIN

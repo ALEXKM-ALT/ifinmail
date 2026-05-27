@@ -22,7 +22,7 @@ RUN mkdir -p /etc/postfix/pgsql \
     && chown root:postfix /etc/postfix/pgsql-templates/*.cf \
     && chmod +x /usr/local/bin/ifinmail-postfix-entrypoint \
     && mkdir -p /var/spool/postfix \
-    && chown -R postfix:postfix /var/spool/postfix \
+    && chown root:root /var/spool/postfix \
     && mkdir -p /var/mail/vhosts
 
 EXPOSE 25 465 587

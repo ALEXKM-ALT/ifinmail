@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
@@ -8,6 +10,8 @@ class MailUserManager(BaseUserManager):
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
+        if user.id is None:
+            user.id = uuid.uuid4()
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -20,7 +24,7 @@ class MailUserManager(BaseUserManager):
 
 
 class MailUser(AbstractBaseUser):
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.CharField(max_length=255, unique=True)
     password_hash = models.CharField(max_length=512, blank=True, null=True)
     is_active = models.BooleanField(default=True)

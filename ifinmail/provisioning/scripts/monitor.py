@@ -93,7 +93,7 @@ def check_postfix_queue() -> Dict[str, Any]:
 
 def check_service_status() -> Dict[str, Any]:
     """Check if all Docker services are running using docker compose ps."""
-    services = ["postgres", "redis", "postfix", "dovecot", "rspamd", "snappymail", "api", "nginx", "certbot"]
+    services = ["postgres", "redis", "postfix", "dovecot", "rspamd", "api", "nginx", "certbot"]
     status = {}
 
     try:

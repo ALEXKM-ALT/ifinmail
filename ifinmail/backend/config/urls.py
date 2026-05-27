@@ -6,6 +6,7 @@ import logging
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.shortcuts import redirect, render
 
 from backend.apps.mail.views import autoconfig_mozilla, autoconfig_outlook
 
@@ -72,12 +73,21 @@ def health_deliverability(request):
     return JsonResponse(result, status=http_status)
 
 
+def legacy_accounts_redirect(request, path=""):
+    # EC-44: Redirect /admin/ directly to dashboard (avoid double redirect chain)
+    from django.urls import reverse
+    target = reverse("accounts:dashboard") if not path else f"/accounts/{path}"
+    return redirect(target, permanent=False)
+
+
 urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("health/full/", health_full, name="health-full"),
     path("health/dns/", health_dns, name="health-dns"),
     path("health/deliverability/", health_deliverability, name="health-deliverability"),
-    path("admin/", include("backend.apps.accounts.urls")),
+    path("accounts/", include("backend.apps.accounts.urls")),
+    path("admin/", legacy_accounts_redirect),
+    path("admin/<path:path>", legacy_accounts_redirect),
     path("manage-panel/", admin.site.urls),
     path("mail/", include("backend.apps.mail.urls")),
     path("domains/", include("backend.apps.domains.urls")),
@@ -90,12 +100,45 @@ urlpatterns = [
 ]
 
 # Custom error handlers
+handler400 = "backend.config.urls.custom_400"
+handler403 = "backend.config.urls.custom_403"
 handler404 = "backend.config.urls.custom_404"
 handler500 = "backend.config.urls.custom_500"
 
 
+def _wants_html(request):
+    accept = request.META.get("HTTP_ACCEPT", "")
+    if "text/html" in accept:
+        return True
+    if accept in ("", "*/*") and not request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
+        return True
+    return False
+
+
+def custom_400(request, exception=None):
+    logger.warning("400 Bad Request: %s", request.path)
+    if _wants_html(request):
+        return render(request, "400.html", status=400)
+    return JsonResponse(
+        {"error": "Bad request", "detail": str(exception) if exception else "Invalid request"},
+        status=400,
+    )
+
+
+def custom_403(request, exception=None):
+    logger.warning("403 Forbidden: %s", request.path)
+    if _wants_html(request):
+        return render(request, "403.html", status=403)
+    return JsonResponse(
+        {"error": "Forbidden", "detail": "You do not have permission to access this resource"},
+        status=403,
+    )
+
+
 def custom_404(request, exception=None):
     logger.warning("404 Not Found: %s", request.path)
+    if _wants_html(request):
+        return render(request, "404.html", status=404)
     return JsonResponse(
         {"error": "Not found", "detail": "Resource not found"},
         status=404,
@@ -104,6 +147,8 @@ def custom_404(request, exception=None):
 
 def custom_500(request):
     logger.exception("500 Internal Server Error")
+    if _wants_html(request):
+        return render(request, "500.html", status=500)
     return JsonResponse(
         {"error": "Internal server error", "detail": "An unexpected error occurred"},
         status=500,

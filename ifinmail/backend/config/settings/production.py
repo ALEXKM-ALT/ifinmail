@@ -28,6 +28,9 @@ DATABASES["default"]["OPTIONS"].update({
     "connect_timeout": int(os.environ.get("DB_CONNECT_TIMEOUT", "10")),
 })
 
+# Static files — content-hashed filenames for cache busting (EC-35)
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
 # Security
 SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", os.environ.get("SECURE_PROXY_HEADER_VALUE", "https"))

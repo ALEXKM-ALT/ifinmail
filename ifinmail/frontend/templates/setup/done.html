@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Setup Complete — {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-setup-wizard">
+  <div class="ifinmail-setup-progress">
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">1. Domain</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">2. DNS</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">3. Account</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--active">4. Done</div>
+  </div>
+
+  <div class="ifinmail-setup-card">
+    <h1 class="ifinmail-admin-title">Your mail server is ready</h1>
+    <p class="ifinmail-setup-description">
+      {{ domain }} is now configured to send and receive email. Here's what to do next:
+    </p>
+
+    <div class="ifinmail-setup-checklist">
+      <div class="ifinmail-setup-checklist-item ifinmail-setup-checklist-item--done">
+        <span class="ifinmail-setup-check">&#10003;</span>
+        <span>Domain configured — {{ domain }}</span>
+      </div>
+      <div class="ifinmail-setup-checklist-item ifinmail-setup-checklist-item--done">
+        <span class="ifinmail-setup-check">&#10003;</span>
+        <span>DNS records configured</span>
+      </div>
+      <div class="ifinmail-setup-checklist-item ifinmail-setup-checklist-item--done">
+        <span class="ifinmail-setup-check">&#10003;</span>
+        <span>Email account created</span>
+      </div>
+    </div>
+
+    <div class="ifinmail-setup-next-steps ifinmail-mt-6">
+      <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Go to Dashboard</a>
+      <a href="/setup/extras/" class="ifinmail-btn ifinmail-btn--outline">Install Nextcloud Companion</a>
+    </div>
+
+    <form method="post" action="{% url 'accounts:setup_advance' %}" class="ifinmail-mt-4">
+      {% csrf_token %}
+      <input type="hidden" name="current_step" value="done">
+      <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Finish Setup</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

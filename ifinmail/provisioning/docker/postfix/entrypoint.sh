@@ -25,6 +25,21 @@ for template in /etc/postfix/pgsql-templates/*.cf; do
     chmod 640 "$map"
 done
 
+mkdir -p /var/spool/postfix /var/mail/vhosts
+if command -v postfix >/dev/null 2>&1; then
+    postfix set-permissions >/dev/null 2>&1 || true
+fi
+for root_owned_dir in \
+    /var/spool/postfix/etc \
+    /var/spool/postfix/lib \
+    /var/spool/postfix/usr \
+    /var/spool/postfix/usr/lib \
+    /var/spool/postfix/usr/lib/sasl2 \
+    /var/spool/postfix/usr/lib/zoneinfo
+do
+    [ -d "$root_owned_dir" ] && chown root:root "$root_owned_dir"
+done
+
 # Wait for PostgreSQL to accept connections
 echo "Waiting for PostgreSQL readiness..."
 for i in $(seq 1 30); do

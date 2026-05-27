@@ -1,0 +1,1 @@
+"""core — signals.py placeholder."""

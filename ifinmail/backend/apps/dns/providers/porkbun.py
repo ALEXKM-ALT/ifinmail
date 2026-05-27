@@ -1,6 +1,7 @@
 """Porkbun DNS provider."""
 import json
 import logging
+import time
 
 import requests
 
@@ -63,7 +64,19 @@ class PorkbunProvider:
                 if key in existing_map:
                     # Delete and recreate (Porkbun edit API has different format)
                     self._request(f"/dns/delete/{domain}/{existing_map[key]['id']}")
-                    self._request(f"/dns/create/{domain}", body)
+                    for retry in range(3):
+                        try:
+                            self._request(f"/dns/create/{domain}", body)
+                            break
+                        except Exception:
+                            if retry < 2:
+                                logger.warning(
+                                    "Porkbun: create after delete failed for %s %s, retrying (attempt %d/3)",
+                                    domain, rec.type, retry + 2,
+                                )
+                                time.sleep(1)
+                            else:
+                                raise
                     logger.info("Porkbun: updated %s %s record", domain, rec.type)
                 else:
                     self._request(f"/dns/create/{domain}", body)
@@ -101,7 +114,7 @@ class PorkbunProvider:
     def _normalize_name(self, name: str, domain: str) -> str:
         if not name or name == domain:
             return "@"
-        if name.endswith(f".{domain}"):
+        if name.endswith(f".{domain}") or name.endswith(f".{domain}."):
             return name[:-(len(domain) + 1)]
         return name
 
