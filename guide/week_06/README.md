@@ -2,7 +2,7 @@
 
 **Month 2: Core Mail Stack | Days 31–36**
 
-Dovecot provides IMAP access, LMTP delivery, and mailbox storage for ifinmail. It serves traditional email clients (Thunderbird, Outlook, Apple Mail) while the ifinmail API serves official apps — both reading the same Maildir storage. This week covers installation, authentication, LMTP integration with Postfix, and Sieve filtering.
+Dovecot provides IMAP access, LMTP delivery, and mailbox storage for ifinmail App. It serves traditional email clients (Thunderbird, Outlook, Apple Mail) while the ifinmail API serves official apps — both reading the same Maildir storage. This week covers installation, authentication, LMTP integration with Postfix, and Sieve filtering.
 
 ---
 
@@ -117,7 +117,7 @@ printf "a1 LOGIN alice@ifinmail.local password123\na2 LIST \"\" \"*\"\na3 LOGOUT
 3. Why does LMTP need a Unix socket that Postfix can write to?
 4. What is the purpose of the `vmail` user?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Dovecot is the MDA and IMAP server. The `mail_location` format maps directly to the virtual mailbox structure we set up in Week 5. Both Postfix (via LMTP) and the ifinmail API (via direct file access or Dovecot's API) read from the same Maildir.
 
 ---
@@ -216,7 +216,7 @@ sudo tail -20 /var/log/mail.log | grep dovecot
 3. How does Postfix use Dovecot's SASL for submission authentication?
 4. What information does userdb provide that passdb does not?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Dovecot authentication is how both IMAP clients and Postfix submission (port 587) verify users. The SQL queries connect directly to the platform's PostgreSQL database — the same users table that the API uses. This is the centralized authentication model the proposal describes.
 
 ---
@@ -287,7 +287,7 @@ sudo grep "lmtp" /var/log/mail.log | tail -10
 3. How does `permit_sasl_authenticated` in relay_restrictions prevent open relay?
 4. Why does the submission service in master.cf set different options than the main smtpd service?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This is the complete delivery chain: Postfix receives mail on port 25, scans it (Rspamd in Week 7), and delivers it to Dovecot via LMTP. Users send mail on port 587 with SASL auth. This split (receive on 25, send on 587) is exactly how production mail systems work.
 
 ---
@@ -358,7 +358,7 @@ sudo journalctl -u dovecot -n 20
 3. How would you troubleshoot an IMAP login failure? List 3 things to check.
 4. Why should Postfix and Dovecot use the same TLS certificate?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Dovecot serves IMAP to traditional clients. The ifinmail API reads the same Maildir storage. This dual-access is crucial: users can use Thunderbird today and the official ifinmail app tomorrow, seeing the same inbox. TLS on IMAP is mandatory per the proposal's "TLS everywhere" principle.
 
 ---
@@ -471,7 +471,7 @@ sudo doveadm stats dump
 3. What does `doveadm force-resync` do and when would you use it?
 4. How do quotas support the proposal's storage growth risk mitigation?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Sieve is the server-side filtering engine. The ifinmail API can manage Sieve scripts, letting users create rules (move to folder, auto-reply, forward) that run during delivery. `doveadm` is the operational tool for mailbox management — the admin dashboard will use equivalent API calls.
 
 ---

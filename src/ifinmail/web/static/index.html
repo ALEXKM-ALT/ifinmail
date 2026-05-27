@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ifinmail App</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="ifinmail-app" id="app">
+  <aside class="ifinmail-sidebar" id="sidebar"></aside>
+  <main class="ifinmail-main" id="main">
+    <div class="ifinmail-login" id="loginView">
+      <h1>ifinmail App</h1>
+      <p class="ifinmail-tagline">Secure, API-first email</p>
+      <form id="loginForm" class="ifinmail-form">
+        <input type="email" id="loginEmail" placeholder="Email" required autofocus>
+        <div class="ifinmail-pw-wrap">
+          <input type="password" id="loginPassword" placeholder="Password" required>
+          <button type="button" class="ifinmail-pw-toggle" data-target="loginPassword" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Sign in</button>
+        <p class="ifinmail-error" id="loginError"></p>
+        <p style="text-align:center;font-size:13px;color:var(--text-light);margin-top:8px">
+          <a href="#" id="showForgotPassword" style="color:var(--text-light)">Forgot password?</a>
+          &middot;
+          <a href="#" id="showRegister" style="color:var(--primary)">Create account</a>
+        </p>
+      </form>
+      <form id="forgotForm" class="ifinmail-form" style="display:none">
+        <p style="font-size:14px;color:var(--text-light);margin-bottom:8px;text-align:center">Enter your email to receive a reset link</p>
+        <input type="email" id="forgotEmail" placeholder="Email" required>
+        <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Send reset link</button>
+        <p class="ifinmail-error" id="forgotError"></p>
+        <p style="text-align:center;font-size:13px;color:var(--text-light);margin-top:8px">
+          <a href="#" id="showLoginFromForgot" style="color:var(--primary)">Back to sign in</a>
+        </p>
+      </form>
+      <form id="resetForm" class="ifinmail-form" style="display:none">
+        <p style="font-size:14px;color:var(--text-light);margin-bottom:8px;text-align:center">Enter your new password</p>
+        <div class="ifinmail-pw-wrap">
+          <input type="password" id="resetPassword" placeholder="New password" required minlength="6">
+          <button type="button" class="ifinmail-pw-toggle" data-target="resetPassword" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Reset password</button>
+        <p class="ifinmail-error" id="resetError"></p>
+      </form>
+      <form id="registerForm" class="ifinmail-form" style="display:none">
+        <input type="email" id="registerEmail" placeholder="Email" required>
+        <div class="ifinmail-pw-wrap">
+          <input type="password" id="registerPassword" placeholder="Password" required minlength="6">
+          <button type="button" class="ifinmail-pw-toggle" data-target="registerPassword" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Create account</button>
+        <p class="ifinmail-error" id="registerError"></p>
+        <p style="text-align:center;font-size:13px;color:var(--text-light);margin-top:8px">
+          Already have an account? <a href="#" id="showLogin" style="color:var(--primary)">Sign in</a>
+        </p>
+      </form>
+    </div>
+    <div class="ifinmail-inbox" id="inboxView" style="display:none"></div>
+    <div class="ifinmail-message" id="messageView" style="display:none"></div>
+    <div class="ifinmail-compose" id="composeView" style="display:none"></div>
+    <div class="ifinmail-settings" id="settingsView" style="display:none"></div>
+    <div class="ifinmail-admin" id="adminView" style="display:none"></div>
+  </main>
+</div>
+<template id="sidebarTmpl">
+  <div class="ifinmail-sidebar-header">
+    <h2>ifinmail</h2>
+  </div>
+  <div class="ifinmail-accounts-container" id="sidebarAccounts">
+    <div class="ifinmail-accounts-container-list" id="accountsListSidebar"></div>
+    <button class="ifinmail-accounts-add-btn" id="accountsAddBtn" title="Add account">+</button>
+  </div>
+  <button class="ifinmail-btn ifinmail-btn-compose" id="composeBtn">+ New Message</button>
+  <nav class="ifinmail-nav">
+    <a class="ifinmail-nav-item" data-folder="INBOX"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,12 8,12 10,15 14,15 16,12 22,12"/></svg></span> Inbox <span class="ifinmail-badge" id="inboxCount"></span></a>
+    <a class="ifinmail-nav-item" data-folder="SENT"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span> Sent</a>
+    <a class="ifinmail-nav-item" data-folder="DRAFTS"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span> Drafts</a>
+    <a class="ifinmail-nav-item" data-folder="ARCHIVE"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span> Archive</a>
+    <a class="ifinmail-nav-item" data-folder="SPAM"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Spam</a>
+    <a class="ifinmail-nav-item" data-folder="TRASH"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span> Trash</a>
+    <a class="ifinmail-nav-item" id="settingsNav"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Settings</a>
+    <a class="ifinmail-nav-item" id="adminNav" style="display:none"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Admin</a>
+    <div id="customFoldersSidebar"></div>
+  </nav>
+  <div class="ifinmail-sidebar-footer">
+    <span class="ifinmail-user-email" id="userEmail"></span>
+    <a class="ifinmail-logout-link" id="logoutBtn">Sign out</a>
+  </div>
+</template>
+<template id="inboxTmpl">
+  <div class="ifinmail-toolbar">
+    <div class="ifinmail-search">
+      <input type="search" id="searchInput" placeholder="Search mail...">
+      <button class="ifinmail-btn ifinmail-btn-search" id="searchBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      <button class="ifinmail-btn ifinmail-btn-icon" id="refreshBtn" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+      <button class="ifinmail-btn ifinmail-btn-icon" id="markAllReadBtn" title="Mark all as read"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 12 5 16 9 12"/><polyline points="13 12 17 16 21 12"/><line x1="12" y1="2" x2="12" y2="8"/></svg></button>
+      <span class="ifinmail-search-count" id="searchCount"></span>
+    </div>
+    <div class="ifinmail-trash-actions" id="trashActions" style="display:none">
+      <button class="ifinmail-btn ifinmail-btn-sm" id="emptyTrashBtn">Empty trash</button>
+      <button class="ifinmail-btn ifinmail-btn-sm" id="restoreAllBtn">Restore all</button>
+    </div>
+  </div>
+  <div class="ifinmail-batch-bar" id="batchBar" style="display:none">
+    <label class="ifinmail-batch-select-all"><input type="checkbox" id="selectAllCb"> Select all</label>
+    <span class="ifinmail-batch-count" id="batchCount">0 selected</span>
+    <button class="ifinmail-btn ifinmail-btn-sm ifinmail-batch-cancel" id="batchCancel" title="Clear selection">Cancel</button>
+    <button class="ifinmail-btn ifinmail-btn-sm" id="batchStar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Star</button>
+    <button class="ifinmail-btn ifinmail-btn-sm" id="batchRead">Read</button>
+    <button class="ifinmail-btn ifinmail-btn-sm" id="batchUnread">Unread</button>
+    <button class="ifinmail-btn ifinmail-btn-sm" id="batchTrash"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Trash</button>
+    <div class="ifinmail-batch-move">
+      <button class="ifinmail-btn ifinmail-btn-sm" id="batchMoveBtn">Move to ▾</button>
+      <div class="ifinmail-batch-move-dropdown" id="batchMoveDropdown"></div>
+    </div>
+  </div>
+  <div class="ifinmail-message-list" id="messageList"></div>
+  <div id="paginationControls" style="display:none;align-items:center;justify-content:center;padding:16px"></div>
+</template>
+<template id="messageRowTmpl">
+  <div class="ifinmail-row" draggable="false">
+    <div class="ifinmail-row-check"><input type="checkbox" class="ifinmail-row-cb"></div>
+    <div class="ifinmail-row-unread-dot" title="Toggle read/unread"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg></div>
+    <div class="ifinmail-row-star" title="Star"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+    <div class="ifinmail-row-sender"></div>
+    <div class="ifinmail-row-subject"></div>
+    <div class="ifinmail-row-labels"></div>
+    <div class="ifinmail-row-date"></div>
+  </div>
+</template>
+<template id="messageViewTmpl">
+  <div class="ifinmail-message-header">
+    <button class="ifinmail-btn ifinmail-btn-back" id="backBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+    <div class="ifinmail-message-actions">
+      <button class="ifinmail-btn" id="replyBtn" title="Reply"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> Reply</button>
+      <button class="ifinmail-btn" id="replyAllBtn" title="Reply all"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 17 22 12 17 7"/><path d="M9 18v-2a4 4 0 0 1 4-4h4"/><polyline points="9 17 4 12 9 7"/><path d="M14 18v-2a4 4 0 0 0-4-4H4"/></svg> Reply all</button>
+      <button class="ifinmail-btn" id="forwardBtn" title="Forward"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg> Forward</button>
+      <button class="ifinmail-btn" id="archiveBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Archive</button>
+      <button class="ifinmail-btn" id="starBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Star</button>
+      <button class="ifinmail-btn" id="trashBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Trash</button>
+      <div class="ifinmail-move-container">
+        <button class="ifinmail-btn" id="moveBtn">Move to ▾</button>
+        <div class="ifinmail-move-dropdown" id="moveDropdown"></div>
+      </div>
+    </div>
+  </div>
+  <h2 class="ifinmail-message-subject" id="msgSubject"></h2>
+  <div class="ifinmail-message-meta">
+    <span class="ifinmail-message-from" id="msgFrom"></span>
+    <span class="ifinmail-message-to" id="msgTo"></span>
+    <span class="ifinmail-message-date" id="msgDate"></span>
+  </div>
+  <div class="ifinmail-attachments" id="msgAttachments"></div>
+  <div class="ifinmail-message-labels" id="msgLabels"></div>
+  <div class="ifinmail-message-body" id="msgBody"></div>
+</template>
+<template id="attachmentRowTmpl">
+  <div class="ifinmail-attachment-row">
+    <span class="ifinmail-attachment-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span>
+    <a class="ifinmail-attachment-link" target="_blank"></a>
+    <span class="ifinmail-attachment-size"></span>
+  </div>
+</template>
+<template id="composeTmpl">
+  <div class="ifinmail-compose-header">
+    <h2>New Message</h2>
+    <button class="ifinmail-btn ifinmail-btn-back" id="cancelCompose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <form id="composeForm" class="ifinmail-form">
+    <input type="email" id="composeTo" placeholder="To" required>
+    <input type="text" id="composeSubject" placeholder="Subject">
+    <textarea id="composeBody" placeholder="Message" rows="12"></textarea>
+    <div id="composeQuote" class="ifinmail-compose-quote"></div>
+    <div class="ifinmail-compose-attachments" id="composeAttachmentsContainer">
+      <div class="ifinmail-attach-btn-wrapper">
+        <button type="button" class="ifinmail-btn" id="attachBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Attach</button>
+        <input type="file" id="attachInput" multiple style="display:none">
+      </div>
+      <div id="composeAttachList"></div>
+    </div>
+    <div class="ifinmail-compose-actions">
+      <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Send</button>
+    </div>
+    <p class="ifinmail-error" id="composeError"></p>
+  </form>
+</template>
+<template id="settingsTmpl">
+  <div class="ifinmail-settings-header"><h2>Settings</h2></div>
+  <div class="ifinmail-settings-body">
+    <section class="ifinmail-settings-section">
+      <h3>Auto-reply / Vacation</h3>
+      <label>Subject <input type="text" id="vacationSubject" class="ifinmail-input"></label>
+      <label>Body <textarea id="vacationBody" class="ifinmail-input" rows="4"></textarea></label>
+      <label class="ifinmail-check-label"><input type="checkbox" id="vacationEnabled"> Enable auto-reply</label>
+      <button class="ifinmail-btn ifinmail-btn-primary" id="saveVacation">Save</button>
+      <p class="ifinmail-error" id="vacationError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Email Forwarding</h3>
+      <div id="forwardingList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="email" id="forwardingEmail" class="ifinmail-input" placeholder="forward@example.com" style="flex:1">
+        <button class="ifinmail-btn ifinmail-btn-primary" id="addForwarding">Add</button>
+      </div>
+      <p class="ifinmail-error" id="forwardingError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Custom Folders</h3>
+      <div id="settingsFoldersList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="settingsFolderName" class="ifinmail-input" placeholder="Folder name" style="flex:1">
+        <button class="ifinmail-btn ifinmail-btn-primary" id="addFolderBtn">Add</button>
+      </div>
+      <p class="ifinmail-error" id="folderError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Domains</h3>
+      <div id="settingsDomainsList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="settingsDomainInput" class="ifinmail-input" placeholder="example.com" style="flex:1">
+        <button class="ifinmail-btn ifinmail-btn-primary" id="addDomainBtn">Add</button>
+      </div>
+      <p class="ifinmail-error" id="domainError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Billing / Plan</h3>
+      <div id="billingInfo"></div>
+      <div id="billingPlans" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+      <p class="ifinmail-error" id="billingError"></p>
+    </section>
+  </div>
+</template>
+<template id="shortcutsTmpl">
+  <div class="ifinmail-overlay" id="shortcutsOverlay">
+    <div class="ifinmail-dialog">
+      <div class="ifinmail-dialog-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button class="ifinmail-btn ifinmail-btn-back" id="shortcutsClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="ifinmail-dialog-body">
+        <div class="ifinmail-shortcut-row"><kbd>n</kbd><span>New message</span></div>
+        <div class="ifinmail-shortcut-row"><kbd>r</kbd><span>Reply to message</span></div>
+        <div class="ifinmail-shortcut-row"><kbd>u</kbd><span>Toggle read/unread</span></div>
+        <div class="ifinmail-shortcut-row"><kbd>#</kbd><span>Delete / trash</span></div>
+        <div class="ifinmail-shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
+        <div class="ifinmail-shortcut-row"><kbd>Ctrl+Z</kbd><span>Undo</span></div>
+        <div class="ifinmail-shortcut-row"><kbd>Ctrl+Shift+Z</kbd><span>Redo</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="addAccountTmpl">
+  <div class="ifinmail-overlay" id="addAccountOverlay">
+    <div class="ifinmail-dialog">
+      <div class="ifinmail-dialog-header">
+        <h3>Add Account</h3>
+        <button class="ifinmail-btn ifinmail-btn-back" id="addAccountClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="ifinmail-dialog-tabs">
+        <button class="ifinmail-tab active" data-aa-tab="login">Sign in</button>
+        <button class="ifinmail-tab" data-aa-tab="register">Register</button>
+      </div>
+      <div class="ifinmail-dialog-body">
+        <form id="addAccountForm" class="ifinmail-form" data-aa-mode="login">
+          <input type="email" id="addAccountEmail" placeholder="Email" required>
+          <div class="ifinmail-pw-wrap">
+            <input type="password" id="addAccountPassword" placeholder="Password" required>
+            <button type="button" class="ifinmail-pw-toggle" data-target="addAccountPassword" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+          <button type="submit" class="ifinmail-btn ifinmail-btn-primary" style="width:100%">Add &amp; switch</button>
+          <p class="ifinmail-error" id="addAccountError"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="adminTmpl">
+  <div class="ifinmail-settings-header"><h2>Admin Dashboard</h2></div>
+  <div class="ifinmail-settings-body">
+    <div class="ifinmail-admin-cards" id="adminCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px"></div>
+    <section class="ifinmail-settings-section">
+      <h3>Users</h3>
+      <div style="overflow-x:auto"><table class="ifinmail-admin-table" id="adminUsersTable" style="width:100%;border-collapse:collapse;font-size:13px"></table></div>
+    </section>
+    <p class="ifinmail-error" id="adminError"></p>
+  </div>
+</template>
+<script src="/static/app.js?v=15"></script>
+</body>
+</html>

@@ -86,12 +86,12 @@ grep -i "spf" /var/log/mail.log | head -10
 ```
 
 ### Checkpoint Questions
-1. What happens when a domain uses `-all` vs `~all`? Which should ifinmail domains use?
+1. What happens when a domain uses `-all` vs `~all`? Which should ifinmail App domains use?
 2. Why does SPF break email forwarding? What mitigates this?
 3. What is the 10-DNS-lookup limit and how do you avoid hitting it?
-4. How does the ifinmail admin dashboard verify SPF records?
+4. How does the ifinmail App admin dashboard verify SPF records?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Proposal Sections 5.4 and 6.5 describe continuous DNS health checking. SPF is the first check. The admin dashboard must show "SPF alignment status" for every domain. Rspamd (Day 3-4) performs the actual SPF checks during inbound delivery.
 
 ---
@@ -160,7 +160,7 @@ sudo grep "dkim" /var/log/mail.log | tail -10
 3. How does DKIM survive email forwarding when SPF does not?
 4. What is the key rotation strategy? Why is it important?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Proposal Section 5.3 assigns DKIM signing to Rspamd. Every outbound ifinmail message must be DKIM-signed. The deliverability dashboard (Section 6.5) shows "DKIM signing status." Combined with SPF and DMARC, DKIM is how ifinmail builds domain reputation.
 
 ---
@@ -255,7 +255,7 @@ echo "Subject: Test message" | rspamc -h localhost:11333
 3. Why does Rspamd use Redis? What does it store there?
 4. Why configure Rspamd in `local.d/` instead of editing `modules.d/` directly?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The proposal describes Rspamd as "a core component of deliverability and reputation management, not just a spam filter." DMARC is how you tell the world "reject mail that isn't from us." The Rspamd web UI becomes the foundation of the deliverability dashboard.
 
 ---
@@ -375,7 +375,7 @@ sudo cat /var/mail/vhosts/ifinmail.local/bob/new/* 2>/dev/null | grep -i "dkim" 
 3. How does Rspamd's DKIM signing module know which key to use for which domain?
 4. What happens if the milter socket is unreachable? (Hint: `milter_default_action = accept`)
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Rspamd is now fully integrated: SPF checking, DKIM signing, DMARC evaluation, and spam filtering. Every inbound message passes through Rspamd before delivery. Every outbound message gets DKIM-signed. This is the proposal Section 5.3 brought to life.
 
 ---
@@ -526,7 +526,7 @@ if __name__ == "__main__":
 3. How would the DNS health checker run continuously for all ifinmail domains?
 4. What action should the admin dashboard take when DNS checks fail?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The DNS health checker is the core of the deliverability dashboard (proposal Section 6.5). In production, this runs as a background task checking every domain on the platform, flagging misconfigurations before they cause delivery failures.
 
 ---

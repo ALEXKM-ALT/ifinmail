@@ -1,8 +1,8 @@
-# Week 12: Capstone Project — Mini-ifinmail
+# Week 12: Capstone Project — Mini-ifinmail App
 
 **Month 3: Integration & Capstone | Days 67–72**
 
-The capstone project integrates everything from the previous 11 weeks into a working prototype. Attaches will configure the full mail stack, build the API, create the webmail UI, set up email authentication, deploy behind TLS, and present a live demo. This is not a toy project — it should send real mail, receive real mail, and demonstrate the core ifinmail value proposition.
+The capstone project integrates everything from the previous 11 weeks into a working prototype. Attaches will configure the full mail stack, build the API, create the webmail UI, set up email authentication, deploy behind TLS, and present a live demo. This is not a toy project — it should send real mail, receive real mail, and demonstrate the core ifinmail App value proposition.
 
 ---
 

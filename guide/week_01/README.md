@@ -2,7 +2,7 @@
 
 **Month 1: Foundations | Days 1–6**
 
-Before touching email systems or writing code, every engineer must be comfortable in the Linux environment. This week builds command-line fluency, shell scripting basics, and text processing skills — all essential for operating Postfix, Dovecot, and the ifinmail platform.
+Before touching email systems or writing code, every engineer must be comfortable in the Linux environment. This week builds command-line fluency, shell scripting basics, and text processing skills — all essential for operating Postfix, Dovecot, and the ifinmail App platform.
 
 ---
 
@@ -62,7 +62,7 @@ rm -rf ~/ifinmail-tmp
 3. What does `ls -la` show that `ls` does not?
 4. Why is `/var` important for a mail server?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Postfix stores its configuration in `/etc/postfix/`. Mail queues live in `/var/spool/postfix/`. Dovecot stores mail in `/var/mail/` or `/var/vmail/`. Everything in this week maps directly to the directories you will work with when setting up the mail stack.
 
 ---
@@ -112,7 +112,7 @@ id dovecot 2>/dev/null || echo "dovecot user not created yet — we will create 
 3. If a file has permissions `---------T`, what happened? (Hint: sticky bit)
 4. Why might `/etc/postfix/` be owned by root but readable by group `postfix`?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Mail services must be isolated. Postfix's `master.cf` defines which user each service runs as. DKIM private keys must be `600` (owner-only readable). Misconfigured permissions on mail spools or TLS certificates are security incidents.
 
 ---
@@ -159,7 +159,7 @@ pidof systemd
 3. Why do mail servers run as daemons rather than foreground processes?
 4. How would you check if Postfix is running?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Every mail component (Postfix, Dovecot, Rspamd) runs as a systemd service. When we configure these in Weeks 5-7, you will use `systemctl start/enable/status/reload` constantly. Understanding processes is essential for debugging delivery issues.
 
 ---
@@ -231,7 +231,7 @@ ls -la "$BACKUP_DIR"
 3. What does `$(date +%Y%m%d)` produce? Why is this useful for backups?
 4. How would you modify `check_service.sh` to check multiple services at once?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Shell scripts are used extensively for mail server automation: backing up configs, rotating logs, checking DNS health, running Rspamd training, and more. The proposal's Phase 1 "basic admin CLI" starts as shell scripts.
 
 ---
@@ -305,7 +305,7 @@ grep -oP '\[\K[0-9.]+(?=\])' ~/ifinmail-scripts/sample_mail.log | sort | uniq -c
 3. What does `grep -v "^#" /etc/postfix/main.cf` do?
 4. How could text processing help automate DNS health checks for ifinmail domains?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Mail servers are log-heavy. Postfix, Dovecot, and Rspamd all write detailed logs. Every sysadmin skill you just practiced (grepping for failures, extracting patterns, counting occurrences) will be used daily when debugging delivery, tracking spam, and monitoring the platform.
 
 ---

@@ -1,0 +1,15 @@
+[Unit]
+Description=ifinmail Web API Server
+After=network.target
+
+[Service]
+Type=simple
+User=alex
+WorkingDirectory=/home/alex/ifinmail
+ExecStart=/home/alex/ifinmail/.venv/bin/ifinmail serve --host 0.0.0.0 --port 8025
+Restart=on-failure
+RestartSec=5
+Environment=IFINMAIL_LOG_LEVEL=INFO
+
+[Install]
+WantedBy=multi-user.target

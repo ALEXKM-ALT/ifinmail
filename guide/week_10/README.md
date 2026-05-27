@@ -2,7 +2,7 @@
 
 **Month 3: Integration & Capstone | Days 55–60**
 
-ifinmail's frontend strategy is deliberately minimal: no React, no Angular, no Vue, no heavy build pipeline. Instead: server-rendered HTML, vanilla JavaScript modules, Web Components only where useful, and strict `.ifinmail-*` CSS prefixing. This week builds the webmail client, admin dashboard, and the internal CSS utility layer that replaces Bootstrap.
+ifinmail App's frontend strategy is deliberately minimal: no React, no Angular, no Vue, no heavy build pipeline. Instead: server-rendered HTML, vanilla JavaScript modules, Web Components only where useful, and strict `.ifinmail-*` CSS prefixing. This week builds the webmail client, admin dashboard, and the internal CSS utility layer that replaces Bootstrap.
 
 ---
 
@@ -215,7 +215,7 @@ pip install fastapi uvicorn jinja2 aiofiles
 3. How many CSS utility classes should you create? What is the rule for adding a new one?
 4. Why use server-rendered HTML instead of a JavaScript SPA?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Proposal Section 9.1 mandates: no React, no heavy SPA, prefixed CSS, server-rendered pages where possible. This CSS system is the production foundation. Every UI component in the webmail and admin dashboard uses these tokens and class names.
 
 ---
@@ -501,7 +501,7 @@ Proposal Section 9.1 mandates: no React, no heavy SPA, prefixed CSS, server-rend
 3. What does `aria-current="page"` communicate to assistive technology?
 4. Why nest the message card grid within the main layout grid?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This is the webmail client that proposal Section 9 describes. No React. No Vue. No npm build step. Just HTML, CSS custom properties, and the `.ifinmail-*` prefixing convention. The three-panel layout matches the architecture diagram in Section 4.1.
 
 ---
@@ -777,7 +777,7 @@ export { InboxController };
 3. How does the `escapeHtml` function prevent XSS?
 4. Why does the Service Worker only cache "read-only" data?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This JavaScript is the full interactivity layer — no framework, no build step, no npm. The `IfinmailAPI` class is the same contract every official client uses. The `escapeHtml` function and CSP headers (Week 8) are the frontend security baseline.
 
 ---
@@ -988,7 +988,7 @@ This JavaScript is the full interactivity layer — no framework, no build step,
 3. What audit events should be visible to admins?
 4. How does the admin page degrade without JavaScript?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This is the deliverability dashboard from proposal Section 6.5. Domain admins check DNS health here. The warnings (yellow indicators) flag problems before they cause delivery failures. Security events from Section 11's "Security event" entity appear in the recent alerts.
 
 ---
@@ -1190,7 +1190,7 @@ self.addEventListener('fetch', (event) => {
 3. How does Shadow DOM encapsulation interact with the `.ifinmail-*` CSS prefixing system?
 4. Why use `self.skipWaiting()` and `self.clients.claim()` in the Service Worker?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Web Components are the "where useful" exception in proposal Section 9.1. The Service Worker enables the "offline read-only cache" from Section 8.4. Both are native browser APIs — no framework, no build step, no npm dependency.
 
 ---
