@@ -1,8 +1,8 @@
-# Week 9: Rust Fundamentals for ifinmail Core Components
+# Week 9: Rust Fundamentals for ifinmail App Core Components
 
 **Month 3: Integration & Capstone | Days 49–54**
 
-Rust is used for ifinmail's security-sensitive, performance-critical, and cross-platform components: mail parsing, MIME handling, cryptography, sync engine, policy engine, and shared libraries linking into Python (via pyo3), Android (via JNI), and desktop apps. This week covers Rust syntax, ownership, error handling, and the FFI bridge to Python.
+Rust is used for ifinmail App's security-sensitive, performance-critical, and cross-platform components: mail parsing, MIME handling, cryptography, sync engine, policy engine, and shared libraries linking into Python (via pyo3), Android (via JNI), and desktop apps. This week covers Rust syntax, ownership, error handling, and the FFI bridge to Python.
 
 ---
 
@@ -144,7 +144,7 @@ cargo test
 3. What does `cargo clippy` do that `cargo check` does not?
 4. Why is `#[derive(Debug)]` needed on structs?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Rust enums perfectly model email delivery states (queued, deferred, bounced, delivered). The ownership system prevents data races in the sync engine. Cargo's lockfile (`Cargo.lock`) delivers on the proposal's supply-chain security requirement.
 
 ---
@@ -279,7 +279,7 @@ fn main() {
 3. When should you `clone()` vs pass a reference?
 4. What does the `'a` lifetime annotation communicate to the compiler?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Mail parsing is memory-intensive. Rust's ownership model means the parser can read raw bytes, extract references into them, and never allocate unless necessary. The Python (pyo3) bridge must respect ownership boundaries — Rust data crossing into Python must be explicitly converted or managed.
 
 ---
@@ -420,7 +420,7 @@ mod tests {
 3. Why are Rust iterators described as "zero-cost abstractions"?
 4. How would you parse a list of email flags using iterators?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Error handling in the mail stack must be explicit — you cannot silently ignore a failed delivery. `Result<T, E>` makes error paths visible and enforced. Iterators process recipient lists, filter spam, and aggregate deliverability stats without allocating intermediate collections.
 
 ---
@@ -614,7 +614,7 @@ Welcome to ifinmail!\r\n\
 3. Why serialize parsed email to JSON? Who consumes this data?
 4. How does Cargo.lock support the proposal's supply-chain security goal?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This Rust parser is one of the "shared secure core components" from proposal Section 10.2. The Python API can call it via pyo3 (tomorrow's topic). The Android app can call it via JNI. Desktop apps call it natively. One parser, no duplication.
 
 ---
@@ -806,7 +806,7 @@ EOF
 3. How does pyo3 handle Python's GIL during Rust function execution?
 4. Where in the ifinmail architecture would you place the Python ↔ Rust boundary?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The `check_send_policy` function implements proposal Section 6.2 trust levels directly in Rust — fast, correct, and shared across every API endpoint that sends mail. The `parse_raw_email` function is called by the FastAPI ingestion handler. This is proposal Section 10.3 integration in practice.
 
 ---

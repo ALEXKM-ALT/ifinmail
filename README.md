@@ -1,8 +1,8 @@
-# ifinmail
+# ifinmail App
 
 **A secure, API-first email platform. One contract. Many clients. Minimal dependencies.**
 
-ifinmail is an open-source email platform designed to compete with Outlook and Gmail while giving users and businesses more control, transparency, and trust. It combines battle-tested mail infrastructure (Postfix, Dovecot, Rspamd) with a modern API-first product layer (Python, Rust) and framework-free clients (Android, Windows, macOS, Linux, web).
+ifinmail App is an open-source email platform designed to compete with Outlook and Gmail while giving users and businesses more control, transparency, and trust. It combines battle-tested mail infrastructure (Postfix, Dovecot, Rspamd) with a modern API-first product layer (Python, Rust) and framework-free clients (Android, Windows, macOS, Linux, web).
 
 ---
 
@@ -79,7 +79,7 @@ ifinmail/
 
 ### For New Team Members
 
-Start with the [curriculum guide](guide/README.md). It is a 12-week, self-paced program that takes you from Linux fundamentals to building a working mini-ifinmail prototype. No prior email systems knowledge is required.
+Start with the [curriculum guide](guide/README.md). It is a 12-week, self-paced program that takes you from Linux fundamentals to building a working mini-ifinmail App prototype. No prior email systems knowledge is required.
 
 ### For Everyone Else
 

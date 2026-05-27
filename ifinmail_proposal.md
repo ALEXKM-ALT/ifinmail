@@ -1,12 +1,12 @@
-# ifinmail Proposal
+# ifinmail App Proposal
 
 ## Building a Secure, API-First Outlook/Gmail Competitor Using Postfix, Rust, Python, and Minimal Frontend Dependencies
 
 ## 1. Executive Summary
 
-**ifinmail** is proposed as a secure, API-first email platform designed to compete with Outlook, Gmail, and other hosted mail systems while giving users and businesses more control, transparency, portability, and trust.
+**ifinmail App** is proposed as a secure, API-first email platform designed to compete with Outlook, Gmail, and other hosted mail systems while giving users and businesses more control, transparency, portability, and trust.
 
-The system will use proven mail infrastructure components such as **Postfix**, **Dovecot**, **Rspamd**, **OpenDKIM**, **OpenDMARC**, DNS-based authentication records, TLS, abuse controls, and reputation-management practices similar in spirit to Mail-in-a-Box. However, ifinmail will not simply be a mail server bundle. It will be a full email platform with one stable API contract powering many official clients: Android, Windows, macOS, Linux, web, and future integrations.
+The system will use proven mail infrastructure components such as **Postfix**, **Dovecot**, **Rspamd**, **OpenDKIM**, **OpenDMARC**, DNS-based authentication records, TLS, abuse controls, and reputation-management practices similar in spirit to Mail-in-a-Box. However, ifinmail App will not simply be a mail server bundle. It will be a full email platform with one stable API contract powering many official clients: Android, Windows, macOS, Linux, web, and future integrations.
 
 The project will avoid unnecessary frontend and backend frameworks. The frontend will use server-rendered HTML, vanilla JavaScript, Web Components where useful, and strictly prefixed CSS classes such as `.ifinmail-*`. The backend will use Python and Rust where each is strongest: Python for orchestration, API development, admin workflows, and service glue; Rust for high-performance, security-sensitive, and reusable core components such as mail parsing, encryption, synchronization, policy enforcement, local client libraries, and device bootstrap agents.
 
@@ -18,7 +18,7 @@ The guiding principle is simple:
 
 ## 2. Product Vision
 
-ifinmail should become a privacy-respecting, security-conscious, developer-friendly email service that users can trust for personal, business, and organizational communication.
+ifinmail App should become a privacy-respecting, security-conscious, developer-friendly email service that users can trust for personal, business, and organizational communication.
 
 Unlike typical webmail-only systems, ifinmail will be designed from the beginning as a multi-client ecosystem. Every client device, whether Android, Windows, macOS, Linux, browser, or future embedded device, will rely on the same backend API contract. This prevents fragmentation, inconsistent behavior, and duplicate business logic.
 

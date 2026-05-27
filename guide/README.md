@@ -1,15 +1,15 @@
-# ifinmail Engineering Curriculum
+# ifinmail App Engineering Curriculum
 
 ## 3-Month Training Program for New Attachees at Eleso Solution
 
-This curriculum transforms new engineering attaches from foundational knowledge to delivering a working prototype of the **ifinmail** email platform — a secure, API-first Outlook/Gmail competitor built on Postfix, Rust, Python, and minimal frontend dependencies.
+This curriculum transforms new engineering attaches from foundational knowledge to delivering a working prototype of the **ifinmail App** email platform — a secure, API-first Outlook/Gmail competitor built on Postfix, Rust, Python, and minimal frontend dependencies.
 
 ---
 
 ## Curriculum Philosophy
 
 - **Incremental difficulty** — each week builds on the previous, never leaving anyone behind
-- **Project-driven** — every concept is tied directly to the ifinmail proposal
+- **Project-driven** — every concept is tied directly to the ifinmail App proposal
 - **Hands-on** — daily practical exercises, not just theory
 - **Production-minded** — we teach security, reputation, and operations from day one
 
@@ -24,7 +24,7 @@ Build the bedrock: operating systems, networking, programming, and data stores.
 | [Week 1](week_01/) | Linux/Unix Fundamentals | Bash, file systems, permissions, processes, shell scripting, text processing |
 | [Week 2](week_02/) | Networking & Email Protocols | TCP/IP, DNS, HTTP/HTTPS, SMTP, IMAP, POP3, TLS, ports |
 | [Week 3](week_03/) | Python, Git & Development Environment | Python syntax, venv, pip, type hints, Git workflow, VS Code / terminal setup |
-| [Week 4](week_04/) | Databases & Data Modeling | PostgreSQL, SQL, Redis, schema design, the ifinmail data model |
+| [Week 4](week_04/) | Databases & Data Modeling | PostgreSQL, SQL, Redis, schema design, the ifinmail App data model |
 
 ---
 
@@ -37,7 +37,7 @@ Learn the mail infrastructure layer and begin building the API platform.
 | [Week 5](week_05/) | Postfix & SMTP | Postfix configuration, virtual domains, TLS, queue management, transport maps |
 | [Week 6](week_06/) | Dovecot & IMAP | Dovecot setup, Maildir storage, LMTP delivery, authentication, Sieve filtering |
 | [Week 7](week_07/) | Email Security & Authentication | SPF, DKIM, DMARC, Rspamd, DNS records, reputation fundamentals |
-| [Week 8](week_08/) | Python API Development | FastAPI, REST design, OpenAPI contracts, JWT auth, the ifinmail API groups |
+| [Week 8](week_08/) | Python API Development | FastAPI, REST design, OpenAPI contracts, JWT auth, the ifinmail App API groups |
 
 ---
 
@@ -50,7 +50,7 @@ Bring everything together: Rust core, frontend, security, deployment, and the fi
 | [Week 9](week_09/) | Rust Fundamentals | Ownership, Cargo, crates, error handling, FFI with Python via pyo3 |
 | [Week 10](week_10/) | Minimal Frontend | Server-rendered HTML, vanilla JS, `.ifinmail-*` CSS, Web Components |
 | [Week 11](week_11/) | Security, DevOps & Deployment | TLS, Certbot, Docker, backups, monitoring, CI/CD, SBOMs |
-| [Week 12](week_12/) | Capstone Project | Build a mini-ifinmail: send/receive mail, webmail UI, admin dashboard, API |
+| [Week 12](week_12/) | Capstone Project | Build a mini-ifinmail App: send/receive mail, webmail UI, admin dashboard, API |
 
 ---
 
@@ -68,7 +68,7 @@ A sixth "Review & Practice" day (Saturday) provides consolidation exercises.
 
 ---
 
-## Capstone Project: Mini-ifinmail
+## Capstone Project: Mini-ifinmail App
 
 In Week 12, attaches will integrate everything into a working prototype:
 
@@ -89,9 +89,9 @@ In Week 12, attaches will integrate everything into a working prototype:
 
 ---
 
-## Reference: The ifinmail Proposal
+## Reference: The ifinmail App Proposal
 
-The full [ifinmail proposal](../ifinmail_proposal.md) is the north star for this curriculum. Attaches should re-read relevant sections each week as their understanding deepens.
+The full [ifinmail App proposal](../ifinmail_proposal.md) is the north star for this curriculum. Attaches should re-read relevant sections each week as their understanding deepens.
 
 ---
 

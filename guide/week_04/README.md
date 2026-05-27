@@ -2,7 +2,7 @@
 
 **Month 1: Foundations | Days 19–24**
 
-PostgreSQL and Redis are the data backbone of ifinmail. PostgreSQL holds users, domains, mail metadata, and audit logs. Redis handles queues, rate limits, counters, and ephemeral state. This week covers SQL fundamentals, schema design, and the ifinmail data model.
+PostgreSQL and Redis are the data backbone of ifinmail App. PostgreSQL holds users, domains, mail metadata, and audit logs. Redis handles queues, rate limits, counters, and ephemeral state. This week covers SQL fundamentals, schema design, and the ifinmail data model.
 
 ---
 
@@ -110,7 +110,7 @@ GROUP BY o.name;
 3. Why do we use a separate `ifinmail` schema instead of the default `public`?
 4. What is the difference between `TIMESTAMP` and `TIMESTAMP WITH TIME ZONE`? Which does ifinmail need?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 PostgreSQL is the "system of record" (Section 10.3). Every entity in Section 11 of the proposal maps to PostgreSQL tables. This week's schema exercises build directly toward the production data model.
 
 ---
@@ -212,7 +212,7 @@ COMMIT;
 3. How do indexes help the ifinmail API respond faster?
 4. Why would you use a CTE instead of a subquery?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Every entity from Section 11 of the proposal (Organization, Domain, User, Mailbox, Alias, Device, Session, API Key, etc.) will become PostgreSQL tables with proper constraints, indexes, and relationships. This exercise is the foundation of the production schema.
 
 ---
@@ -302,7 +302,7 @@ WHERE search_vector @@ phraseto_tsquery('english', 'deployment plan');
 3. How does a GIN index make search faster?
 4. When would ifinmail need a dedicated search engine instead?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Section 12 of the proposal explicitly plans PostgreSQL FTS as the initial search implementation. Every official client's search bar will query these indexes. Understanding FTS now means you can build the search feature from day one.
 
 ---
@@ -384,7 +384,7 @@ KEYS ifinmail:*
 3. How would you implement the proposal's "trust level" sending limits using Redis sorted sets?
 4. What is the difference between Redis lists (queues) and sorted sets (rate windows)?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Section 6.2 defines trust-based sending limits. Redis is the engine that enforces them in real time. The proposal lists Redis for "queues, rate limits, policy counters, and temporary verification flows" — every Redis data type maps to a specific ifinmail feature.
 
 ---
@@ -525,7 +525,7 @@ if __name__ == "__main__":
 3. How does the Redis rate limiter reset after one hour?
 4. Why is `decode_responses=True` useful in the Redis client?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This is the bridge between Week 3's API layer and Week 4's data layer. The production ifinmail API will use these exact patterns: psycopg2 for PostgreSQL queries, redis-py for rate limits and sessions, and FastAPI to expose it all to clients.
 
 ---

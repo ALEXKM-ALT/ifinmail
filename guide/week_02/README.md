@@ -2,7 +2,7 @@
 
 **Month 1: Foundations | Days 7–12**
 
-Email flows across the internet using protocols refined over 40+ years. This week covers TCP/IP fundamentals, DNS, and the three protocols at the heart of ifinmail: SMTP, IMAP, and TLS. No email system can be built without understanding what happens between `MAIL FROM` and `logout`.
+Email flows across the internet using protocols refined over 40+ years. This week covers TCP/IP fundamentals, DNS, and the three protocols at the heart of ifinmail App: SMTP, IMAP, and TLS. No email system can be built without understanding what happens between `MAIL FROM` and `logout`.
 
 ---
 
@@ -61,7 +61,7 @@ netstat -natp 2>/dev/null | head -20 || ss -tanp | head -20
 3. What is the difference between a listening socket and an established connection?
 4. If port 25 is already bound, what error will Postfix produce on startup?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Postfix binds to ports 25 (SMTP), 465 (SMTPS), and 587 (submission). Dovecot binds to 143 (IMAP) and 993 (IMAPS). If these ports are occupied, mail stops. Understanding ports is the first step in debugging "mail isn't flowing."
 
 ---
@@ -119,7 +119,7 @@ echo "  PTR: server IP → mail.ifinmail.com"
 3. Why is reverse DNS (PTR) important for email deliverability?
 4. Where would you check if a domain's SPF record is correctly configured?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Section 5.4 of the proposal dedicates an entire subsection to DNS identity records. The admin dashboard must "continuously check DNS health." Every domain hosted on ifinmail needs MX, SPF, DKIM, DMARC, MTA-STS, TLS-RPT, and PTR records correctly configured. You will implement these checks in Week 7.
 
 ---
@@ -164,7 +164,7 @@ EOF
 3. What port should a user's email client use to *send* mail? Why not port 25?
 4. In the ifinmail architecture, which component acts as MTA? Which acts as MDA?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Postfix is ifinmail's MTA. Dovecot's LMTP is the MDA. Users submit mail on port 587 (submission) after authentication. Port 25 receives inbound mail from other servers. The API wraps these into clean endpoints — but underneath, SMTP is still doing the work.
 
 ---
@@ -217,7 +217,7 @@ EOF
 3. How does the ifinmail API relate to IMAP? Why have both?
 4. What port does IMAP-over-TLS use?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Dovecot provides IMAP for traditional clients (Thunderbird, Outlook, Apple Mail), while the ifinmail API provides the same data for official apps (Android, desktop, web). Both read from the same Maildir storage. This dual-access is a key architectural decision.
 
 ---
@@ -263,7 +263,7 @@ openssl x509 -in ~/ifinmail-certs/test.crt -noout -text | head -20
 3. How does Certbot/ACME automate certificate renewal?
 4. What is the relationship between TLS certificates and the `.ifinmail-*` security model?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The proposal mandates "TLS everywhere" (Section 13.3). DANE/DNSSEC can complement MTA-STS. Certbot automates certificate lifecycle for Postfix and Dovecot. Certificate pinning is an option for official ifinmail apps.
 
 ---

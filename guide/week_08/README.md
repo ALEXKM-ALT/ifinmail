@@ -1,8 +1,8 @@
-# Week 8: Python API Development — The ifinmail Platform Layer
+# Week 8: Python API Development — The ifinmail App Platform Layer
 
 **Month 2: Core Mail Stack | Days 43–48**
 
-The API layer is what makes ifinmail a platform, not just a mail server. This week builds the full REST API contract described in proposal Section 7: authentication, mail operations, admin endpoints, device bootstrap, structured errors, and OpenAPI documentation. By Friday, you will have a working API that powers both the web client and future official apps.
+The API layer is what makes ifinmail App a platform, not just a mail server. This week builds the full REST API contract described in proposal Section 7: authentication, mail operations, admin endpoints, device bootstrap, structured errors, and OpenAPI documentation. By Friday, you will have a working API that powers both the web client and future official apps.
 
 ---
 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
 3. What information should go in a JWT payload vs what should be looked up in the database?
 4. How would you implement session revocation given stateless JWTs?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Auth is the gateway to every API call. The proposal mandates "structured and consistent" errors and "idempotency keys where useful." This JWT implementation powers authentication for all official clients.
 
 ---
@@ -371,7 +371,7 @@ async def search_messages(
 3. Why is cursor-based pagination better than offset-based for email?
 4. What is the difference between the envelope and the headers in the send model?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This is the exact API contract from proposal Section 7.2. Every official client — Android, Windows, macOS, Linux, and web — calls these same endpoints. The consistency comes from one API definition powering all clients.
 
 ---
@@ -541,7 +541,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 3. How would the DNS health endpoint integrate with the Week 7 checker?
 4. What audit events should be logged for compliance?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The Admin API is how the platform is managed — adding domains, creating users, and monitoring deliverability. The OpenAPI spec is the single source of truth that client code generators use for Android, desktop, and web apps.
 
 ---
@@ -698,7 +698,7 @@ async def events_websocket(websocket: WebSocket):
 3. How does device revocation work with stateless JWTs?
 4. What events should be pushed over WebSocket vs polled via REST?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The bootstrap contract is the key to multi-client consistency. Every official app (Android, Windows, macOS, Linux, web) starts with the same `/bootstrap/manifest` call. Device-specific credentials mean revoking one device does not affect others. This is proposal Section 8 implemented.
 
 ---
@@ -850,7 +850,7 @@ python -m pytest tests/ --cov=app --cov-report=term-missing
 3. What security headers should every ifinmail API response include?
 4. How would you test rate limiting behavior?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Testing is not optional for an email platform. A bug in the send endpoint could mean lost messages. Structured errors mean every client (Android, desktop, web) can handle failures the same way. The middleware pattern keeps cross-cutting concerns (auth, rate limiting, errors) out of business logic.
 
 ---

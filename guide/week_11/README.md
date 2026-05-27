@@ -2,7 +2,7 @@
 
 **Month 3: Integration & Capstone | Days 61–66**
 
-A mail platform lives and dies by its operations. This week covers TLS certificate automation, Docker containerization, backup strategies, monitoring, CI/CD pipeline design, SBOM generation, and the security hardening required to run ifinmail in production. By Friday, you will deploy the full stack on a VPS.
+A mail platform lives and dies by its operations. This week covers TLS certificate automation, Docker containerization, backup strategies, monitoring, CI/CD pipeline design, SBOM generation, and the security hardening required to run ifinmail App in production. By Friday, you will deploy the full stack on a VPS.
 
 ---
 
@@ -133,7 +133,7 @@ sudo ss -tlnp | grep -E ":(22|25|80|143|443|465|587|993) "
 3. Why does the renewal hook need to restart services?
 4. What is the principle behind `ufw default deny incoming`?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Proposal Sections 13.3 and 14.1 mandate "TLS everywhere" and "certificate automation." Certbot delivers this. The firewall configuration protects the mail ports. fail2ban blocks brute force attacks on SMTP/IMAP submission — a real threat for any mail server.
 
 ---
@@ -327,7 +327,7 @@ docker compose down
 3. When would it be better to run Postfix on bare metal instead of Docker?
 4. How does Docker Compose's `depends_on` + `healthcheck` ensure correct startup order?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Docker Compose enables the "single VPS" deployment model from proposal Section 14.1. As ifinmail scales, services can be split across hosts. The volume configuration ensures mail data, database files, and logs survive container restarts.
 
 ---
@@ -487,7 +487,7 @@ crontab -l
 3. Why must backup restores be tested regularly, not just taken?
 4. What does the 3-2-1 backup rule mean for ifinmail?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Proposal Section 14.2 defines the backup scope. This script implements exactly that: PostgreSQL, mail storage, DKIM keys, configurations, audit logs. The monthly restore test ensures backups are actually usable. The encryption step prepares for offsite storage.
 
 ---
@@ -678,7 +678,7 @@ chmod +x ~/ifinmail-monitor/monitor.py
 3. How does storing metrics in Redis help the API dashboard?
 4. What should happen when the certificate expiry check returns CRITICAL?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This monitor implements every metric from proposal Section 14.3. The Redis storage feeds the deliverability dashboard (Section 6.5). In production, this would also push to Prometheus/Grafana or a managed monitoring service.
 
 ---
@@ -853,7 +853,7 @@ cargo audit  # For Rust
 3. What is the difference between CI (continuous integration) and CD (continuous delivery)?
 4. Why should build environments be separate from production environments?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Proposal Section 13.5 mandates: SBOM generation, pinned CI/CD actions, signed releases, and separated build/production environments. This pipeline implements all of them. Every PR runs tests; every release generates signed container images with verified SBOMs.
 
 ---

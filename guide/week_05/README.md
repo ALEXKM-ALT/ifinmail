@@ -2,7 +2,7 @@
 
 **Month 2: Core Mail Stack | Days 25–30**
 
-Postfix is the SMTP engine of ifinmail — it receives, routes, and delivers every message. This week covers installation, core configuration, virtual domains, TLS, and the integration patterns that connect Postfix to the rest of the platform.
+Postfix is the SMTP engine of ifinmail App — it receives, routes, and delivers every message. This week covers installation, core configuration, virtual domains, TLS, and the integration patterns that connect Postfix to the rest of the platform.
 
 ---
 
@@ -88,7 +88,7 @@ mail   # or: cat /var/mail/$USER
 3. What is `myorigin` and why does it matter?
 4. Where does Postfix store queued messages on disk?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Postfix is the first component in the ifinmail architecture diagram (Section 4.1). Every message flows through it. The configuration you learn today — `myhostname`, `mydomain`, `inet_interfaces` — is the foundation you will extend with virtual domains, TLS, and Dovecot integration.
 
 ---
@@ -167,7 +167,7 @@ sudo journalctl -u postfix -n 20
 3. How would you add a third domain `acme.local` with a mailbox `carol@acme.local`?
 4. Why is `virtual_mailbox_base` separated from the lookup table?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The proposal envisions hosting many domains on one platform. Virtual domains are how Postfix handles `eleso.com`, `acme.com`, `ifinsta.io`, and every customer domain. In production, these maps will come from PostgreSQL (via `pgsql:` tables), not flat files.
 
 ---
@@ -232,7 +232,7 @@ sudo systemctl reload postfix
 3. What does `lmtp:unix:private/dovecot-lmtp` mean? What is LMTP?
 4. Why separate the transport for different domains?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The queue is where deliverability lives or dies. Section 6.3 (warm-up strategy) depends on controlling queue rates. The transport map is how Postfix hands mail to Dovecot's LMTP for final delivery — the critical Postfix→Dovecot integration.
 
 ---
@@ -303,7 +303,7 @@ postconf | grep -E "_tls_" | sort
 3. What does `smtpd_tls_received_header = yes` add to each message?
 4. How does MTA-STS (proposal Section 5.4) improve on opportunistic TLS?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 TLS is the first line of transport security. Every connection to ifinmail's Postfix must be encrypted. In production, Certbot will auto-renew certificates. The `smtp_tls` settings also apply to outbound delivery — protecting mail sent to other servers that support TLS.
 
 ---
@@ -406,7 +406,7 @@ sudo grep "status=deferred" /var/log/mail.log | grep -oP 'dsn=\K[^,]+' | sort | 
 3. What does the deferred queue tell you about your mail system's health?
 4. How would you detect a spam outbreak from the logs?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This is production ifinmail: Postfix reading domains, mailboxes, and aliases directly from PostgreSQL. The admin dashboard will run these same log queries to populate the deliverability dashboard (proposal Section 6.5).
 
 ---

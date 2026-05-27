@@ -2,7 +2,7 @@
 
 **Month 1: Foundations | Days 13–18**
 
-Python is the orchestration layer of ifinmail — APIs, admin workflows, DNS verification, background tasks. This week builds solid Python fundamentals from zero, establishes Git discipline, and sets up the development environment we will use throughout the curriculum.
+Python is the orchestration layer of ifinmail App — APIs, admin workflows, DNS verification, background tasks. This week builds solid Python fundamentals from zero, establishes Git discipline, and sets up the development environment we will use throughout the curriculum.
 
 ---
 
@@ -79,7 +79,7 @@ print(f"Bytes length: {len(email_bytes)}, String length: {len(email_str)}")
 3. When would you use a `tuple` instead of a `list`?
 4. How is a `set` useful when working with email flags?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Every API response in ifinmail will be JSON — Python lists and dicts map directly. Email messages arrive as bytes from Postfix and must be parsed. The Rust core will also use these concepts (though with stricter types).
 
 ---
@@ -160,7 +160,7 @@ def parse_email_headers(raw: str) -> Dict[str, str]:
 3. How do type hints help in a multi-developer project like ifinmail?
 4. What is the difference between `requirements.txt` and `pyproject.toml`?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The proposal requires "pinned dependencies and lockfiles" (Section 3.3). The Python API layer will be organized as packages: `ifinmail.api`, `ifinmail.admin`, `ifinmail.mail`, `ifinmail.auth`. Every function will use type hints for safety.
 
 ---
@@ -247,7 +247,7 @@ cd ~
 3. When should you branch vs commit directly to main?
 4. How does `git log --oneline --graph` help understand project history?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 The proposal requires signed commits and signed releases (Section 3.3). ifinmail is hosted at `github.com/ifinsta/ifinmail`. Every week of this curriculum adds to a Git repository. Clean Git history is part of the project's supply-chain security.
 
 ---
@@ -330,7 +330,7 @@ except ApiError as e:
 3. How do structured API errors (Section 7.1) help client developers?
 4. What does `mypy` catch that Python's runtime does not?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 Section 7.1 of the proposal mandates "structured and consistent" API errors. Type hints catch bugs in the API layer before they reach production. The integration between Python and Rust (via pyo3) relies on clear type boundaries.
 
 ---
@@ -472,7 +472,7 @@ async def health_check():
 3. How does this API structure map to the proposal's API groups (Section 7.2)?
 4. Why use `from_` instead of `from` in the Pydantic model?
 
-### Connection to ifinmail
+### Connection to ifinmail App
 This FastAPI app is a miniature version of the ifinmail API layer. The real API will have Auth, Admin, Device Bootstrap, and WebSocket groups instead of just Mail. But the patterns — Pydantic models, structured errors, versioned endpoints — are identical.
 
 ---
