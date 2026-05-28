@@ -2,6 +2,6 @@ from django.apps import AppConfig
 
 
 class CoreConfig(AppConfig):
-    name = "backend.apps.core"
-    label = "ifinmail_core"
-    verbose_name = "ifinmail Core"
+    name: str = "backend.apps.core"
+    label: str = "ifinmail_core"
+    verbose_name: str = "ifinmail Core"

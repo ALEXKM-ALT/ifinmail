@@ -2,6 +2,6 @@ from django.apps import AppConfig
 
 
 class MailConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'backend.apps.mail'
-    label = 'mail'
+    default_auto_field: str = 'django.db.models.BigAutoField'
+    name: str = 'backend.apps.mail'
+    label: str = 'mail'

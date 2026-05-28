@@ -1,0 +1,1330 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-27 14:24+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: frontend/templates/400.html:4
+#, python-format
+msgid "Bad Request — %(name)s"
+msgstr ""
+
+#: frontend/templates/400.html:9
+msgid "The server could not understand your request due to invalid syntax."
+msgstr ""
+
+#: frontend/templates/400.html:11 frontend/templates/403.html:11
+#: frontend/templates/404.html:11 frontend/templates/500.html:12
+#: frontend/templates/502.html:12 frontend/templates/503.html:12
+#: frontend/templates/504.html:12
+msgid "Return to Dashboard"
+msgstr ""
+
+#: frontend/templates/400.html:12 frontend/templates/403.html:12
+#: frontend/templates/404.html:12
+msgid "Go Back"
+msgstr ""
+
+#: frontend/templates/403.html:4
+#, python-format
+msgid "Forbidden — %(name)s"
+msgstr ""
+
+#: frontend/templates/403.html:9
+msgid "You do not have permission to access this resource."
+msgstr ""
+
+#: frontend/templates/404.html:4
+#, python-format
+msgid "Page Not Found — %(name)s"
+msgstr ""
+
+#: frontend/templates/404.html:9
+msgid "The page you requested could not be found."
+msgstr ""
+
+#: frontend/templates/500.html:4
+#, python-format
+msgid "Server Error — %(name)s"
+msgstr ""
+
+#: frontend/templates/500.html:9
+msgid "An unexpected error occurred. The team has been notified."
+msgstr ""
+
+#: frontend/templates/500.html:10 frontend/templates/502.html:10
+#: frontend/templates/503.html:10 frontend/templates/504.html:10
+msgid "If this issue persists, please contact support."
+msgstr ""
+
+#: frontend/templates/500.html:13 frontend/templates/502.html:13
+#: frontend/templates/503.html:13 frontend/templates/504.html:13
+msgid "Retry"
+msgstr ""
+
+#: frontend/templates/502.html:4
+#, python-format
+msgid "Bad Gateway — %(name)s"
+msgstr ""
+
+#: frontend/templates/502.html:9
+msgid ""
+"The server received an invalid response from an upstream server. Please try "
+"again later."
+msgstr ""
+
+#: frontend/templates/503.html:4
+#, python-format
+msgid "Service Unavailable — %(name)s"
+msgstr ""
+
+#: frontend/templates/503.html:9
+msgid ""
+"The service is temporarily unavailable due to maintenance or capacity "
+"issues. Please try again shortly."
+msgstr ""
+
+#: frontend/templates/504.html:4
+#, python-format
+msgid "Gateway Timeout — %(name)s"
+msgstr ""
+
+#: frontend/templates/504.html:9
+msgid ""
+"The server did not receive a timely response from an upstream server. Please "
+"try again later."
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:4
+#, python-format
+msgid "Branding & Identity — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:12
+msgid "Branding & Identity"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:13
+msgid ""
+"Customize the visual identity of your mail server suite. These settings will "
+"propagate across administrative interfaces, user-facing webmail clients, and "
+"automated email communications."
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:18
+msgid "Logo Management"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:21
+msgid "Primary Logo"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:22
+msgid "Click to upload or drag and drop"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:22
+msgid "SVG, PNG (max 400x120px)"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:25
+msgid "Email Header Logo"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:27
+msgid "Current:"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:27
+msgid "Change"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:30
+msgid "Favicon"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:31
+#: frontend/templates/admin/branding_identity.html:37
+#: frontend/templates/admin/branding_identity.html:39
+#: frontend/templates/admin/branding_identity.html:71
+#: frontend/templates/admin/branding_identity.html:72
+#: frontend/templates/admin/dns_config.html:19
+#: frontend/templates/admin/dns_config.html:64
+#: frontend/templates/admin/logs.html:19 frontend/templates/admin/logs.html:20
+#: frontend/templates/admin/logs.html:21 frontend/templates/admin/logs.html:53
+#: frontend/templates/admin/spam_filtering.html:56
+#: frontend/templates/admin/user_management.html:17
+#: frontend/templates/admin/user_management.html:58
+msgid "Not yet implemented"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:31
+msgid "Replace Icon"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:35
+msgid "Typography"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:36
+msgid "Headings Font"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:37
+#: frontend/templates/admin/branding_identity.html:39
+msgid "Inter (System Default)"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:38
+msgid "Body Text Font"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:41
+msgid "Bold Heading"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:42
+msgid "Medium Subheader"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:43
+msgid "Regular paragraph text with technical details."
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:48
+msgid "Color Palette"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:50
+msgid "Primary Color"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:51
+msgid "Secondary Color"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:52
+msgid "Accent/Tertiary"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:55
+msgid "Live Preview"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:56
+msgid "Primary Action"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:57
+msgid "Secondary Action"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:58
+msgid "Sample Hyperlink"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:59
+msgid "Accent Badge"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:64
+msgid "Brand Application"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:65
+msgid "Mail Clients"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:65
+msgid "Apply to user-facing webmail"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:66
+msgid "Admin Login"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:66
+msgid "Apply to administrative portal"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:67
+msgid "White-labeling"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:67
+msgid "Hide all ifinmail references"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:71
+msgid "Save Branding"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:72
+msgid "Reset"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:76
+msgid "Design System Strategy"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:77
+msgid "Visual Consistency at Scale"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:78
+msgid ""
+"Your branding tokens are automatically converted into a structured CSS "
+"architecture, ensuring every system-generated email and dashboard component "
+"maintains alignment with your corporate identity."
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:83
+msgid "Smart Generation"
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:83
+msgid ""
+"AI-driven contrast checking ensures your color palette choices meet WCAG 2.1 "
+"accessibility standards before deployment."
+msgstr ""
+
+#: frontend/templates/admin/branding_identity.html:83
+msgid "Run accessibility audit →"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:4
+#, python-format
+msgid "Server Dashboard — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:14
+msgid "Server Dashboard"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:15
+msgid "Real-time telemetry and management cluster"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:20
+msgid "Force Rescan"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:24
+msgid "Open Shell"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:32
+msgid "Storage Usage"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:38
+#, python-format
+msgid "82%% Used"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:38
+msgid "2.0 TB Total"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:40
+msgid "Cleanup recommended"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:43
+msgid "Traffic (24h)"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:45
+msgid "Outbound messages"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:49
+msgid "Uptime"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:51
+msgid "Stable runtime"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:52
+msgid "Policy Compliant"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:57
+msgid "System Telemetry"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:64
+msgid "Processor Usage"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:64
+msgid "Avg. Load (15m)"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:65
+msgid "Memory Usage"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:65
+msgid "of 16GB ECC"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:70
+msgid "Quick Actions"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:72
+#: frontend/templates/admin/user_management.html:18
+msgid "Provision User"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:72
+msgid "Create new mailbox"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:73
+msgid "SSL Certificate"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:73
+msgid "Renew or update"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:74
+msgid "Purge Logs"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:74
+msgid "Clear archival data"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:75
+msgid "Reboot Service"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:75
+msgid "Restart postfix/dovecot"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:80
+msgid "Active Queues"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:93
+msgid "Security Node"
+msgstr ""
+
+#: frontend/templates/admin/dashboard.html:94
+msgid "DC Connectivity Status"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:4
+#, python-format
+msgid "Domain Configuration — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:14
+msgid "Domain Configuration"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:15
+msgid "Manage DNS zones, record validation, and cluster infrastructure health."
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:18
+msgid "Full Zone Refresh"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:19
+msgid "Register New Domain"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:25
+msgid "Propagation Sync"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:30
+msgid "DNSSEC Health"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:31
+msgid "Issues"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:32
+msgid "Pending"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:35
+msgid "Name Servers"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:36
+#: frontend/templates/admin/dns_config.html:41
+#: frontend/templates/admin/dns_config.html:42
+msgid "Active"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:37
+msgid "Global"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:40
+msgid "Mail Routing Cluster"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:43
+msgid "Idle"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:48
+msgid "Active Domain Registry"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:52
+msgid "Domain Name"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:52
+msgid "MX Status"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:52
+msgid "SPF/DKIM"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:52
+msgid "SSL Expiry"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:52
+#: frontend/templates/admin/spam_filtering.html:59
+msgid "Actions"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:54
+msgid "Primary Domain"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:54
+#: frontend/templates/admin/dns_config.html:56
+msgid "Verified"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:54
+msgid "342 days left"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:54
+#: frontend/templates/admin/dns_config.html:55
+#: frontend/templates/admin/dns_config.html:56
+msgid "Manage DNS"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:55
+msgid "External Client"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:55
+msgid "Mismatch"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:55
+msgid "SPF Fail"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:55
+msgid "12 days left"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:56
+msgid "Internal Dev"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:56
+msgid "89 days left"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:63
+msgid "DNS Toolbox"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:64
+msgid "Export Records"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:68
+msgid "MX Record"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:70
+msgid "Copy"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:71
+msgid "Edit"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:76
+msgid "DKIM Selector"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:83
+msgid "Mail Routing Controls"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:84
+msgid "Global SMTP Proxy"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:84
+msgid "Force all outbound through US-EAST-1 cluster."
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:85
+msgid "Smart Host Relay"
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:85
+msgid "Use SendGrid/AWS SES fallback on high latency."
+msgstr ""
+
+#: frontend/templates/admin/dns_config.html:86
+msgid "Max Hop Count Limit"
+msgstr ""
+
+#: frontend/templates/admin/login.html:4
+#, python-format
+msgid "Sign In — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/login.html:20
+msgid "Email"
+msgstr ""
+
+#: frontend/templates/admin/login.html:24
+#: frontend/templates/setup/create_account.html:29
+msgid "Password"
+msgstr ""
+
+#: frontend/templates/admin/login.html:27
+msgid "Sign In"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:4
+#, python-format
+msgid "System Logs — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:15
+msgid "System Logs"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:16
+msgid "Real-time infrastructure and application telemetry"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:19
+msgid "Filter Level"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:20
+msgid "Export"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:21
+msgid "Live View"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:26
+msgid "Timestamp"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:26
+msgid "Level"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:26
+msgid "Service"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:26
+msgid "Message"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:38
+msgid "Showing 1-50 of 12,894 events"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:42
+msgid "Audit Trail"
+msgstr ""
+
+#: frontend/templates/admin/logs.html:53
+msgid "View Full History"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:4
+#, python-format
+msgid "Spam Filtering — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:12
+#: frontend/templates/includes/sidebar.html:42
+msgid "Spam Filtering"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:17
+msgid "Blocked Spam"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:19
+#, python-format
+msgid "+12.4%% vs last week"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:22
+msgid "False Positives"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:24
+#, python-format
+msgid "-0.01%% stability"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:27
+msgid "Filtering Activity (24h)"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:34
+msgid "Global Sensitivity Control"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:36
+msgid "Heuristic Aggression Level"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:40
+msgid "Permissive"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:40
+msgid "Standard"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:40
+msgid "Strict"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:40
+msgid "Zero-Tolerance"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:42
+msgid ""
+"Higher values increase the likelihood of catching sophisticated spam but may "
+"elevate false positive risks for encrypted attachments."
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:45
+msgid "Engines"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:49
+msgid "Deep Learning NLP"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:49
+msgid "REQUIRES PRO LICENSE"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:55
+msgid "DNSBL Blacklist Settings"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:55
+msgid "Real-time domain reputation checking across global providers."
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:56
+msgid "Add Provider"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:59
+msgid "Provider Host"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:59
+msgid "Type"
+msgstr ""
+
+#: frontend/templates/admin/spam_filtering.html:59
+msgid "Latency"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:4
+#, python-format
+msgid "User Management — %(name)s"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:13
+#: frontend/templates/includes/sidebar.html:54
+msgid "User Management"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:14
+msgid ""
+"Configure access control, audit sessions, and monitor security governance."
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:17
+msgid "Export Report"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:23
+msgid "MFA Adoption"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:24
+msgid "Active Sessions"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:24
+msgid "Across 42 domains"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:25
+msgid "Failed Logins"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:25
+msgid "Last 24 hours"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:26
+msgid "RBAC Integrity"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:26
+msgid "Optimal"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:26
+msgid "0 Unassigned roles"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:29
+msgid "Admin Directory"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:31
+msgid "Administrator"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:31
+msgid "Role"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:31
+msgid "Status"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:31
+msgid "Last Active"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:46
+msgid "RBAC Overview"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:48
+msgid "Superuser"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:48
+msgid "Full system access"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:48
+msgid "2 Users"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:49
+msgid "Security Audit"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:49
+msgid "Logs & Monitor only"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:49
+msgid "5 Users"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:50
+msgid "Domain Operator"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:50
+msgid "Manage specific domains"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:50
+msgid "12 Users"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:54
+msgid "Real-time Sessions"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:55
+#: frontend/templates/admin/user_management.html:57
+msgid "Live"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:56
+msgid "14m ago"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:57
+msgid "SSH Terminal"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:57
+msgid "Root Console Access"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:58
+msgid "Terminate All Other Sessions"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:64
+msgid "Security Governance"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:64
+msgid "Enterprise-wide audit of access patterns and policy compliance."
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:64
+msgid "SSO Integration Active (Okta)"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:64
+msgid "Password Complexity: Hardened"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:64
+msgid "3 Keys expiring within 30 days"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:65
+msgid "Anomalous Activity"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:65
+msgid "Spike detected in API token rotation from HK-based proxies."
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "Privileged Access Audit"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "Just-in-Time Access"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "4 Approved"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "Key Rotation"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "Last: 12h ago"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "Manual Overrides"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "2 Pending Review"
+msgstr ""
+
+#: frontend/templates/admin/user_management.html:66
+msgid "Review All Logs →"
+msgstr ""
+
+#: frontend/templates/includes/header.html:4
+msgid "Toggle navigation"
+msgstr ""
+
+#: frontend/templates/includes/header.html:10
+msgid "Search"
+msgstr ""
+
+#: frontend/templates/includes/header.html:11
+msgid "Search settings..."
+msgstr ""
+
+#: frontend/templates/includes/header.html:15
+msgid "Notifications"
+msgstr ""
+
+#: frontend/templates/includes/header.html:15
+msgid "No new notifications"
+msgstr ""
+
+#: frontend/templates/includes/header.html:20
+msgid "Settings"
+msgstr ""
+
+#: frontend/templates/includes/header.html:24
+msgid "Sign out"
+msgstr ""
+
+#: frontend/templates/includes/header.html:30
+msgid "Admin Root"
+msgstr ""
+
+#: frontend/templates/includes/header.html:30
+msgid "SUPERUSER"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:3
+msgid "Admin navigation"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:14
+msgid "ifinmail Admin"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:25
+msgid "General Settings"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:31
+msgid "Domain Config"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:36
+msgid "Security/SSL"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:48
+msgid "Logs"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:59
+msgid "Server Status: Online"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:62
+msgid "Support"
+msgstr ""
+
+#: frontend/templates/includes/sidebar.html:66
+msgid "Documentation"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:4
+#, python-format
+msgid "Create Account — %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:9
+#: frontend/templates/setup/dns_auto.html:9
+#: frontend/templates/setup/dns_manual.html:9
+#: frontend/templates/setup/dns_provider.html:9
+#: frontend/templates/setup/done.html:9 frontend/templates/setup/welcome.html:9
+msgid "1. Domain"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:10
+#: frontend/templates/setup/dns_auto.html:10
+#: frontend/templates/setup/dns_manual.html:10
+#: frontend/templates/setup/dns_provider.html:10
+#: frontend/templates/setup/done.html:10
+#: frontend/templates/setup/welcome.html:10
+msgid "2. DNS"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:11
+#: frontend/templates/setup/dns_auto.html:11
+#: frontend/templates/setup/dns_manual.html:11
+#: frontend/templates/setup/dns_provider.html:11
+#: frontend/templates/setup/done.html:11
+#: frontend/templates/setup/welcome.html:11
+msgid "3. Account"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:12
+#: frontend/templates/setup/dns_auto.html:12
+#: frontend/templates/setup/dns_manual.html:12
+#: frontend/templates/setup/dns_provider.html:12
+#: frontend/templates/setup/done.html:12
+#: frontend/templates/setup/welcome.html:12
+msgid "4. Done"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:16
+msgid "Create Your Email Account"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:18
+msgid ""
+"This will be your first mailbox. You'll use this address to log in and send "
+"email."
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:25
+msgid "Email address"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:31
+msgid "Choose a strong password"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:33
+msgid ""
+"Use at least 8 characters. You can add more accounts later from the admin "
+"panel."
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:36
+msgid "Create Account"
+msgstr ""
+
+#: frontend/templates/setup/create_account.html:37
+#: frontend/templates/setup/dns_auto.html:52
+#: frontend/templates/setup/dns_manual.html:42
+#: frontend/templates/setup/dns_provider.html:76
+#: frontend/templates/setup/welcome.html:32
+msgid "Skip for now"
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:4
+#, python-format
+msgid "DNS Auto-Configuration — %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:16
+#, python-format
+msgid "Configuring DNS for %(domain)s"
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:18
+#, python-format
+msgid ""
+"Setting up DNS records with <strong>%(dns_provider|title)s</strong>.\n"
+"      This may take a minute."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:25
+msgid "Creating A records..."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:29
+msgid "Creating MX record..."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:33
+msgid "Creating SPF record..."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:37
+msgid "Creating DKIM record..."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:41
+msgid "Creating DMARC record..."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:51
+msgid "Continue"
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:85
+msgid ""
+"All DNS records configured successfully. Propagation may take a few minutes."
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:87
+msgid "Configuration failed: "
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:87
+msgid "Unknown error"
+msgstr ""
+
+#: frontend/templates/setup/dns_auto.html:92
+msgid "Request failed: "
+msgstr ""
+
+#: frontend/templates/setup/dns_manual.html:4
+#, python-format
+msgid "Manual DNS Setup — %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/dns_manual.html:16
+#, python-format
+msgid "Manual DNS Configuration for %(domain)s"
+msgstr ""
+
+#: frontend/templates/setup/dns_manual.html:18
+#, python-format
+msgid ""
+"Create these DNS records with your domain provider. Your server IP is\n"
+"      <strong>%(server_ip)s</strong>."
+msgstr ""
+
+#: frontend/templates/setup/dns_manual.html:30
+msgid "copy from /etc/rspamd/dkim/"
+msgstr ""
+
+#: frontend/templates/setup/dns_manual.html:34
+msgid ""
+"DNS changes can take up to 48 hours to propagate, but typically complete "
+"within minutes."
+msgstr ""
+
+#: frontend/templates/setup/dns_manual.html:41
+msgid "I've added these records"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:4
+#, python-format
+msgid "DNS Setup — %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:16
+#, python-format
+msgid "Configure DNS for %(domain)s"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:18
+#, python-format
+msgid ""
+"Choose your DNS provider so we can set up your email records automatically.\n"
+"      Your server IP is <strong>%(server_ip)s</strong>."
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:26
+msgid "Requires an API token with DNS:Edit permission."
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:27
+#: frontend/templates/setup/dns_provider.html:42
+#: frontend/templates/setup/dns_provider.html:58
+msgid "How to get yours"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:34
+msgid "Auto-Configure with Cloudflare"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:41
+msgid "Requires API Key and Secret Key from your Porkbun account."
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:50
+msgid "Auto-Configure with Porkbun"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:57
+msgid "Requires a personal access token with write access."
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:65
+msgid "Auto-Configure with DigitalOcean"
+msgstr ""
+
+#: frontend/templates/setup/dns_provider.html:72
+msgid "I'll configure DNS manually"
+msgstr ""
+
+#: frontend/templates/setup/done.html:4
+#, python-format
+msgid "Setup Complete — %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/done.html:16
+msgid "Your mail server is ready"
+msgstr ""
+
+#: frontend/templates/setup/done.html:18
+#, python-format
+msgid ""
+"%(domain)s is now configured to send and receive email. Here's what to do "
+"next:"
+msgstr ""
+
+#: frontend/templates/setup/done.html:24
+#, python-format
+msgid "Domain configured — %(domain)s"
+msgstr ""
+
+#: frontend/templates/setup/done.html:28
+msgid "DNS records configured"
+msgstr ""
+
+#: frontend/templates/setup/done.html:32
+msgid "Email account created"
+msgstr ""
+
+#: frontend/templates/setup/done.html:37
+msgid "Go to Dashboard"
+msgstr ""
+
+#: frontend/templates/setup/done.html:38
+msgid "Install Nextcloud Companion"
+msgstr ""
+
+#: frontend/templates/setup/done.html:44
+msgid "Finish Setup"
+msgstr ""
+
+#: frontend/templates/setup/welcome.html:4
+#, python-format
+msgid "Setup — %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/welcome.html:16
+#, python-format
+msgid "Welcome to %(name)s"
+msgstr ""
+
+#: frontend/templates/setup/welcome.html:18
+msgid ""
+"You're about to set up your own email server. You'll need a domain name you "
+"own (like <strong>example.com</strong>). We'll handle the rest."
+msgstr ""
+
+#: frontend/templates/setup/welcome.html:25
+msgid "Your domain name"
+msgstr ""
+
+#: frontend/templates/setup/welcome.html:28
+msgid "Enter the domain you want to send and receive email from."
+msgstr ""
+
+#: frontend/templates/setup/welcome.html:31
+msgid "Next: Configure DNS"
+msgstr ""

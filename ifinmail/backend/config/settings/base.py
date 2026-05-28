@@ -3,11 +3,12 @@ Base Django settings for ifinmail.
 """
 import os
 from pathlib import Path
+from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 DEBUG = False
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     "django.middleware.gzip.GZipMiddleware",
     "django.middleware.http.ConditionalGetMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -74,6 +76,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "backend.config.branding.brand_context",
+                "backend.config.server_context.server_context",
+                "backend.config.user_context.user_context",
             ],
         },
     },
@@ -81,7 +85,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.config.wsgi.application"
 
-DATABASES = {
+DATABASES: dict[str, dict[str, Any]] = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ["DB_NAME"],
@@ -109,7 +113,10 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = os.environ.get("LANGUAGE_CODE", "en-us")
 TIME_ZONE = os.environ.get("TIME_ZONE", "UTC")
 USE_I18N = os.environ.get("USE_I18N", "True").lower() == "true"
+USE_L10N = os.environ.get("USE_L10N", "True").lower() == "true"
 USE_TZ = os.environ.get("USE_TZ", "True").lower() == "true"
+
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 STATIC_URL = os.environ.get("STATIC_URL", "/static/")
 STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"]
@@ -181,3 +188,57 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", f"noreply@{_domain}" i
 # Branding (self-hosted customization)
 from backend.config.branding import BrandingConfig
 BRAND_CONFIG = BrandingConfig.from_env()
+
+
+# ── Startup validation ──────────────────────────────────────────────────────
+import re
+from django.core.checks import Error, register
+
+
+@register()
+def check_critical_env_vars(app_configs, **kwargs) -> list[Error]:
+    """Validate critical environment variables at startup."""
+    errors: list[Error] = []
+
+    required_vars = {
+        "DJANGO_SECRET_KEY": "Secret key must be set for cryptographic signing",
+        "DB_NAME": "Database name must be set",
+        "DB_USER": "Database user must be set",
+        "DB_PASSWORD": "Database password must be set",
+    }
+    for var, hint in required_vars.items():
+        if not os.environ.get(var):
+            errors.append(Error(
+                f"Environment variable {var} is not set",
+                hint=hint,
+                id="ifinmail.E001",
+            ))
+
+    return errors
+
+
+@register()
+def check_email_config(app_configs, **kwargs) -> list[Error]:
+    """Validate email configuration."""
+    errors: list[Error] = []
+
+    tls = os.environ.get("EMAIL_USE_TLS", "False").lower() == "true"
+    ssl = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
+    if tls and ssl:
+        errors.append(Error(
+            "EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled",
+            hint="Set only one of EMAIL_USE_TLS or EMAIL_USE_SSL to True",
+            id="ifinmail.E002",
+        ))
+
+    from_email = os.environ.get("DEFAULT_FROM_EMAIL", "")
+    if from_email:
+        match = re.match(r"^[^@]+@([^@]+)$", from_email)
+        if not match:
+            errors.append(Error(
+                f"DEFAULT_FROM_EMAIL '{from_email}' is not a valid email address",
+                hint="Set DEFAULT_FROM_EMAIL to a valid email address (e.g. noreply@example.com)",
+                id="ifinmail.E003",
+            ))
+
+    return errors

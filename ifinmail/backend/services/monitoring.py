@@ -2,8 +2,10 @@
 import json
 import logging
 import os
+import shutil
 import subprocess
 from datetime import datetime, timezone
+from typing import Any
 
 from django.core.cache import cache
 
@@ -20,7 +22,7 @@ class MonitoringService:
     CACHE_TIMEOUT = 600
 
     @staticmethod
-    def get_latest_report():
+    def get_latest_report() -> dict[str, Any] | None:
         try:
             data = cache.get(MonitoringService.CACHE_KEY_LATEST)
             if data:
@@ -30,7 +32,7 @@ class MonitoringService:
         return None
 
     @staticmethod
-    def get_service_status():
+    def get_service_status() -> dict[str, Any]:
         report = MonitoringService.get_latest_report()
         if report is None:
             return {"status": "unknown", "services": {}}
@@ -41,7 +43,7 @@ class MonitoringService:
         }
 
     @staticmethod
-    def check_tls_expiry():
+    def check_tls_expiry() -> dict[str, Any]:
         """Check TLS certificate expiry. Returns dict with days and status."""
         mail_hostname = os.environ.get("MAIL_HOSTNAME", "")
         domain = os.environ.get("DOMAIN", os.environ.get("MAIL_DOMAIN", ""))
@@ -53,6 +55,10 @@ class MonitoringService:
 
         if not cert_paths:
             return {"days": None, "status": "err", "error": "No TLS certificate found — domain not configured"}
+
+        if not shutil.which("openssl"):
+            logger.error("openssl not found on PATH; cannot check TLS expiry")
+            return {"days": None, "status": "err", "error": "openssl not available"}
 
         for cert_path in cert_paths:
             if not os.path.isfile(cert_path):
@@ -79,7 +85,7 @@ class MonitoringService:
         return {"days": None, "status": "err", "error": "No TLS certificate found"}
 
     @staticmethod
-    def check_dns(domain):
+    def check_dns(domain: str) -> dict[str, Any]:
         """Validate DNS records for a domain. Returns per-record status."""
         records = {
             "mx": {"status": "unchecked", "detail": ""},
@@ -88,6 +94,9 @@ class MonitoringService:
             "dmarc": {"status": "unchecked", "detail": ""},
         }
         dkim_selector = os.environ.get("DKIM_SELECTOR", "default")
+
+        if not shutil.which("dig"):
+            return {k: {"status": "err", "detail": "dig not found on PATH"} for k in records}
 
         # MX check
         try:
@@ -106,7 +115,7 @@ class MonitoringService:
             result = subprocess.run(
                 ["dig", "+short", "TXT", domain], capture_output=True, text=True, timeout=10
             )
-            if result.returncode == 0 and "v=spf1" in result.stdout:
+            if result.returncode == 0 and "v=spf1" in result.stdout.lower():
                 records["spf"] = {"status": "pass", "detail": "SPF record found"}
             else:
                 records["spf"] = {"status": "fail", "detail": "No SPF record found"}
@@ -119,7 +128,7 @@ class MonitoringService:
             result = subprocess.run(
                 ["dig", "+short", "TXT", dkim_domain], capture_output=True, text=True, timeout=10
             )
-            if result.returncode == 0 and "v=DKIM1" in result.stdout:
+            if result.returncode == 0 and "v=DKIM1" in result.stdout.upper():
                 records["dkim"] = {"status": "pass", "detail": "DKIM record found"}
             else:
                 records["dkim"] = {"status": "fail", "detail": "No DKIM record found"}
@@ -131,7 +140,7 @@ class MonitoringService:
             result = subprocess.run(
                 ["dig", "+short", "TXT", f"_dmarc.{domain}"], capture_output=True, text=True, timeout=10
             )
-            if result.returncode == 0 and "v=DMARC1" in result.stdout:
+            if result.returncode == 0 and "v=DMARC1" in result.stdout.upper():
                 records["dmarc"] = {"status": "pass", "detail": "DMARC record found"}
             else:
                 records["dmarc"] = {"status": "fail", "detail": "No DMARC record found"}
@@ -141,9 +150,9 @@ class MonitoringService:
         return records
 
     @staticmethod
-    def get_full_health():
+    def get_full_health() -> dict[str, Any]:
         """Aggregate health check — database, redis, TLS, disk."""
-        health = {
+        health: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": {},
         }

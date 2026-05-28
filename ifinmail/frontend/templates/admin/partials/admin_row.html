@@ -1,0 +1,7 @@
+{% load i18n %}
+<tr>
+    <td><span class="ifinmail-avatar" style="margin-right:14px">{{ row.initials|default:'?' }}</span><strong>{{ row.name|default:'' }}</strong><br>{{ row.email|default:'' }}</td>
+    <td><span class="ifinmail-badge">{{ row.role|default:'—' }}</span></td>
+    <td><span class="ifinmail-status-dot {% if row.status == 'Offline' %}ifinmail-status-dot--idle{% endif %}">{{ row.status|default:'—' }}</span></td>
+    <td>{{ row.last|default:'—' }}</td>
+</tr>

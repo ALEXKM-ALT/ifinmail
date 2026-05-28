@@ -9,7 +9,7 @@ Automatically purges the oldest DB records when the table exceeds
 
 import logging
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 
 logger = logging.getLogger("backend")
 
@@ -17,7 +17,7 @@ logger = logging.getLogger("backend")
 _AuditEvent = None
 
 
-def _get_audit_model():
+def _get_audit_model() -> Any:
     """Return the AuditEvent model class, importing it on first access."""
     global _AuditEvent
     if _AuditEvent is None:

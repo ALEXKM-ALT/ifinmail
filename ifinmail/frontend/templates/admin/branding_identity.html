@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Branding & Identity — {{ name }}{% endblocktrans %}{% endblock %}
+{% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
+{% block header %}{% include "includes/header.html" %}{% endblock %}
+
+{% block content %}
+<section class="ifinmail-admin-content">
+    <div class="ifinmail-admin-page">
+        <div>
+            <h1 class="ifinmail-page-title">{% trans 'Branding & Identity' %}</h1>
+            <p class="ifinmail-page-subtitle">{% trans 'Customize the visual identity of your mail server suite. These settings will propagate across administrative interfaces, user-facing webmail clients, and automated email communications.' %}</p>
+        </div>
+
+        <div class="ifinmail-admin-grid">
+            <article class="ifinmail-panel ifinmail-span-7">
+                <h2 class="ifinmail-panel-title">{% trans 'Logo Management' %}</h2>
+                <div class="ifinmail-admin-grid" style="margin-top:20px">
+                    <div class="ifinmail-span-6">
+                        <span class="ifinmail-overline">{% trans 'Primary Logo' %}</span>
+                        <div class="ifinmail-codebox" style="height:190px;display:flex;align-items:center;justify-content:center;text-align:center;border-style:dashed">ifinmail<br>{% trans 'Click to upload or drag and drop' %}<br>{% trans 'SVG, PNG (max 400x120px)' %}</div>
+                    </div>
+                    <div class="ifinmail-span-6">
+                        <span class="ifinmail-overline">{% trans 'Email Header Logo' %}</span>
+                        <div class="ifinmail-codebox" style="height:160px;display:flex;align-items:center;justify-content:center">✉</div>
+                        <p><strong>{% trans 'Current:' %}</strong> {{ current_logo_filename|default:'—' }} <a class="ifinmail-link-strong">{% trans 'Change' %}</a></p>
+                    </div>
+                </div>
+                <span class="ifinmail-overline" style="margin-top:18px">{% trans 'Favicon' %}</span>
+                <form id="favicon-form" style="display:flex;align-items:center;gap:10px;margin-top:8px">
+                    <input type="file" name="favicon" accept=".ico,.png,.svg">
+                    {% if favicon_url %}<img src="{{ favicon_url }}" alt="Favicon preview" width="16" height="16" style="margin-left:8px">{% endif %}
+                </form>
+            </article>
+
+            <aside class="ifinmail-panel ifinmail-span-5">
+                <h2 class="ifinmail-panel-title">{% trans 'Typography' %}</h2>
+                <label class="ifinmail-label" style="margin-top:20px">{% trans 'Headings Font' %}</label>
+                <select id="heading-font" onchange="previewFonts()" style="width:100%;padding:8px 12px;margin-top:6px">
+                    {% for value, label in web_fonts %}
+                    <option value="{{ value }}"{% if heading_font == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <label class="ifinmail-label" style="margin-top:16px">{% trans 'Body Text Font' %}</label>
+                <select id="body-font" onchange="previewFonts()" style="width:100%;padding:8px 12px;margin-top:6px">
+                    {% for value, label in web_fonts %}
+                    <option value="{{ value }}"{% if body_font == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="ifinmail-codebox" style="margin-top:18px">
+                    <h3>{% trans 'Bold Heading' %}</h3>
+                    <strong>{% trans 'Medium Subheader' %}</strong>
+                    <p>{% trans 'Regular paragraph text with technical details.' %}</p>
+                </div>
+            </aside>
+
+            <article class="ifinmail-panel ifinmail-span-7">
+                <h2 class="ifinmail-panel-title">{% trans 'Color Palette' %}</h2>
+                <div class="ifinmail-admin-grid" style="margin-top:20px">
+                    <div class="ifinmail-span-4"><span class="ifinmail-overline">{% trans 'Primary Color' %}</span><div class="ifinmail-codebox"><span class="ifinmail-avatar" style="width:32px;height:32px;margin-right:12px;background:{{ primary_color|default:'#0051D5' }}"></span>{{ primary_color|default:'#0051D5' }}</div></div>
+                    <div class="ifinmail-span-4"><span class="ifinmail-overline">{% trans 'Secondary Color' %}</span><div class="ifinmail-codebox">{{ secondary_color|default:'#ECEEF0' }}</div></div>
+                    <div class="ifinmail-span-4"><span class="ifinmail-overline">{% trans 'Accent/Tertiary' %}</span><div class="ifinmail-codebox">{{ accent_color|default:'#4EDEA3' }}</div></div>
+                </div>
+                <div class="ifinmail-codebox" style="margin-top:22px">
+                    <span class="ifinmail-overline">{% trans 'Live Preview' %}</span>
+                    <button class="ifinmail-btn ifinmail-btn--primary" type="button">{% trans 'Primary Action' %}</button>
+                    <button class="ifinmail-btn" type="button">{% trans 'Secondary Action' %}</button>
+                    <a class="ifinmail-link-strong">{% trans 'Sample Hyperlink' %}</a>
+                    <p><span class="ifinmail-badge ifinmail-badge--success">{% trans 'Accent Badge' %}</span></p>
+                </div>
+            </article>
+
+            <aside class="ifinmail-panel ifinmail-span-5">
+                <h2 class="ifinmail-panel-title">{% trans 'Brand Application' %}</h2>
+                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:22px"><span><strong>{% trans 'Mail Clients' %}</strong><br>{% trans 'Apply to user-facing webmail' %}</span><span class="ifinmail-switch ifinmail-switch--on"></span></div>
+                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:22px"><span><strong>{% trans 'Admin Login' %}</strong><br>{% trans 'Apply to administrative portal' %}</span><span class="ifinmail-switch ifinmail-switch--on"></span></div>
+                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:22px"><span><strong>{% trans 'White-labeling' %}</strong><br>{% trans 'Hide all ifinmail references' %}</span><span class="ifinmail-switch"></span></div>
+            </aside>
+
+            <div class="ifinmail-span-12 ifinmail-page-actions">
+                <button class="ifinmail-btn ifinmail-btn--primary" type="button" onclick="saveBranding()">{% trans 'Save Branding' %}</button>
+                <button class="ifinmail-btn ifinmail-btn--outline" type="button" onclick="resetBranding()">{% trans 'Reset' %}</button>
+            </div>
+
+            <article class="ifinmail-panel ifinmail-span-6">
+                <span class="ifinmail-overline" style="color:var(--ifinmail-color-primary)">{% trans 'Design System Strategy' %}</span>
+                <h3>{% trans 'Visual Consistency at Scale' %}</h3>
+                <p>{% trans 'Your branding tokens are automatically converted into a structured CSS architecture, ensuring every system-generated email and dashboard component maintains alignment with your corporate identity.' %}</p>
+            </article>
+            <article class="ifinmail-panel ifinmail-span-6">
+                <div class="ifinmail-action-row" style="justify-content:flex-start">
+                    <span class="ifinmail-icon-tile">✦</span>
+                    <div><strong>{% trans 'Smart Generation' %}</strong><p>{% trans 'AI-driven contrast checking ensures your color palette choices meet WCAG 2.1 accessibility standards before deployment.' %}</p><a class="ifinmail-link-strong">{% trans 'Run accessibility audit →' %}</a></div>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<script>
+(function() {
+    function getCSRFToken() {
+        var name = 'csrftoken';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf(name + '=') === 0) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    window.previewFonts = function() {
+        var heading = document.getElementById('heading-font').value;
+        var body = document.getElementById('body-font').value;
+        var preview = document.querySelector('.ifinmail-codebox h3');
+        if (preview && heading) preview.style.fontFamily = heading + ', sans-serif';
+        var bodyEl = document.querySelector('.ifinmail-codebox p');
+        if (bodyEl && body) bodyEl.style.fontFamily = body + ', sans-serif';
+    };
+
+    window.saveBranding = function() {
+        var formData = new FormData();
+        formData.append('primary_color', '{{ primary_color|default:"" }}');
+        formData.append('secondary_color', '{{ secondary_color|default:"" }}');
+        formData.append('accent_color', '{{ accent_color|default:"" }}');
+        formData.append('heading_font', document.getElementById('heading-font').value);
+        formData.append('body_font', document.getElementById('body-font').value);
+        var favInput = document.querySelector('#favicon-form input[type=file]');
+        if (favInput && favInput.files.length > 0) {
+            formData.append('favicon', favInput.files[0]);
+        }
+        fetch('{% url "accounts:branding_save" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()},
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                alert('{% trans "Branding saved successfully. Some changes may require a page refresh." %}');
+                location.reload();
+            } else {
+                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
+            }
+        })
+        .catch(function() { alert('{% trans "Request failed" %}'); });
+    };
+
+    window.resetBranding = function() {
+        if (!confirm('{% trans "Reset all branding to system defaults?" %}')) return;
+        fetch('{% url "accounts:branding_reset" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                alert('{% trans "Branding reset to defaults." %}');
+                location.reload();
+            } else {
+                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
+            }
+        })
+        .catch(function() { alert('{% trans "Request failed" %}'); });
+    };
+})();
+</script>
+{% endblock %}

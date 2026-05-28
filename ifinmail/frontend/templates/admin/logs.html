@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}System Logs — {{ name }}{% endblocktrans %}{% endblock %}
+{% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
+{% block header %}{% include "includes/header.html" %}{% endblock %}
+
+{% block content %}
+<section class="ifinmail-admin-content">
+    <div class="ifinmail-admin-page">
+        <div class="ifinmail-admin-grid">
+            <div class="ifinmail-span-9">
+                <div class="ifinmail-page-header">
+                    <div>
+                        <h1 class="ifinmail-page-title">{% trans 'System Logs' %}</h1>
+                        <p class="ifinmail-page-subtitle">{% trans 'Real-time infrastructure and application telemetry' %}</p>
+                    </div>
+                    <div class="ifinmail-page-actions">
+                        <select id="log-level-filter" onchange="filterByLevel(this.value)" style="padding:6px 10px;font-size:var(--ifinmail-font-size-body)">
+                            <option value="">{% trans 'Filter Level' %}</option>
+                            <option value="ERROR"{% if current_level == 'ERROR' %} selected{% endif %}>ERROR</option>
+                            <option value="WARNING"{% if current_level == 'WARNING' %} selected{% endif %}>WARNING</option>
+                            <option value="INFO"{% if current_level == 'INFO' %} selected{% endif %}>INFO</option>
+                        </select>
+                        <a class="ifinmail-link-strong" href="{% url 'accounts:logs_export' %}{% if current_level %}?level={{ current_level }}{% endif %}">{% trans 'Export' %}</a>
+                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" id="live-toggle" onclick="toggleLiveView()">{% trans 'Live View' %}</button>
+                    </div>
+                </div>
+                <article class="ifinmail-table-panel" style="margin-top:20px">
+                    {% include "includes/admin_table.html" with span=None title=None headers=log_headers|default:'' rows=log_rows|default:'' row_template="admin/partials/log_row.html" footer=log_footer|default:'' %}
+                </article>
+            </div>
+            <aside class="ifinmail-span-3">
+                <h2 class="ifinmail-panel-title">{% trans 'Audit Trail' %}</h2>
+                <div class="ifinmail-timeline" style="margin-top:24px">
+                    {% for item in audit_items %}
+                    <article class="ifinmail-timeline-item">
+                        <span class="ifinmail-overline" style="color:var(--ifinmail-color-primary)">{{ item.type|default:'' }}</span>
+                        <strong>{{ item.title|default:'' }}</strong>
+                        <p>{{ item.body|default:'' }}</p>
+                        <small>{{ item.actor|default:'' }} <span style="float:right">{{ item.age|default:'' }}</span></small>
+                    </article>
+                    {% empty %}
+                    <p class="ifinmail-text--muted">{% trans 'No audit entries available.' %}</p>
+                    {% endfor %}
+                </div>
+                {% if has_more %}<a class="ifinmail-link-strong" href="{% url 'accounts:logs_full' %}?page={{ current_page|add:'1' }}{% if current_level %}&level={{ current_level }}{% endif %}" style="font-size:var(--ifinmail-font-size-body-small);display:block;text-align:center;padding:8px">{% trans 'View Full History' %}</a>{% else %}<span class="ifinmail-text--muted" style="font-size:var(--ifinmail-font-size-body-small);display:block;text-align:center;padding:8px">{% trans 'End of audit trail' %}</span>{% endif %}
+            </aside>
+        </div>
+    </div>
+</section>
+
+<script>
+var liveInterval = null;
+
+function filterByLevel(level) {
+    var url = new URL(window.location.href);
+    if (level) {
+        url.searchParams.set('level', level);
+    } else {
+        url.searchParams.delete('level');
+    }
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+function toggleLiveView() {
+    var btn = document.getElementById('live-toggle');
+    if (liveInterval) {
+        clearInterval(liveInterval);
+        liveInterval = null;
+        btn.textContent = '{% trans "Live View" %}';
+        btn.classList.remove('ifinmail-btn--primary');
+        return;
+    }
+    btn.textContent = '{% trans "Pause" %}';
+    btn.classList.add('ifinmail-btn--primary');
+    liveInterval = setInterval(function() {
+        var level = document.getElementById('log-level-filter').value;
+        var url = '{% url "accounts:logs_live" %}' + (level ? '?level=' + level : '');
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!liveInterval) return; // cancelled
+                console.log('Live log update:', (data.rows || []).length, 'entries');
+            });
+    }, 5000);
+}
+</script>
+{% endblock %}

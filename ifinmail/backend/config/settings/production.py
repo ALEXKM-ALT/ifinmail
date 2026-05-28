@@ -33,6 +33,8 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesSto
 
 # Security
 SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
+# Exempt internal health checks from SSL redirect (Docker healthcheck hits API directly on port 8000)
+SECURE_REDIRECT_EXEMPT = [r"^health"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", os.environ.get("SECURE_PROXY_HEADER_VALUE", "https"))
 USE_X_FORWARDED_HOST = os.environ.get("USE_X_FORWARDED_HOST", "True").lower() == "true"
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "3600"))

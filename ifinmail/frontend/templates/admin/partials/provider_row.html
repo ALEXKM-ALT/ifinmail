@@ -1,0 +1,7 @@
+{% load i18n %}
+<tr>
+    <td>{{ row.host|default:'—' }}</td>
+    <td><span class="ifinmail-badge {% if row.tone == 'success' %}ifinmail-badge--info{% elif row.tone == 'danger' %}ifinmail-badge--dark{% endif %}">{{ row.type|default:'—' }}</span></td>
+    <td class="{% if row.tone == 'danger' %}ifinmail-trend--danger{% else %}ifinmail-trend{% endif %}">{{ row.latency|default:'—' }}</td>
+    <td>{% trans 'Manage' %}</td>
+</tr>

@@ -12,7 +12,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--ifinmail-space-2);
-    height: 40px;
+    height: 36px;
     padding: 0 var(--ifinmail-space-4);
     border: 1px solid var(--ifinmail-outline-variant);
     border-radius: var(--ifinmail-radius);
@@ -110,13 +110,13 @@
 
 /* Size modifiers */
 .ifinmail-btn--sm {
-    height: 36px;
+    height: 32px;
     padding: 0 var(--ifinmail-space-3);
     font-size: var(--ifinmail-font-size-caption);
 }
 
 .ifinmail-btn--lg {
-    height: 48px;
+    height: 42px;
     padding: 0 var(--ifinmail-space-5);
     font-size: var(--ifinmail-font-size-body);
 }
@@ -153,7 +153,7 @@
 
 .ifinmail-input {
     width: 100%;
-    height: 40px;
+    height: 36px;
     padding: var(--ifinmail-space-2) var(--ifinmail-space-3);
     border: 1px solid var(--ifinmail-color-border);
     border-radius: var(--ifinmail-radius);
@@ -211,7 +211,7 @@
 /* Textarea */
 textarea.ifinmail-input {
     height: auto;
-    min-height: 80px;
+    min-height: 72px;
     resize: vertical;
 }
 
@@ -260,7 +260,7 @@ select.ifinmail-input {
     background: #ffffff;
     border: none;
     border-radius: var(--ifinmail-radius-lg);
-    padding: var(--ifinmail-space-4);
+    padding: var(--ifinmail-space-3);
     box-shadow: var(--ifinmail-shadow-1);
 }
 
@@ -269,13 +269,13 @@ select.ifinmail-input {
 }
 
 .ifinmail-card__header {
-    padding-bottom: var(--ifinmail-space-4);
+    padding-bottom: var(--ifinmail-space-3);
     font-size: var(--ifinmail-font-size-h3);
     font-weight: var(--ifinmail-font-weight-semibold);
 }
 
 .ifinmail-card__footer {
-    padding-top: var(--ifinmail-space-4);
+    padding-top: var(--ifinmail-space-3);
     border-top: 1px solid var(--ifinmail-color-border);
     display: flex;
     justify-content: flex-end;
@@ -385,7 +385,7 @@ select.ifinmail-input {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--ifinmail-space-4) var(--ifinmail-space-6);
+    padding: var(--ifinmail-space-3) var(--ifinmail-space-5);
     border-bottom: 1px solid var(--ifinmail-color-border);
     flex-shrink: 0;
 }
@@ -414,14 +414,14 @@ select.ifinmail-input {
 .ifinmail-modal__body {
     flex: 1;
     overflow-y: auto;
-    padding: var(--ifinmail-space-6);
+    padding: var(--ifinmail-space-5);
 }
 
 .ifinmail-modal__footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--ifinmail-space-4);
-    padding: var(--ifinmail-space-4) var(--ifinmail-space-6);
+    padding: var(--ifinmail-space-3) var(--ifinmail-space-5);
     border-top: 1px solid var(--ifinmail-color-border);
     flex-shrink: 0;
 }
@@ -469,7 +469,7 @@ select.ifinmail-input {
 }
 
 .ifinmail-table__cell {
-    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+    padding: 10px 16px;
     color: var(--ifinmail-color-text-primary);
     vertical-align: middle;
 }
@@ -564,6 +564,7 @@ select.ifinmail-input {
 
 .ifinmail-tab:hover {
     color: var(--ifinmail-color-text-secondary);
+    background: var(--ifinmail-surface-container);
 }
 
 .ifinmail-tab--active {
@@ -811,199 +812,18 @@ select.ifinmail-input {
     100% { transform: translateX(100%); }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Sidebar Navigation (Mailboxes)
-   ══════════════════════════════════════════════════════════════ */
-.ifinmail-mailbox-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ifinmail-space-1);
-    margin-top: var(--ifinmail-space-4);
-}
 
-.ifinmail-mailbox-item {
-    display: flex;
-    align-items: center;
-    gap: var(--ifinmail-space-2);
-    padding: var(--ifinmail-space-2) var(--ifinmail-space-3);
-    border-radius: var(--ifinmail-radius);
-    font-size: var(--ifinmail-font-size-body);
-    font-weight: var(--ifinmail-font-weight-normal);
-    color: var(--ifinmail-on-surface-variant);
-    text-decoration: none;
-    transition: background var(--ifinmail-transition-fast);
-}
-
-.ifinmail-mailbox-item:hover {
-    background: var(--ifinmail-surface-container-high);
-    color: var(--ifinmail-on-surface);
-    text-decoration: none;
-}
-
-.ifinmail-mailbox-item--active {
-    background: var(--ifinmail-surface-container-high);
-    color: var(--ifinmail-on-surface);
-    font-weight: var(--ifinmail-font-weight-semibold);
-}
-
-.ifinmail-mailbox-icon {
-    flex-shrink: 0;
-}
-
-.ifinmail-mailbox-name {
-    flex: 1;
-}
-
-.ifinmail-mailbox-count {
-    margin-left: auto;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   Message Cards (Mail Inbox)
-   ══════════════════════════════════════════════════════════════ */
-.ifinmail-message-cards {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.ifinmail-message-card {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    grid-template-rows: auto auto;
-    gap: 0 var(--ifinmail-space-3);
-    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
-    border-bottom: 1px solid var(--ifinmail-outline-variant);
-    cursor: pointer;
-    transition: background var(--ifinmail-transition-fast);
-}
-
-.ifinmail-message-card:hover {
-    background: var(--ifinmail-surface-container);
-}
-
-.ifinmail-message-card--unread {
-    background: var(--ifinmail-surface-container);
-    border-left: 3px solid var(--ifinmail-secondary);
-    padding-left: calc(var(--ifinmail-space-4) - 3px);
-}
-
-.ifinmail-message-card--selected {
-    background: var(--ifinmail-secondary-fixed-dim);
-}
-
-.ifinmail-message-card .ifinmail-checkbox {
-    grid-row: 1 / -1;
-    align-self: center;
-}
-
-.ifinmail-message-sender {
-    font-weight: var(--ifinmail-font-weight-semibold);
-    grid-column: 2;
-}
-
-.ifinmail-message-subject {
-    grid-column: 2;
-}
-
-.ifinmail-message-snippet {
-    grid-column: 2;
-    font-size: var(--ifinmail-font-size-body-small);
-    color: var(--ifinmail-on-surface-variant);
-}
-
-.ifinmail-message-date {
-    grid-row: 1;
-    grid-column: 3;
-    justify-self: end;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   Message List Header & Toolbar
-   ══════════════════════════════════════════════════════════════ */
-.ifinmail-message-list-header {
-    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
-    border-bottom: 1px solid var(--ifinmail-outline-variant);
-    background: var(--ifinmail-surface-container);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ifinmail-space-2);
-}
-
-.ifinmail-toolbar {
-    display: flex;
-    align-items: center;
-    gap: var(--ifinmail-space-2);
-    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
-    border-bottom: 1px solid var(--ifinmail-outline-variant);
-    background: var(--ifinmail-surface-container);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   Message Detail (Reading Pane)
-   ══════════════════════════════════════════════════════════════ */
-.ifinmail-message-detail {
-    overflow-y: auto;
-    padding: var(--ifinmail-space-6);
-    background: var(--ifinmail-surface-bright);
-}
-
-.ifinmail-message-detail-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--ifinmail-outline);
-    font-size: var(--ifinmail-font-size-body);
-}
-
-.ifinmail-message-detail--loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-}
-
-.ifinmail-message-full {
-    max-width: 760px;
-}
-
-.ifinmail-message-full-subject {
-    font-size: var(--ifinmail-font-size-xl);
-    font-weight: var(--ifinmail-font-weight-semibold);
-    margin-bottom: var(--ifinmail-space-4);
-    color: var(--ifinmail-on-surface);
-}
-
-.ifinmail-message-full-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ifinmail-space-2);
-    margin-bottom: var(--ifinmail-space-6);
-    padding-bottom: var(--ifinmail-space-6);
-    border-bottom: 1px solid var(--ifinmail-outline-variant);
-    font-size: var(--ifinmail-font-size-body);
-    color: var(--ifinmail-on-surface-variant);
-}
-
-.ifinmail-message-full-body {
-    font-size: var(--ifinmail-font-size-base);
-    line-height: var(--ifinmail-line-height);
-    color: var(--ifinmail-on-surface);
-    white-space: pre-wrap;
-}
 
 /* ══════════════════════════════════════════════════════════════
    Admin Sidebar — Navy background, 3px blue active stripe
+   Fills 100vh within the flex layout.
    ══════════════════════════════════════════════════════════════ */
 .ifinmail-admin-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
     width: var(--ifinmail-sidebar-width);
-    height: 100vh;
-    z-index: 100;
+    min-height: 100vh;
+    max-height: 100vh;
     overflow-y: auto;
+    flex-shrink: 0;
     background: var(--ifinmail-primary-container);
     border-right: 1px solid var(--ifinmail-outline-variant);
     padding: var(--ifinmail-space-4);
@@ -1078,10 +898,6 @@ select.ifinmail-input {
     border-left-color: var(--ifinmail-secondary);
 }
 
-[data-theme="dark"] .ifinmail-admin-nav-item--active {
-    color: #ffffff;
-}
-
 /* ══════════════════════════════════════════════════════════════
    Admin Content
    ══════════════════════════════════════════════════════════════ */
@@ -1121,15 +937,15 @@ select.ifinmail-input {
 .ifinmail-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--ifinmail-space-4);
-    margin-bottom: var(--ifinmail-space-6);
+    gap: var(--ifinmail-space-3);
+    margin-bottom: var(--ifinmail-space-4);
 }
 
 .ifinmail-stat-card {
     background: var(--ifinmail-surface-container-lowest);
     border: 1px solid var(--ifinmail-outline-variant);
     border-radius: var(--ifinmail-radius-lg);
-    padding: var(--ifinmail-space-4);
+    padding: var(--ifinmail-space-3);
 }
 
 .ifinmail-stat-value {
@@ -1171,7 +987,7 @@ select.ifinmail-input {
 }
 
 .ifinmail-service-card {
-    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+    padding: var(--ifinmail-space-2) var(--ifinmail-space-3);
     border: 1px solid var(--ifinmail-outline-variant);
     border-radius: var(--ifinmail-radius-lg);
     background: var(--ifinmail-surface-container-lowest);
@@ -1822,12 +1638,6 @@ select.ifinmail-input {
 /* ══════════════════════════════════════════════════════════════
    Misc Utilities
    ══════════════════════════════════════════════════════════════ */
-.ifinmail-theme-toggle {
-    font-size: var(--ifinmail-font-size-base);
-    line-height: 1;
-    padding: var(--ifinmail-space-1) var(--ifinmail-space-2);
-}
-
 .ifinmail-dns-value {
     word-break: break-all;
     font-size: var(--ifinmail-font-size-xs);
@@ -1841,4 +1651,779 @@ select.ifinmail-input {
     border-radius: var(--ifinmail-radius);
     font-size: var(--ifinmail-font-size-xs);
     color: var(--ifinmail-on-surface);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Admin Remediation Shell + Primitives
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ifinmail-admin-nav {
+    width: 240px;
+    min-height: 100vh;
+    max-height: 100vh;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    color: var(--ifinmail-color-text-primary);
+    border-right: 1px solid var(--ifinmail-color-border);
+    padding: 28px 16px 18px;
+    gap: 0;
+}
+
+.ifinmail-admin-brand {
+    padding: 0 8px 54px;
+    margin: 0;
+    border: 0;
+}
+
+.ifinmail-admin-brand-top {
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ifinmail-admin-brand-mark {
+    display: inline-flex;
+    color: #000000;
+}
+
+.ifinmail-admin-brand-name {
+    display: block;
+    color: #000000;
+    font-size: 24px;
+    font-weight: var(--ifinmail-font-weight-bold);
+    line-height: 1.08;
+    letter-spacing: 0;
+}
+
+.ifinmail-admin-brand-tagline {
+    display: block;
+    margin: 6px 0 0;
+    color: var(--ifinmail-color-text-muted);
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-caption);
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+}
+
+.ifinmail-admin-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ifinmail-admin-nav-item {
+    min-height: 36px;
+    padding: 7px 12px;
+    border-left: 0;
+    border-radius: 4px;
+    color: var(--ifinmail-color-text-primary);
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-label);
+    font-weight: var(--ifinmail-font-weight-medium);
+    line-height: 1.35;
+    letter-spacing: 0;
+}
+
+.ifinmail-admin-nav-item:hover {
+    background: var(--ifinmail-color-primary-subtle);
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-admin-nav-item--active {
+    background: var(--ifinmail-color-primary);
+    color: #ffffff;
+    border-left: 0;
+}
+
+.ifinmail-admin-nav-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--ifinmail-color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ifinmail-server-status {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: #e9edf2;
+    color: #000000;
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-label);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    line-height: 1.3;
+    letter-spacing: 0;
+}
+
+.ifinmail-server-status span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #0ea66b;
+}
+
+.ifinmail-admin-footer-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 36px;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ifinmail-color-text-primary);
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-label);
+    font-weight: var(--ifinmail-font-weight-medium);
+    line-height: 1.35;
+    letter-spacing: 0;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ifinmail-admin-footer-action:hover {
+    background: var(--ifinmail-color-surface-2);
+    text-decoration: none;
+}
+
+.ifinmail-header {
+    height: 64px;
+    justify-content: flex-start;
+    gap: 24px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--ifinmail-color-border);
+}
+
+.ifinmail-global-search {
+    width: min(448px, 48vw);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border: 1px solid #b9c0ca;
+    border-radius: 4px;
+    background: #f7f8fa;
+}
+
+.ifinmail-global-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ifinmail-color-text-primary);
+    font: 400 16px/1.2 var(--ifinmail-font-ui);
+}
+
+.ifinmail-header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.ifinmail-icon-button {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #111827;
+    cursor: pointer;
+}
+
+.ifinmail-icon-button:hover {
+    background: var(--ifinmail-color-surface-2);
+    text-decoration: none;
+}
+
+.ifinmail-notification-dot {
+    position: absolute;
+    top: 8px;
+    right: 9px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--ifinmail-color-danger);
+    border: 1px solid #ffffff;
+}
+
+.ifinmail-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ifinmail-color-primary);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: var(--ifinmail-font-weight-bold);
+}
+
+.ifinmail-header-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ifinmail-header-profile strong,
+.ifinmail-header-profile small {
+    display: block;
+}
+
+.ifinmail-header-profile small {
+    margin-top: 2px;
+    color: var(--ifinmail-color-text-secondary);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+}
+
+.ifinmail-footer {
+    display: none;
+}
+
+.ifinmail-admin-content {
+    max-width: 1280px;
+    padding: 28px 28px 48px;
+    background: var(--ifinmail-color-surface-1);
+}
+
+.ifinmail-admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.ifinmail-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.ifinmail-page-title {
+    margin: 0;
+    color: #0b0f14;
+    font-size: var(--ifinmail-font-size-display);
+    font-weight: var(--ifinmail-font-weight-bold);
+    line-height: 1.18;
+    letter-spacing: 0;
+}
+
+.ifinmail-page-subtitle {
+    margin: 6px 0 0;
+    max-width: 720px;
+    color: #2f333a;
+    font-size: var(--ifinmail-font-size-body-large);
+    line-height: 1.48;
+}
+
+.ifinmail-page-actions,
+.ifinmail-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ifinmail-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.ifinmail-span-2 { grid-column: span 2; }
+.ifinmail-span-3 { grid-column: span 3; }
+.ifinmail-span-4 { grid-column: span 4; }
+.ifinmail-span-5 { grid-column: span 5; }
+.ifinmail-span-6 { grid-column: span 6; }
+.ifinmail-span-7 { grid-column: span 7; }
+.ifinmail-span-8 { grid-column: span 8; }
+.ifinmail-span-9 { grid-column: span 9; }
+.ifinmail-span-12 { grid-column: span 12; }
+
+.ifinmail-panel,
+.ifinmail-stat-panel,
+.ifinmail-table-panel {
+    background: #ffffff;
+    border: 1px solid #c4c9d2;
+    border-radius: 8px;
+    box-shadow: var(--ifinmail-shadow-1);
+}
+
+.ifinmail-panel {
+    padding: 18px;
+}
+
+.ifinmail-panel-header,
+.ifinmail-table-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+}
+
+.ifinmail-panel-title {
+    margin: 0;
+    font-size: var(--ifinmail-font-size-h1);
+    line-height: 1.25;
+    font-weight: var(--ifinmail-font-weight-semibold);
+    letter-spacing: 0;
+}
+
+.ifinmail-overline {
+    display: block;
+    margin-bottom: 10px;
+    color: #151a22;
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-overline);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ifinmail-stat-panel {
+    min-height: 120px;
+    padding: 20px;
+}
+
+.ifinmail-stat-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ifinmail-stat-big {
+    margin-top: 8px;
+    display: block;
+    color: #0b0f14;
+    font-size: var(--ifinmail-font-size-h1);
+    font-weight: var(--ifinmail-font-weight-bold);
+    line-height: 1.05;
+}
+
+.ifinmail-stat-detail {
+    margin-top: 8px;
+    color: var(--ifinmail-color-text-secondary);
+    font-size: var(--ifinmail-font-size-body);
+}
+
+.ifinmail-trend {
+    color: var(--ifinmail-color-success);
+    font-weight: 700;
+}
+
+.ifinmail-trend--danger {
+    color: var(--ifinmail-color-danger);
+}
+
+.ifinmail-progress {
+    height: 8px;
+    margin: 16px 0 12px;
+    overflow: hidden;
+    background: #e4e7eb;
+    border-radius: 2px;
+}
+
+.ifinmail-progress span {
+    display: block;
+    height: 100%;
+    background: var(--ifinmail-color-primary);
+}
+
+.ifinmail-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--ifinmail-font-size-body);
+}
+
+.ifinmail-admin-table th {
+    padding: 9px 14px;
+    background: #e8eaee;
+    color: #2d323a;
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-caption);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-align: left;
+    text-transform: uppercase;
+    border-top: 1px solid #c4c9d2;
+    border-bottom: 1px solid #c4c9d2;
+}
+
+.ifinmail-admin-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #cfd3da;
+    vertical-align: middle;
+}
+
+.ifinmail-admin-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.ifinmail-link-strong {
+    color: var(--ifinmail-color-primary);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    transition: color var(--ifinmail-transition-fast);
+}
+
+.ifinmail-link-strong:hover {
+    color: var(--ifinmail-color-primary-hover);
+    text-decoration: underline;
+}
+
+.ifinmail-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 20px;
+    padding: 2px 8px;
+    border: 1px solid #c9ced6;
+    border-radius: 3px;
+    background: #e9ecef;
+    color: #111827;
+    font-size: 12px;
+    font-weight: var(--ifinmail-font-weight-semibold);
+    line-height: 1.3;
+}
+
+.ifinmail-badge--info {
+    background: #dbeafe;
+    border-color: #a9c8ff;
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-badge--success {
+    background: #dcfce7;
+    border-color: #a7f3d0;
+    color: #047857;
+}
+
+.ifinmail-badge--warning {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.ifinmail-badge--dark {
+    background: #052e22;
+    border-color: #052e22;
+    color: #34d399;
+}
+
+.ifinmail-status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ifinmail-status-dot::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--ifinmail-color-success);
+}
+
+.ifinmail-status-dot--idle::before {
+    background: #f59e0b;
+}
+
+.ifinmail-chart-bars {
+    height: 220px;
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    padding: 28px 30px;
+    border-bottom: 1px solid #d5d9df;
+}
+
+.ifinmail-chart-bars span {
+    flex: 1;
+    min-width: 18px;
+    background: #dce8fa;
+}
+
+.ifinmail-chart-bars span:nth-child(2n) { background: #b7cff5; }
+.ifinmail-chart-bars span:nth-child(5) { background: var(--ifinmail-color-primary); }
+
+.ifinmail-watermark {
+    position: relative;
+    overflow: hidden;
+}
+
+.ifinmail-watermark::before {
+    content: "DELIVERY";
+    position: absolute;
+    inset: 40px auto auto 0;
+    color: rgba(15, 23, 42, 0.04);
+    font-size: 96px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+}
+
+.ifinmail-quick-action,
+.ifinmail-role-card,
+.ifinmail-session-item,
+.ifinmail-toolbox-record,
+.ifinmail-engine-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #c9ced6;
+    border-radius: 4px;
+    background: #f3f4f6;
+}
+
+.ifinmail-quick-action + .ifinmail-quick-action,
+.ifinmail-role-card + .ifinmail-role-card,
+.ifinmail-session-item + .ifinmail-session-item,
+.ifinmail-toolbox-record + .ifinmail-toolbox-record,
+.ifinmail-engine-row + .ifinmail-engine-row {
+    margin-top: 10px;
+}
+
+.ifinmail-quick-action {
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--ifinmail-transition-fast),
+                border-color var(--ifinmail-transition-fast);
+}
+
+.ifinmail-quick-action:hover {
+    background: var(--ifinmail-surface-container-high);
+    border-color: var(--ifinmail-outline);
+}
+
+.ifinmail-quick-action:hover .ifinmail-icon-tile {
+    background: var(--ifinmail-color-primary-tint);
+}
+
+.ifinmail-engine-row {
+    transition: background var(--ifinmail-transition-fast);
+}
+
+.ifinmail-engine-row:hover {
+    background: var(--ifinmail-surface-container-high);
+}
+
+.ifinmail-icon-tile {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: #e5e7eb;
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-switch {
+    width: 48px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 999px;
+    background: #d1d5db;
+    transition: box-shadow var(--ifinmail-transition-fast);
+}
+
+.ifinmail-switch:hover {
+    box-shadow: 0 0 0 2px var(--ifinmail-color-primary-tint);
+    cursor: pointer;
+}
+
+.ifinmail-switch::after {
+    content: "";
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: var(--ifinmail-shadow-1);
+}
+
+.ifinmail-switch--on {
+    justify-content: flex-end;
+    background: var(--ifinmail-color-primary);
+}
+
+.ifinmail-slider {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #dfe4ea 0 72%, var(--ifinmail-color-primary) 72% 75%, #dfe4ea 75%);
+}
+
+.ifinmail-quote {
+    margin-top: 28px;
+    padding: 18px 22px;
+    border-left: 4px solid var(--ifinmail-color-primary);
+    background: #f1f3f6;
+    font-style: italic;
+}
+
+.ifinmail-timeline {
+    position: relative;
+    padding-left: 38px;
+}
+
+.ifinmail-timeline::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #cfd3da;
+}
+
+.ifinmail-timeline-item {
+    position: relative;
+    margin-bottom: 24px;
+    padding: 18px;
+    border: 1px solid #c4c9d2;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.ifinmail-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -33px;
+    top: 18px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--ifinmail-color-primary);
+    border-radius: 999px;
+    background: #ffffff;
+}
+
+.ifinmail-codebox {
+    padding: 12px 14px;
+    border: 1px solid #d5d9df;
+    background: #e9ecef;
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-body);
+    line-height: 1.45;
+    letter-spacing: 0;
+    overflow-x: auto;
+}
+
+.ifinmail-codebox code,
+.ifinmail-codebox pre,
+.ifinmail-codebox kbd,
+.ifinmail-codebox samp {
+    font-family: var(--ifinmail-font-mono);
+    font-size: var(--ifinmail-font-size-code);
+}
+
+.ifinmail-codebox h3 {
+    margin: 0 0 4px;
+    font-size: var(--ifinmail-font-size-h3);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    line-height: 1.35;
+}
+
+.ifinmail-codebox strong {
+    font-weight: var(--ifinmail-font-weight-medium);
+}
+
+.ifinmail-codebox p {
+    margin: 2px 0 0;
+}
+
+.ifinmail-hero-media {
+    min-height: 150px;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.1)),
+        repeating-linear-gradient(35deg, #d9dde3 0 2px, #eef0f3 2px 8px);
+    border-bottom: 1px solid #c4c9d2;
+}
+
+@media (max-width: 1100px) {
+    .ifinmail-span-2,
+    .ifinmail-span-3,
+    .ifinmail-span-4,
+    .ifinmail-span-5,
+    .ifinmail-span-6,
+    .ifinmail-span-7,
+    .ifinmail-span-8,
+    .ifinmail-span-9 {
+        grid-column: span 12;
+    }
+}
+
+@media (max-width: 767px) {
+    .ifinmail-admin-nav {
+        position: fixed;
+        width: 280px;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform var(--ifinmail-transition);
+    }
+
+    .ifinmail-admin-nav.ifinmail-admin-nav--open {
+        display: flex;
+        transform: translateX(0);
+    }
+
+    .ifinmail-global-search {
+        width: 100%;
+    }
+
+    .ifinmail-header-actions {
+        gap: 6px;
+    }
+
+    .ifinmail-header-profile {
+        display: none;
+    }
+
+    .ifinmail-admin-content {
+        padding: 24px 16px 40px;
+    }
+
+    .ifinmail-page-header {
+        flex-direction: column;
+    }
+
+    .ifinmail-page-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .ifinmail-admin-table {
+        min-width: 720px;
+    }
+
+    .ifinmail-table-panel {
+        overflow-x: auto;
+    }
 }

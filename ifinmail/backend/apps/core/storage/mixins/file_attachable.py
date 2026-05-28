@@ -22,11 +22,11 @@ class FileAttachableMixin(models.Model):
     )
 
     @property
-    def files(self):
+    def files(self) -> models.QuerySet[StoredFile]:
         return self._files.all()
 
     @property
-    def images(self):
+    def images(self) -> models.QuerySet[StoredFile]:
         return self._files.filter(content_type__startswith="image/")
 
     class Meta:

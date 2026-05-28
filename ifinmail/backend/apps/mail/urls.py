@@ -1,9 +1,1 @@
-from django.urls import path
-
-from .views import inbox
-
-app_name = "mail"
-
-urlpatterns = [
-    path("", inbox, name="inbox"),
-]
+# Mail client removed. Autoconfig endpoints live in config/urls.py.

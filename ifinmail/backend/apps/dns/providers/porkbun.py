@@ -13,7 +13,7 @@ PORKBUN_API = "https://api.porkbun.com/api/json/v3"
 
 
 class PorkbunProvider:
-    provider_name = "porkbun"
+    provider_name: str = "porkbun"
 
     def __init__(self, api_key: str, secret_key: str):
         self.api_key = api_key

@@ -24,11 +24,11 @@ class ImageAttachableMixin(models.Model):
     )
 
     @property
-    def primary_image(self):
+    def primary_image(self) -> StoredFile | None:
         return self._primary_image
 
     @property
-    def image_url(self):
+    def image_url(self) -> str | None:
         if self._primary_image:
             return self._primary_image.file.url
         return None

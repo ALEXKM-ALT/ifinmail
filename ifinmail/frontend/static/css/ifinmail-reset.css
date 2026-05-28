@@ -16,6 +16,8 @@
     background: var(--ifinmail-bg);
     line-height: var(--ifinmail-line-height);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 .ifinmail-shell a {

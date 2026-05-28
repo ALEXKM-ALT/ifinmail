@@ -1,9 +1,32 @@
 /* ifinmail Layout — "Institutional Precision"
-   Page-level grids: header, sidebar, footer, content.
-   Fixed 280px sidebar + fluid content on desktop.
+   Page-level flex layout: sidebar + main content column.
+   Fixed 240px sidebar fills 100vh; main column contains header + content + footer.
    64px icon rail on tablet. Hamburger on mobile. */
 
-/* === Header (48px utility bar) === */
+/* === App-level flex container === */
+.ifinmail-body {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.ifinmail-app-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* === App Main: flex column (header + content + footer) === */
+.ifinmail-app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;          /* prevent flex overflow */
+    min-height: 100vh;
+    background: var(--ifinmail-color-surface-1);
+}
+
+/* === Header (64px utility bar) === */
 .ifinmail-header {
     display: flex;
     align-items: center;
@@ -72,9 +95,29 @@
     color: var(--ifinmail-on-surface-variant);
 }
 
-/* === Main content area === */
+/* === Hamburger button (visible on mobile only) === */
+.ifinmail-hamburger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--ifinmail-space-2);
+    color: var(--ifinmail-on-surface);
+}
+
+.ifinmail-hamburger svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+}
+
+/* === Main content area (flex child that fills remaining space) === */
 .ifinmail-main {
-    min-height: calc(100vh - var(--ifinmail-header-height) - var(--ifinmail-footer-height));
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--ifinmail-color-surface-1);
 }
 
 /* === Footer (32px status bar) === */
@@ -91,43 +134,15 @@
     flex-shrink: 0;
 }
 
-/* === Three-panel Mail Layout === */
-.ifinmail-mail-layout {
-    display: grid;
-    grid-template-columns: var(--ifinmail-sidebar-width) 360px 1fr;
-    grid-template-rows: 1fr;
-    height: calc(100vh - var(--ifinmail-header-height) - var(--ifinmail-footer-height));
-    overflow: hidden;
-}
-
-.ifinmail-sidebar {
-    border-right: 1px solid var(--ifinmail-outline-variant);
-    padding: var(--ifinmail-space-4);
-    overflow-y: auto;
-    background: var(--ifinmail-surface-container);
-}
-
-.ifinmail-message-list {
-    border-right: 1px solid var(--ifinmail-outline-variant);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    background: var(--ifinmail-surface-bright);
-}
-
-.ifinmail-message-detail {
-    overflow-y: auto;
-    padding: var(--ifinmail-space-6);
-    background: var(--ifinmail-surface-bright);
-}
-
-/* === Two-panel Admin Layout (fixed 100vh sidebar + fluid content) === */
+/* === Two-panel Admin Layout (sidebar + fluid content, flex-based) === */
 .ifinmail-admin-layout {
-    padding-left: var(--ifinmail-sidebar-width);
-    min-height: calc(100vh - var(--ifinmail-header-height) - var(--ifinmail-footer-height));
+    display: flex;
+    flex: 1;
+    min-height: 0;
 }
 
 .ifinmail-admin-content {
+    flex: 1;
     padding: var(--ifinmail-gutter);
     overflow-y: auto;
     max-width: var(--ifinmail-container-max-width);
@@ -136,6 +151,8 @@
     background: var(--ifinmail-surface-container-lowest);
 }
 
+
+
 /* === Centered page layout (login, error pages, etc.) === */
 .ifinmail-page {
     max-width: var(--ifinmail-container-max-width);
@@ -143,24 +160,21 @@
     padding: var(--ifinmail-gutter);
 }
 
+/* === Standalone layout (login, error, setup — no sidebar) === */
+.ifinmail-standalone-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.ifinmail-standalone-layout .ifinmail-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* === Responsive: Tablet (768px - 1024px) — 64px icon rail === */
 @media (max-width: 1024px) {
-    .ifinmail-mail-layout {
-        grid-template-columns: var(--ifinmail-sidebar-width) 1fr;
-    }
-
-    .ifinmail-message-detail {
-        display: none;
-    }
-
-    .ifinmail-message-detail.ifinmail-message-detail--open {
-        display: block;
-    }
-
-    .ifinmail-admin-layout {
-        padding-left: var(--ifinmail-sidebar-rail-width);
-    }
-
     .ifinmail-admin-content {
         max-width: 100%;
     }
@@ -172,28 +186,13 @@
         padding: 0 var(--ifinmail-margin-mobile);
     }
 
-    .ifinmail-mail-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .ifinmail-sidebar,
-    .ifinmail-message-list {
-        display: none;
-    }
-
-    .ifinmail-sidebar.ifinmail-sidebar--open,
-    .ifinmail-message-list.ifinmail-message-list--open {
-        display: block;
-        position: absolute;
-        top: var(--ifinmail-header-height);
-        left: 0;
-        width: 100%;
-        height: calc(100vh - var(--ifinmail-header-height) - var(--ifinmail-footer-height));
-        z-index: 100;
+    .ifinmail-hamburger {
+        display: flex;
+        align-items: center;
     }
 
     .ifinmail-admin-layout {
-        padding-left: 0;
+        flex-direction: column;
     }
 
     .ifinmail-admin-nav {

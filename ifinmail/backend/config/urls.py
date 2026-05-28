@@ -4,16 +4,16 @@ Root URL configuration for ifinmail.
 import logging
 
 from django.contrib import admin
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.urls import include, path
 from django.shortcuts import redirect, render
 
-from backend.apps.mail.views import autoconfig_mozilla, autoconfig_outlook
+from backend.apps.mail.web import autoconfig_mozilla, autoconfig_outlook
 
 logger = logging.getLogger("backend")
 
 
-def health_check(request):
+def health_check(request: HttpRequest) -> JsonResponse:
     """Health check endpoint for load balancers and monitoring."""
     from django.db import connections
     from django.db.utils import OperationalError
@@ -27,28 +27,28 @@ def health_check(request):
         status["status"] = "degraded"
 
     http_status = 200 if status["status"] == "ok" else 503
-    return JsonResponse(status, status=http_status)
+    return JsonResponse(status, status=http_status, content_type="application/json; charset=utf-8")
 
 
-def health_full(request):
+def health_full(request: HttpRequest) -> JsonResponse:
     """Full system health check — database, redis, TLS, disk."""
     from backend.services.monitoring import MonitoringService
 
     health = MonitoringService.get_full_health()
     http_status = 200 if health["status"] == "ok" else (503 if health["status"] == "err" else 200)
-    return JsonResponse(health, status=http_status)
+    return JsonResponse(health, status=http_status, content_type="application/json; charset=utf-8")
 
 
-def health_dns(request):
+def health_dns(request: HttpRequest) -> JsonResponse:
     """DNS health check for configured domains."""
     import os
 
-    from backend.apps.domains.models import Domain
+    from backend.apps.domains.services import DomainService
     from backend.services.monitoring import MonitoringService
 
     domains_data = {}
     try:
-        for domain in Domain.objects.order_by("name"):
+        for domain in DomainService.get_all_domains():
             domains_data[domain.name] = MonitoringService.check_dns(domain.name)
     except Exception:
         fallback = os.environ.get("MAIL_DOMAIN", os.environ.get("DOMAIN", ""))
@@ -61,19 +61,19 @@ def health_dns(request):
     return JsonResponse({
         "status": "ok" if all_pass else "warn",
         "domains": domains_data,
-    })
+    }, content_type="application/json; charset=utf-8")
 
 
-def health_deliverability(request):
+def health_deliverability(request: HttpRequest) -> JsonResponse:
     """Deliverability check — DNS propagation, blacklists, rDNS, port 25, TLS."""
     domain = request.GET.get("domain", "")
     from backend.services.deliverability import DeliverabilityService
     result = DeliverabilityService.run_all_checks(domain=domain or None)
     http_status = 200 if result.get("status") != "fail" else 503
-    return JsonResponse(result, status=http_status)
+    return JsonResponse(result, status=http_status, content_type="application/json; charset=utf-8")
 
 
-def legacy_accounts_redirect(request, path=""):
+def legacy_accounts_redirect(request: HttpRequest, path: str = "") -> HttpResponse:
     # EC-44: Redirect /admin/ directly to dashboard (avoid double redirect chain)
     from django.urls import reverse
     target = reverse("accounts:dashboard") if not path else f"/accounts/{path}"
@@ -89,7 +89,6 @@ urlpatterns = [
     path("admin/", legacy_accounts_redirect),
     path("admin/<path:path>", legacy_accounts_redirect),
     path("manage-panel/", admin.site.urls),
-    path("mail/", include("backend.apps.mail.urls")),
     path("domains/", include("backend.apps.domains.urls")),
     path("devices/", include("backend.apps.devices.urls")),
     path("dns/", include("backend.apps.dns.urls")),
@@ -100,56 +99,65 @@ urlpatterns = [
 ]
 
 # Custom error handlers
-handler400 = "backend.config.urls.custom_400"
-handler403 = "backend.config.urls.custom_403"
-handler404 = "backend.config.urls.custom_404"
-handler500 = "backend.config.urls.custom_500"
+ERROR_HANDLERS: dict[int, tuple[str, str, str, str, str]] = {
+    400: ("400 Bad Request: %s", "Bad request", "Invalid request", "warn", "400.html"),
+    403: ("403 Forbidden: %s", "Forbidden", "You do not have permission to access this resource", "warn", "403.html"),
+    404: ("404 Not Found: %s", "Not found", "Resource not found", "warn", "404.html"),
+    500: ("500 Internal Server Error", "Internal server error", "An unexpected error occurred", "exception", "500.html"),
+    502: ("502 Bad Gateway: %s", "Bad gateway", "Invalid upstream response", "warn", "502.html"),
+    503: ("503 Service Unavailable: %s", "Service unavailable", "Temporarily unavailable", "warn", "503.html"),
+    504: ("504 Gateway Timeout: %s", "Gateway timeout", "Upstream timed out", "warn", "504.html"),
+}
+
+for _code in (400, 403, 404, 500, 502, 503, 504):
+    globals()[f"handler{_code}"] = f"backend.config.urls.custom_error_{_code}"
 
 
-def _wants_html(request):
+def _make_error_handler(status_code: int):
+    log_msg, json_error, json_detail, log_level, template = ERROR_HANDLERS[status_code]
+
+    def handler(request: HttpRequest, exception: Exception | None = None) -> HttpResponse:
+        path = request.path
+        try:
+            if log_level == "exception":
+                logger.exception(log_msg, path)
+            else:
+                logger.log(getattr(logging, log_level.upper(), logging.WARNING), log_msg, path)
+        except Exception:
+            # Never let logging failures cascade
+            pass
+
+        if _wants_html(request):
+            try:
+                return render(request, template, {
+                    "error_code": str(status_code),
+                    "error_title": json_error.title(),
+                    "error_description": str(exception) if exception is not None else "",
+                    "error_detail": json_detail,
+                }, status=status_code)
+            except Exception:
+                # Fall back to JSON if template rendering fails
+                pass
+
+        return JsonResponse(
+            {"error": json_error, "detail": json_detail},
+            status=status_code,
+            content_type="application/json; charset=utf-8",
+        )
+
+    return handler
+
+
+def _wants_html(request: HttpRequest) -> bool:
     accept = request.META.get("HTTP_ACCEPT", "")
     if "text/html" in accept:
         return True
-    if accept in ("", "*/*") and not request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
-        return True
+    # */* or empty accept means client accepts anything — prefer JSON for API safety
+    # Most browsers explicitly send text/html; only API clients send bare */*
+    if accept in ("", "*/*"):
+        return False
     return False
 
 
-def custom_400(request, exception=None):
-    logger.warning("400 Bad Request: %s", request.path)
-    if _wants_html(request):
-        return render(request, "400.html", status=400)
-    return JsonResponse(
-        {"error": "Bad request", "detail": str(exception) if exception else "Invalid request"},
-        status=400,
-    )
-
-
-def custom_403(request, exception=None):
-    logger.warning("403 Forbidden: %s", request.path)
-    if _wants_html(request):
-        return render(request, "403.html", status=403)
-    return JsonResponse(
-        {"error": "Forbidden", "detail": "You do not have permission to access this resource"},
-        status=403,
-    )
-
-
-def custom_404(request, exception=None):
-    logger.warning("404 Not Found: %s", request.path)
-    if _wants_html(request):
-        return render(request, "404.html", status=404)
-    return JsonResponse(
-        {"error": "Not found", "detail": "Resource not found"},
-        status=404,
-    )
-
-
-def custom_500(request):
-    logger.exception("500 Internal Server Error")
-    if _wants_html(request):
-        return render(request, "500.html", status=500)
-    return JsonResponse(
-        {"error": "Internal server error", "detail": "An unexpected error occurred"},
-        status=500,
-    )
+for _code in ERROR_HANDLERS:
+    globals()[f"custom_error_{_code}"] = _make_error_handler(_code)

@@ -1,46 +1,49 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Setup Complete — {{ brand.name }}{% endblock %}
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Setup Complete — {{ name }}{% endblocktrans %}{% endblock %}
 
 {% block content %}
 <div class="ifinmail-setup-wizard">
   <div class="ifinmail-setup-progress">
-    <div class="ifinmail-setup-step ifinmail-setup-step--done">1. Domain</div>
-    <div class="ifinmail-setup-step ifinmail-setup-step--done">2. DNS</div>
-    <div class="ifinmail-setup-step ifinmail-setup-step--done">3. Account</div>
-    <div class="ifinmail-setup-step ifinmail-setup-step--active">4. Done</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">{% trans '1. Domain' %}</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">{% trans '2. DNS' %}</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">{% trans '3. Account' %}</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--active">{% trans '4. Done' %}</div>
   </div>
 
   <div class="ifinmail-setup-card">
-    <h1 class="ifinmail-admin-title">Your mail server is ready</h1>
+    <h1 class="ifinmail-admin-title">{% trans 'Your mail server is ready' %}</h1>
     <p class="ifinmail-setup-description">
-      {{ domain }} is now configured to send and receive email. Here's what to do next:
+      {% blocktrans trimmed %}{{ domain }} is now configured to send and receive email. Here's what to do next:{% endblocktrans %}
     </p>
 
     <div class="ifinmail-setup-checklist">
-      <div class="ifinmail-setup-checklist-item ifinmail-setup-checklist-item--done">
+      <div class="ifinmail-setup-checklist-item{% if setup_domain_done %} ifinmail-setup-checklist-item--done{% endif %}">
         <span class="ifinmail-setup-check">&#10003;</span>
-        <span>Domain configured — {{ domain }}</span>
+        <span>{% blocktrans trimmed %}Domain configured — {{ domain }}{% endblocktrans %}</span>
       </div>
-      <div class="ifinmail-setup-checklist-item ifinmail-setup-checklist-item--done">
+      <div class="ifinmail-setup-checklist-item{% if setup_dns_done %} ifinmail-setup-checklist-item--done{% endif %}">
         <span class="ifinmail-setup-check">&#10003;</span>
-        <span>DNS records configured</span>
+        <span>{% trans 'DNS records configured' %}</span>
       </div>
-      <div class="ifinmail-setup-checklist-item ifinmail-setup-checklist-item--done">
+      <div class="ifinmail-setup-checklist-item{% if setup_account_done %} ifinmail-setup-checklist-item--done{% endif %}">
         <span class="ifinmail-setup-check">&#10003;</span>
-        <span>Email account created</span>
+        <span>{% trans 'Email account created' %}</span>
       </div>
     </div>
 
     <div class="ifinmail-setup-next-steps ifinmail-mt-6">
-      <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Go to Dashboard</a>
-      <a href="/setup/extras/" class="ifinmail-btn ifinmail-btn--outline">Install Nextcloud Companion</a>
+      <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Go to Dashboard' %}</a>
+      {% if ENABLE_NEXTCLOUD %}
+      <a href="https://apps.nextcloud.com" target="_blank" rel="noopener" class="ifinmail-btn ifinmail-btn--outline">{% trans 'Install Nextcloud Companion' %}</a>
+      {% endif %}
     </div>
 
     <form method="post" action="{% url 'accounts:setup_advance' %}" class="ifinmail-mt-4">
       {% csrf_token %}
       <input type="hidden" name="current_step" value="done">
-      <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Finish Setup</button>
+      <button type="submit" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Finish Setup' %}</button>
     </form>
   </div>
 </div>

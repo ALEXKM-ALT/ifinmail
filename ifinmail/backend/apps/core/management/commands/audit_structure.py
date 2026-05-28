@@ -39,9 +39,9 @@ REQUIRED_FILES = [
 
 
 class Command(BaseCommand):
-    help = "Audit all backend apps for AGENTS.md structural compliance."
+    help: str = "Audit all backend apps for AGENTS.md structural compliance."
 
-    def handle(self, **options):
+    def handle(self, **options: object) -> None:
         apps_dir = Path("backend/apps")
         violations = 0
 

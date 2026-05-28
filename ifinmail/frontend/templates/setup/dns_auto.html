@@ -1,43 +1,44 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}DNS Auto-Configuration — {{ brand.name }}{% endblock %}
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}DNS Auto-Configuration — {{ name }}{% endblocktrans %}{% endblock %}
 
 {% block content %}
 <div class="ifinmail-setup-wizard">
   <div class="ifinmail-setup-progress">
-    <div class="ifinmail-setup-step ifinmail-setup-step--done">1. Domain</div>
-    <div class="ifinmail-setup-step ifinmail-setup-step--active">2. DNS</div>
-    <div class="ifinmail-setup-step">3. Account</div>
-    <div class="ifinmail-setup-step">4. Done</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--done">{% trans '1. Domain' %}</div>
+    <div class="ifinmail-setup-step ifinmail-setup-step--active">{% trans '2. DNS' %}</div>
+    <div class="ifinmail-setup-step">{% trans '3. Account' %}</div>
+    <div class="ifinmail-setup-step">{% trans '4. Done' %}</div>
   </div>
 
   <div class="ifinmail-setup-card">
-    <h1 class="ifinmail-admin-title">Configuring DNS for {{ domain }}</h1>
+    <h1 class="ifinmail-admin-title">{% blocktrans trimmed %}Configuring DNS for {{ domain }}{% endblocktrans %}</h1>
     <p class="ifinmail-setup-description">
-      Setting up DNS records with <strong>{{ dns_provider|title }}</strong>.
-      This may take a minute.
+      {% blocktrans trimmed %}Setting up DNS records with <strong>{{ dns_provider|title }}</strong>.
+      This may take a minute.{% endblocktrans %}
     </p>
 
     <div class="ifinmail-dns-check-grid" id="dns-progress">
-      <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-a">
+      <div class="ifinmail-dns-check ifinmail-dns-check--pending" id="check-a">
         <span class="ifinmail-dns-check-type">A</span>
-        <span class="ifinmail-dns-check-detail">Creating A records...</span>
+        <span class="ifinmail-dns-check-detail">{% trans 'Creating A records...' %}</span>
       </div>
       <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-mx">
         <span class="ifinmail-dns-check-type">MX</span>
-        <span class="ifinmail-dns-check-detail">Creating MX record...</span>
+        <span class="ifinmail-dns-check-detail">{% trans 'Creating MX record...' %}</span>
       </div>
       <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-spf">
         <span class="ifinmail-dns-check-type">SPF</span>
-        <span class="ifinmail-dns-check-detail">Creating SPF record...</span>
+        <span class="ifinmail-dns-check-detail">{% trans 'Creating SPF record...' %}</span>
       </div>
       <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-dkim">
         <span class="ifinmail-dns-check-type">DKIM</span>
-        <span class="ifinmail-dns-check-detail">Creating DKIM record...</span>
+        <span class="ifinmail-dns-check-detail">{% trans 'Creating DKIM record...' %}</span>
       </div>
       <div class="ifinmail-dns-check ifinmail-dns-check--unchecked" id="check-dmarc">
         <span class="ifinmail-dns-check-type">DMARC</span>
-        <span class="ifinmail-dns-check-detail">Creating DMARC record...</span>
+        <span class="ifinmail-dns-check-detail">{% trans 'Creating DMARC record...' %}</span>
       </div>
     </div>
 
@@ -47,13 +48,14 @@
       <form method="post" action="{% url 'accounts:setup_advance' %}">
         {% csrf_token %}
         <input type="hidden" name="current_step" value="dns-auto">
-        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">Continue</button>
-        <button type="submit" name="skip" value="1" class="ifinmail-btn ifinmail-btn--ghost">Skip for now</button>
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Continue' %}</button>
+        <button type="submit" name="skip" value="1" class="ifinmail-btn ifinmail-btn--ghost">{% trans 'Skip for now' %}</button>
       </form>
     </div>
   </div>
 </div>
 
+{% block dns_auto_scripts %}
 <script>
 (function() {
   var domain = "{{ domain|escapejs }}";
@@ -61,11 +63,18 @@
   if (!domain || !provider) return;
 
   var checks = ["a", "mx", "spf", "dkim", "dmarc"];
+  var dnsLabels = {
+    a: "{% trans 'A record configured' %}",
+    mx: "{% trans 'MX record configured' %}",
+    spf: "{% trans 'SPF record configured' %}",
+    dkim: "{% trans 'DKIM record configured' %}",
+    dmarc: "{% trans 'DMARC record configured' %}",
+  };
   var formData = new FormData();
   formData.append("domain", domain);
   formData.append("provider", provider);
 
-  fetch('/dns/configure/', {
+  fetch('{% url "dns:configure" %}', {
     method: 'POST',
     headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
     body: formData
@@ -78,18 +87,19 @@
         var el = document.getElementById('check-' + c);
         if (el) {
           el.className = 'ifinmail-dns-check ifinmail-dns-check--pass';
-          el.querySelector('.ifinmail-dns-check-detail').textContent = c.toUpperCase() + ' record configured';
+          el.querySelector('.ifinmail-dns-check-detail').textContent = dnsLabels[c];
         }
       });
-      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--ok"><p>All DNS records configured successfully. Propagation may take a few minutes.</p></div>';
+      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--ok"><p>{% trans 'All DNS records configured successfully. Propagation may take a few minutes.' %}</p></div>';
     } else {
-      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Configuration failed: ' + (data.message || 'Unknown error') + '</p></div>';
+      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>{% trans 'Configuration failed:' %} ' + (data.message || '{% trans 'Unknown error' %}') + '</p></div>';
     }
   })
   .catch(function(err) {
     document.getElementById('dns-result-message').innerHTML =
-      '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Request failed: ' + err.message + '</p></div>';
+      '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>{% trans 'Configuration failed. Please try again or configure manually.' %}</p></div>';
   });
 })();
 </script>
+{% endblock %}
 {% endblock %}

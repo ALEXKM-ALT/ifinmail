@@ -1,7 +1,7 @@
 .PHONY: migrate makemigrations run shell shell_plus dbshell check test coverage lint lint-fix \
         format fmt format-check collectstatic deploy createsuperuser audit clean \
         provision reload rebuild up down build restart pull logs ps shell-api migrate-api manage \
-        health backup restore-test firewall
+        health backup restore-test firewall makemessages compilemessages
 
 # --- Django targets (local development) ---
 PORT ?= 8000
@@ -87,13 +87,13 @@ provision:
 	DOMAIN="$(DOMAIN)" provisioning/scripts/provision.sh
 
 reload:
+	$(DOCKER_COMPOSE) build --pull
 	$(DOCKER_COMPOSE) down --remove-orphans
 	$(DOCKER_COMPOSE) up -d --remove-orphans
 	@echo ""
 	$(DOCKER_COMPOSE) ps
 
 rebuild:
-	$(DOCKER_COMPOSE) build --pull
 	make reload
 
 up:
@@ -140,3 +140,12 @@ restore-test:
 
 firewall:
 	provisioning/scripts/firewall.sh
+
+# --- i18n ---
+LOCALE ?= en
+
+makemessages:
+	python manage.py makemessages -l $(LOCALE) --ignore=.venv --ignore=staticfiles --ignore=media --ignore=node_modules
+
+compilemessages:
+	python manage.py compilemessages

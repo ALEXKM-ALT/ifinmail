@@ -1,0 +1,8 @@
+{% load i18n %}
+<tr>
+    <td><strong>{{ row.name|default:'' }}</strong><br>{{ row.subtitle|default:'' }}</td>
+    <td><span class="{% if row.mx_status_class %}ifinmail-trend--danger{% else %}ifinmail-trend{% endif %}">{{ row.mx_status|default:'—' }}</span></td>
+    <td>{{ row.auth_records|default:'—' }}</td>
+    <td>{{ row.ssl_expiry|default:'—' }}</td>
+    <td>{{ row.actions|default:'' }}</td>
+</tr>

@@ -1,151 +1,219 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Admin Dashboard — {{ brand.name }}{% endblock %}
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Server Dashboard — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
+{% block header %}{% include "includes/header.html" %}{% endblock %}
 
 {% block content %}
-<div class="ifinmail-admin-layout">
-    {% include "admin/partials/admin_sidebar.html" with active_section="overview" %}
-
-    <section class="ifinmail-admin-content">
-        <h1 class="ifinmail-admin-title">Platform Overview</h1>
-
-        <!-- Stats Cards -->
-        <div class="ifinmail-stats-grid">
-            {% for stat in stats %}
-            <div class="ifinmail-stat-card{% if stat.status == 'err' %} ifinmail-stat-card--error{% elif stat.status == 'warn' %} ifinmail-stat-card--warning{% endif %}">
-                <span class="ifinmail-stat-value">{{ stat.value }}</span>
-                <span class="ifinmail-stat-label">{{ stat.label }}</span>
+<section class="ifinmail-admin-content">
+    <div class="ifinmail-admin-page">
+        <div class="ifinmail-page-header">
+            <div>
+                <h1 class="ifinmail-page-title">{% trans 'Server Dashboard' %}</h1>
+                <p class="ifinmail-page-subtitle">{% trans 'Real-time telemetry and management cluster' %}</p>
             </div>
-            {% endfor %}
+            <div class="ifinmail-page-actions">
+                <button class="ifinmail-btn" onclick="forceRescan()">{% trans 'Force Rescan' %}</button>
+                <button class="ifinmail-btn ifinmail-btn--outline" onclick="toggleShell()">{% trans 'Open Shell' %}</button>
+            </div>
         </div>
 
-        <!-- Services Health -->
-        <div class="ifinmail-admin-section" id="services">
-            <h2 class="ifinmail-admin-section-title">Service Health</h2>
-            <div class="ifinmail-services-grid">
-                {% for key, svc in services.items %}
-                <div class="ifinmail-service-card ifinmail-service-card--{{ svc.status }}">
-                    <span class="ifinmail-service-name">{{ svc.label }}</span>
-                    <span class="ifinmail-service-status">{{ svc.detail }}</span>
+        <div class="ifinmail-admin-grid">
+            <article class="ifinmail-stat-panel ifinmail-span-6">
+                <div class="ifinmail-stat-topline">
+                    <span class="ifinmail-overline">{% trans 'Storage Usage' %}</span>
+                    <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- DNS Health Summary -->
-        <div class="ifinmail-admin-section" id="domains">
-            <h2 class="ifinmail-admin-section-title">DNS Health by Domain</h2>
-            <div class="ifinmail-domain-health-list">
-                {% for domain in domains %}
-                <div class="ifinmail-domain-health">
-                    <span class="ifinmail-domain-health-name ifinmail-font-semibold">{{ domain.name }}</span>
-
-                    <div class="ifinmail-domain-health-checks">
-                        {% for check in domain.checks %}
-                        <span class="ifinmail-health-indicator ifinmail-health-indicator--{{ check.status }}"
-                              title="{{ check.message }}">
-                            {{ check.check|upper }}
-                        </span>
-                        {% endfor %}
-                    </div>
-
-                    {% if domain.warnings %}
-                    <div class="ifinmail-domain-health-warnings">
-                        {% for warning in domain.warnings %}
-                        <p class="ifinmail-admin-warning">{{ warning }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
+                <span class="ifinmail-stat-big">{{ storage_used|default:'0' }}</span>
+                <div class="ifinmail-progress"><span style="width:{{ storage_pct|default:'0%' }}"></span></div>
+                <div class="ifinmail-action-row" style="justify-content:space-between">
+                    <strong>{% blocktrans trimmed with pct=storage_pct|default:'0%' %}{{ pct }} Used{% endblocktrans %}</strong><strong>{% blocktrans trimmed with total=storage_total|default:'0' %}{{ total }} Total{% endblocktrans %}</strong>
                 </div>
-                {% empty %}
-                <p class="ifinmail-admin-empty">No domains configured. <a href="/manage-panel/domains/domain/add/">Add your first domain</a>.</p>
-                {% endfor %}
-            </div>
-        </div>
+                {% if storage_warning %}<p class="ifinmail-trend--danger">{{ storage_warning }}</p>{% endif %}
+            </article>
+            <article class="ifinmail-stat-panel ifinmail-span-3">
+                <span class="ifinmail-overline">{% trans 'Traffic (24h)' %}</span>
+                <span class="ifinmail-stat-big">{{ traffic_stats.count|default:'0' }}</span>
+                <p class="ifinmail-stat-detail">{{ traffic_stats.label|default:'' }}</p>
+                <p class="ifinmail-trend">{{ traffic_stats.trend|default:'' }}</p>
+            </article>
+            <article class="ifinmail-stat-panel ifinmail-span-3">
+                <span class="ifinmail-overline">{% trans 'Uptime' %}</span>
+                <span class="ifinmail-stat-big">{{ uptime_stats.pct|default:'0%' }}</span>
+                <p class="ifinmail-stat-detail">{{ uptime_stats.detail|default:'' }}</p>
+                <p class="ifinmail-trend">{{ uptime_stats.status|default:'' }}</p>
+            </article>
 
-        <!-- Email Setup Guide -->
-        <div class="ifinmail-admin-section">
-            <h2 class="ifinmail-admin-section-title">Email Client Settings</h2>
-            <div class="ifinmail-setup-guide">
-                <p>Use these settings to configure your email client:</p>
-                <table class="ifinmail-setup-table">
-                    <tr><td><strong>IMAP Server</strong></td><td>{{ mail_hostname }}</td><td>Port 993, SSL/TLS</td></tr>
-                    <tr><td><strong>SMTP Server</strong></td><td>{{ mail_hostname }}</td><td>Port 587, STARTTLS</td></tr>
-                    <tr><td><strong>Username</strong></td><td colspan="2">Your full email address</td></tr>
-                    <tr><td><strong>Password</strong></td><td colspan="2">Your mail account password</td></tr>
-                </table>
-            </div>
-        </div>
-
-        <!-- Deliverability Check -->
-        <div class="ifinmail-admin-section" id="deliverability">
-            <h2 class="ifinmail-admin-section-title">Deliverability Check</h2>
-            <p class="ifinmail-admin-empty ifinmail-text-left">
-                Run a comprehensive check to make sure your emails reach inboxes, not spam folders.
-            </p>
-            <button class="ifinmail-btn ifinmail-btn--primary" onclick="runDeliverabilityCheck()">
-                Check Deliverability
-            </button>
-            <div id="deliverability-results" class="ifinmail-mt-4"></div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="ifinmail-admin-section" id="activity">
-            <h2 class="ifinmail-admin-section-title">Recent Activity</h2>
-            <div class="ifinmail-event-list">
-                {% for event in events %}
-                <div class="ifinmail-event-item ifinmail-event-item--{{ event.severity }}">
-                    <span class="ifinmail-event-time ifinmail-text-xs ifinmail-text-muted">{{ event.time }}</span>
-                    <span class="ifinmail-event-description">{{ event.description }}</span>
+            <article class="ifinmail-table-panel ifinmail-span-8 ifinmail-watermark">
+                <div class="ifinmail-table-panel-header" style="padding-bottom:0">
+                    <span class="ifinmail-overline">{% trans 'System Telemetry' %}</span>
+                    <div class="ifinmail-action-row"><span class="ifinmail-trend">CPU</span><span class="ifinmail-trend">Memory</span></div>
                 </div>
-                {% empty %}
-                <p class="ifinmail-admin-empty">No recent events.</p>
-                {% endfor %}
-            </div>
+                <div class="ifinmail-chart-bars">
+                    {% for h in telemetry_bars %}<span style="height:{{ h }}%"></span>{% empty %}<span style="height:0%"></span>{% endfor %}
+                </div>
+                <div class="ifinmail-admin-grid" style="padding:26px 30px">
+                    <div class="ifinmail-span-6"><span class="ifinmail-overline">{% trans 'Processor Usage' %}</span><strong style="font-size:var(--ifinmail-font-size-h1)">{{ system_load.cpu_pct|default:'0' }}%</strong> <span>{{ system_load.cpu_label|default:'' }}</span></div>
+                    <div class="ifinmail-span-6"><span class="ifinmail-overline">{% trans 'Memory Usage' %}</span><strong style="font-size:var(--ifinmail-font-size-h1)">{{ system_load.mem_used|default:'0' }}<span style="font-size:var(--ifinmail-font-size-body)">{{ system_load.mem_unit|default:'GB' }}</span></strong> <span>{{ system_load.mem_total|default:'' }}</span></div>
+                </div>
+            </article>
+
+            <aside class="ifinmail-panel ifinmail-span-4">
+                <h2 class="ifinmail-panel-title">{% trans 'Quick Actions' %}</h2>
+                <div style="margin-top:22px">
+                    <a href="{% url 'accounts:user_management' %}" class="ifinmail-quick-action"><span class="ifinmail-icon-tile">+</span><span><strong>{% trans 'Provision User' %}</strong><br>{% trans 'Create new mailbox' %}</span></a>
+                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionSSL()"><span class="ifinmail-icon-tile">↓</span><span><strong>{% trans 'SSL Certificate' %}</strong><br>{% trans 'Renew or update' %}</span></a>
+                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionPurge()"><span class="ifinmail-icon-tile">⌁</span><span><strong>{% trans 'Purge Logs' %}</strong><br>{% trans 'Clear archival data' %}</span></a>
+                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionReboot()"><span class="ifinmail-icon-tile">↻</span><span><strong>{% trans 'Reboot Service' %}</strong><br>{% trans 'Restart postfix/dovecot' %}</span></a>
+                </div>
+            </aside>
+
+            <article class="ifinmail-table-panel ifinmail-span-8">
+                <div class="ifinmail-table-panel-header"><span class="ifinmail-overline">{% trans 'Active Queues' %}</span></div>
+                {% include "includes/admin_table.html" with span=None title=None headers=queue_headers|default:'' rows=queue_rows|default:'' row_template="admin/partials/queue_row.html" %}
+            </article>
+            <article class="ifinmail-table-panel ifinmail-span-4">
+                <div class="ifinmail-hero-media"></div>
+                <div id="security" style="scroll-margin-top:80px"></div>
+                <div class="ifinmail-panel">
+                    <span class="ifinmail-overline" style="color:var(--ifinmail-color-primary)">{% trans 'Security Node' %}</span>
+                    <h3>{% trans 'DC Connectivity Status' %}</h3>
+                </div>
+            </article>
         </div>
-    </section>
+    </div>
+</section>
+
+<div id="shell-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ifinmail-color-bg-panel);border-top:2px solid var(--ifinmail-color-primary);padding:16px 24px;z-index:1000;max-height:320px;overflow:auto;box-shadow:0 -4px 20px rgba(0,0,0,0.15)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <strong>{% trans 'Web Shell' %}</strong>
+        <button class="ifinmail-btn" onclick="toggleShell()">{% trans 'Close' %}</button>
+    </div>
+    <form onsubmit="event.preventDefault(); execShell()" style="display:flex;gap:8px;margin-bottom:10px">
+        <span style="color:var(--ifinmail-color-primary);font-weight:600;align-self:center">$</span>
+        <input id="shell-cmd" type="text" placeholder="uptime" style="flex:1;font-family:monospace;padding:6px 10px" autofocus>
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Run' %}</button>
+    </form>
+    <pre id="shell-output" style="background:#0d1117;color:#c9d1d9;padding:12px;border-radius:6px;max-height:180px;overflow:auto;font-size:var(--ifinmail-font-size-code);margin:0;white-space:pre-wrap;word-break:break-all">{% trans 'Ready. Type a command and press Run.' %}</pre>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-function runDeliverabilityCheck() {
-    var el = document.getElementById('deliverability-results');
-    el.innerHTML = '<p class="ifinmail-dns-progress">Running deliverability checks...</p>';
+(function() {
+    function getCSRFToken() {
+        var name = 'csrftoken';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf(name + '=') === 0) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
 
-    fetch('/health/deliverability/')
+    window.toggleShell = function() {
+        var panel = document.getElementById('shell-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'block') {
+            document.getElementById('shell-cmd').focus();
+        }
+    };
+
+    window.execShell = function() {
+        var cmd = document.getElementById('shell-cmd').value.trim();
+        var output = document.getElementById('shell-output');
+        if (!cmd) return;
+        output.textContent = 'Running…';
+        var formData = new FormData();
+        formData.append('cmd', cmd);
+        fetch('{% url "accounts:shell" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()},
+            body: formData
+        })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            var checks = {
-                'dns_propagation': 'DNS Propagation',
-                'blacklists': 'Blacklist Check',
-                'reverse_dns': 'Reverse DNS',
-                'port25': 'Port 25',
-                'tls': 'TLS Certificate'
-            };
-            var html = '<div class="ifinmail-dns-check-grid">';
-            for (var key in checks) {
-                if (!checks.hasOwnProperty(key)) continue;
-                var check = data[key] || {};
-                var status = check.status || 'warn';
-                var statusClass = status === 'pass' ? 'pass' : (status === 'fail' ? 'fail' : 'unchecked');
-                html += '<div class="ifinmail-dns-check ifinmail-dns-check--' + statusClass + '">' +
-                    '<div>' +
-                    '<span class="ifinmail-dns-check-type">' + checks[key] + '</span>' +
-                    '<br><span class="ifinmail-dns-check-detail">' + (check.detail || '') + '</span>' +
-                    '</div>' +
-                    '<span class="ifinmail-health-indicator ifinmail-health-indicator--' + statusClass + '">' + status.toUpperCase() + '</span>' +
-                    '</div>';
-                if (check.fix) {
-                    html += '<div class="ifinmail-deliverability-fix">Fix: ' + check.fix + '</div>';
-                }
+            if (data.error) {
+                output.textContent = 'Error: ' + data.error;
+            } else {
+                output.textContent = (data.stdout || '') + (data.stderr ? '\n[stderr]\n' + data.stderr : '');
+                if (!data.stdout && !data.stderr) output.textContent = '(no output)';
             }
-            html += '</div>';
-            el.innerHTML = html;
         })
         .catch(function(err) {
-            el.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>Check failed: ' + err.message + '</p></div>';
+            output.textContent = 'Request failed. Please try again.';
         });
-}
+    };
+
+    window.forceRescan = function() {
+        var btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Scanning…';
+        fetch('{% url "accounts:rescan" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.textContent = data.status === 'ok' ? 'Rescan Complete' : 'Rescan Failed';
+            btn.disabled = false;
+            setTimeout(function() { btn.textContent = '{% trans "Force Rescan" %}'; }, 3000);
+            if (data.status === 'ok') location.reload();
+        })
+        .catch(function() {
+            btn.textContent = 'Request Failed';
+            btn.disabled = false;
+            setTimeout(function() { btn.textContent = '{% trans "Force Rescan" %}'; }, 3000);
+        });
+    };
+
+    window.quickActionSSL = function() {
+        var tls = {{ tls_info|safe|default:'{}' }};
+        var msg = '{% trans "TLS Certificate Info" %}' + '\n\n';
+        if (tls.issuer) msg += '{% trans "Issuer" %}: ' + tls.issuer + '\n';
+        if (tls.sans && tls.sans.length) msg += '{% trans "Domains" %}: ' + tls.sans.join(', ') + '\n';
+        if (tls.expiry_days !== undefined && tls.expiry_days !== null) msg += '{% trans "Expires in" %}: ' + tls.expiry_days + ' days\n';
+        else msg += '{% trans "No certificate found" %}\n';
+        alert(msg);
+    };
+
+    window.quickActionPurge = function() {
+        if (!confirm('{% trans "Delete all archived audit logs, keeping the 500 most recent?" %}')) return;
+        fetch('{% url "accounts:log_purge" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                alert('{% trans "Purged" %}: ' + (data.deleted || 0) + ' {% trans "entries" %}');
+                location.reload();
+            } else {
+                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
+            }
+        })
+        .catch(function() { alert('{% trans "Request failed" %}'); });
+    };
+
+    window.quickActionReboot = function() {
+        if (!confirm('{% trans "Restart postfix and dovecot services? This will briefly interrupt mail delivery." %}')) return;
+        fetch('{% url "accounts:reboot" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var msg = '';
+            for (var svc in data.services) {
+                msg += svc + ': ' + data.services[svc] + '\n';
+            }
+            alert(msg);
+            location.reload();
+        })
+        .catch(function() { alert('{% trans "Request failed" %}'); });
+    };
+})();
 </script>
 {% endblock %}

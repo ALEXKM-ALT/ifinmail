@@ -12,7 +12,7 @@ DO_API = "https://api.digitalocean.com/v2"
 
 
 class DigitalOceanProvider:
-    provider_name = "digitalocean"
+    provider_name: str = "digitalocean"
 
     def __init__(self, api_token: str):
         self.session = requests.Session()
@@ -21,7 +21,7 @@ class DigitalOceanProvider:
             "Content-Type": "application/json",
         })
 
-    def _request(self, method: str, path: str, **kwargs) -> dict:
+    def _request(self, method: str, path: str, **kwargs: object) -> dict:
         url = f"{DO_API}{path}"
         max_retries = 3
         for attempt in range(max_retries + 1):
@@ -41,6 +41,7 @@ class DigitalOceanProvider:
                 raise RuntimeError(f"DigitalOcean API request failed: {e}") from e
             except requests.RequestException as e:
                 raise RuntimeError(f"DigitalOcean API request failed: {e}") from e
+        raise RuntimeError("DigitalOcean API request failed after max retries")
 
     def _fetch_records(self, domain: str) -> list[dict]:
         records = []

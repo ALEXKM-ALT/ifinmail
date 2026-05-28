@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}User Management — {{ name }}{% endblocktrans %}{% endblock %}
+{% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
+{% block header %}{% include "includes/header.html" %}{% endblock %}
+
+{% block content %}
+<section class="ifinmail-admin-content">
+    <div class="ifinmail-admin-page">
+        <div class="ifinmail-page-header">
+            <div>
+                <h1 class="ifinmail-page-title">{% trans 'User Management' %}</h1>
+                <p class="ifinmail-page-subtitle">{% trans 'Configure access control, audit sessions, and monitor security governance.' %}</p>
+            </div>
+            <div class="ifinmail-page-actions">
+                <a class="ifinmail-link-strong" href="{% url 'accounts:users_export' %}">{% trans 'Export Report' %}</a>
+                <a href="{% url 'accounts:setup_step' step='welcome' %}" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Provision User' %}</a>
+            </div>
+        </div>
+
+        <div class="ifinmail-admin-grid">
+            <article class="ifinmail-stat-panel ifinmail-span-3"><span class="ifinmail-overline">{% trans 'MFA Adoption' %}</span><span class="ifinmail-stat-big">{{ mfa_adoption_pct|default:'0%' }}</span><div class="ifinmail-progress"><span style="width:{{ mfa_adoption_pct|default:'0%' }}"></span></div></article>
+            <article class="ifinmail-stat-panel ifinmail-span-3"><span class="ifinmail-overline">{% trans 'Active Sessions' %}</span><span class="ifinmail-stat-big">{{ active_sessions|default:'0' }}</span><p class="ifinmail-stat-detail">{{ session_domains|default:'' }}</p></article>
+            <article class="ifinmail-stat-panel ifinmail-span-3"><span class="ifinmail-overline">{% trans 'Failed Logins' %}</span><span class="ifinmail-stat-big">{{ failed_logins|default:'0' }}</span><p class="ifinmail-trend--danger">{% trans 'Last 24 hours' %}</p></article>
+            <article class="ifinmail-stat-panel ifinmail-span-3"><span class="ifinmail-overline">{% trans 'RBAC Integrity' %}</span><span class="ifinmail-stat-big">{{ rbac_status|default:'—' }}</span><p class="ifinmail-trend">{{ unassigned_roles|default:'' }}</p></article>
+
+            <article class="ifinmail-table-panel ifinmail-span-8">
+                <div class="ifinmail-table-panel-header"><h2 class="ifinmail-panel-title">{% trans 'Admin Directory' %}</h2><span>≡ ⋮</span></div>
+                {% include "includes/admin_table.html" with span=None title=None headers=admin_headers|default:'' rows=admins|default:'' row_template="admin/partials/admin_row.html" %}
+            </article>
+            <aside class="ifinmail-span-4">
+                <article class="ifinmail-panel">
+                    <h2 class="ifinmail-panel-title">{% trans 'RBAC Overview' %}</h2>
+                    <div style="margin-top:22px">
+                        {% for role in role_counts %}
+                        <div class="ifinmail-role-card"><span><strong>{{ role.name|default:'' }}</strong><br>{{ role.desc|default:'' }}</span><span class="ifinmail-badge{% if role.badge_class %} {{ role.badge_class }}{% endif %}">{{ role.count|default:'0' }}</span></div>
+                        {% empty %}
+                        <p class="ifinmail-text--muted">{% trans 'No roles configured.' %}</p>
+                        {% endfor %}
+                    </div>
+                </article>
+                <article class="ifinmail-panel" style="margin-top:24px">
+                    <h2 class="ifinmail-panel-title">{% trans 'Real-time Sessions' %}</h2>
+                    {% for session in live_sessions %}
+                    <div class="ifinmail-session-item"><span>{{ session.device|default:'' }}<br><small>{{ session.detail|default:'' }}</small></span>{% if session.live %}<a class="ifinmail-link-strong">{% trans 'Live' %}</a>{% else %}<small>{{ session.ago|default:'' }}</small>{% endif %}</div>
+                    {% empty %}
+                    <p class="ifinmail-text--muted">{% trans 'No active sessions.' %}</p>
+                    {% endfor %}
+                    <a class="ifinmail-link-strong" onclick="event.preventDefault(); killOtherSessions()" style="display:block;text-align:center;padding:8px;cursor:pointer">{% trans 'Terminate All Other Sessions' %}</a>
+                </article>
+            </aside>
+
+            <article class="ifinmail-panel ifinmail-span-12">
+                <div class="ifinmail-admin-grid">
+                    <div class="ifinmail-span-4"><h2 class="ifinmail-panel-title">{% trans 'Security Governance' %}</h2><p>{% trans 'Enterprise-wide audit of access patterns and policy compliance.' %}</p>{% for item in governance_items %}<p class="{% if item.status == 'warn' %}ifinmail-trend--danger{% else %}ifinmail-trend{% endif %}">{{ item.text|default:'' }}</p>{% empty %}<p class="ifinmail-text--muted">{% trans 'No governance data.' %}</p>{% endfor %}</div>
+                    <div class="ifinmail-span-4 ifinmail-panel"><span class="ifinmail-overline">{% trans 'Anomalous Activity' %}</span><div class="ifinmail-chart-bars" style="height:120px;padding:0;border:0">{% for h in anomaly_bars %}<span style="height:{{ h }}%{% if forloop.counter0 == 4 %};background:#c81e1e{% endif %}"></span>{% empty %}<span style="height:0%"></span>{% endfor %}</div><p>{{ anomaly_description|default:'' }}</p></div>
+                    <div class="ifinmail-span-4 ifinmail-panel"><span class="ifinmail-overline">{% trans 'Privileged Access Audit' %}</span><p>{% trans 'Just-in-Time Access' %} <strong style="float:right">{{ audit_stats.jit_access|default:'0' }}</strong></p><p>{% trans 'Key Rotation' %} <strong style="float:right">{{ audit_stats.key_rotation|default:'0' }}</strong></p><p>{% trans 'Manual Overrides' %} <strong class="ifinmail-trend--danger" style="float:right">{{ audit_stats.manual_overrides|default:'0' }}</strong></p><a class="ifinmail-link-strong" href="{% url 'accounts:logs' %}">{% trans 'Review All Logs →' %}</a></div>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<script>
+(function() {
+    function getCSRFToken() {
+        var name = 'csrftoken';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf(name + '=') === 0) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    window.killOtherSessions = function() {
+        if (!confirm('{% trans "Terminate all user sessions except your own? All other users will be logged out." %}')) return;
+        fetch('{% url "accounts:users_kill_sessions" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                alert('{% trans "Terminated" %}: ' + (data.killed || 0) + ' {% trans "sessions" %}');
+                location.reload();
+            } else {
+                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
+            }
+        })
+        .catch(function() { alert('{% trans "Request failed" %}'); });
+    };
+})();
+</script>
+{% endblock %}

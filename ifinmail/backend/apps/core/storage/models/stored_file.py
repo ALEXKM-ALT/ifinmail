@@ -7,7 +7,7 @@ from backend.apps.core.base.models.base import CoreModel
 from backend.apps.core.types.enums import EntityType, StorageVisibility
 
 
-def _upload_to(instance, filename):
+def _upload_to(instance: "StoredFile", filename: str) -> str:
     """Generate unique, collision-resistant upload paths (EC-76).
     Uses UUIDs to prevent filename collisions and race conditions.
     """

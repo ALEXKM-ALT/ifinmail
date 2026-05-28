@@ -1,0 +1,43 @@
+{% load i18n %}
+<header class="ifinmail-header">
+    <button class="ifinmail-hamburger" type="button" aria-label="{% trans 'Toggle navigation' %}" data-sidebar-toggle>
+        <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+
+    <form class="ifinmail-global-search" role="search" action="{% url 'accounts:logs' %}" method="get">
+        <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <label class="ifinmail-sr-only" for="ifinmail-global-search">{% trans 'Search' %}</label>
+        <input id="ifinmail-global-search" type="search" name="q" placeholder="{{ header_search_placeholder|default:_('Search settings...') }}" autocomplete="off">
+    </form>
+
+    <div class="ifinmail-header-actions">
+        <button class="ifinmail-icon-button" type="button" aria-label="{% trans 'Notifications' %}" title="{% trans 'No new notifications' %}">
+            <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            {% if notification_count %}
+            <span class="ifinmail-notification-dot" aria-hidden="true"></span>
+            {% endif %}
+        </button>
+        {% if show_settings_icon %}
+        <a class="ifinmail-icon-button" href="{% url 'accounts:branding_identity' %}" aria-label="{% trans 'Settings' %}">
+            <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.3 7A2 2 0 1 1 7.1 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+        </a>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <a class="ifinmail-icon-button" href="{% url 'accounts:logout' %}" aria-label="{% trans 'Sign out' %}">
+            <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
+        </a>
+        {% endif %}
+        {% if show_user_profile %}
+        <a class="ifinmail-header-profile ifinmail-header-profile--button" href="{% url 'accounts:branding_identity' %}" aria-label="{% trans 'Open account menu' %}">
+            <span class="ifinmail-avatar">{{ user_initials|default:'AD' }}</span>
+            <span><strong>{{ user_display_name|default:_('Admin Root') }}</strong><small>{{ user_role_label|default:_('ADMIN') }}</small></span>
+            <svg class="ifinmail-profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </a>
+        {% else %}
+        <a class="ifinmail-avatar-button" href="{% url 'accounts:branding_identity' %}" aria-label="{% trans 'Open account menu' %}">
+            <span class="ifinmail-avatar">{{ user_initials|default:'AD' }}</span>
+            <svg class="ifinmail-profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </a>
+        {% endif %}
+    </div>
+</header>

@@ -1,13 +1,30 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
-from .views import (
+from .web import (
+    branding_identity,
+    branding_reset,
+    branding_save,
     dashboard,
+    dashboard_log_purge,
+    dashboard_reboot,
+    dashboard_rescan,
+    dashboard_shell,
     login_view,
     logout_view,
+    logs,
+    logs_export,
+    logs_full_history,
+    logs_live_data,
     setup_advance,
     setup_step,
     setup_wizard,
+    spam_add_provider,
+    spam_filtering,
+    spam_set_sensitivity,
+    user_management,
+    users_export,
+    users_kill_sessions,
 )
 
 app_name = "accounts"
@@ -15,9 +32,26 @@ app_name = "accounts"
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="accounts:dashboard", permanent=False)),
     path("dashboard/", dashboard, name="dashboard"),
+    path("dashboard/rescan/", dashboard_rescan, name="rescan"),
+    path("dashboard/shell/", dashboard_shell, name="shell"),
+    path("dashboard/log-purge/", dashboard_log_purge, name="log_purge"),
+    path("dashboard/reboot/", dashboard_reboot, name="reboot"),
+    path("logs/", logs, name="logs"),
+    path("spam-filtering/", spam_filtering, name="spam_filtering"),
+    path("users/", user_management, name="user_management"),
+    path("branding/", branding_identity, name="branding_identity"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
     path("setup/", setup_wizard, name="setup_wizard"),
-    path("setup/<str:step>/", setup_step, name="setup_step"),
     path("setup/advance/", setup_advance, name="setup_advance"),
+    path("setup/<str:step>/", setup_step, name="setup_step"),
+    path("branding/save/", branding_save, name="branding_save"),
+    path("branding/reset/", branding_reset, name="branding_reset"),
+    path("logs/export/", logs_export, name="logs_export"),
+    path("logs/live/", logs_live_data, name="logs_live"),
+    path("logs/full/", logs_full_history, name="logs_full"),
+    path("spam-filtering/set-sensitivity/", spam_set_sensitivity, name="spam_sensitivity"),
+    path("spam-filtering/add-provider/", spam_add_provider, name="spam_add_provider"),
+    path("users/export/", users_export, name="users_export"),
+    path("users/kill-sessions/", users_kill_sessions, name="users_kill_sessions"),
 ]

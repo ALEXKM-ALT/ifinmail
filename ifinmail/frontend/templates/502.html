@@ -1,15 +1,10 @@
-{% extends "base.html" %}
-
-{% block title %}Bad Gateway — {{ brand.name }}{% endblock %}
-
-{% block content %}
-<div class="ifinmail-error-page">
-  <h1>502</h1>
-  <p>The server received an invalid response from an upstream server. Please try again later.</p>
-  <p class="ifinmail-error-detail">If this issue persists, please contact support.</p>
-  <div class="ifinmail-error-actions">
-    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Return to Dashboard</a>
-    <button type="button" class="ifinmail-btn" onclick="location.reload()">Retry</button>
-  </div>
-</div>
+{% extends "error_base.html" %}
+{% load i18n %}
+{% block error_code %}502{% endblock %}
+{% block error_title %}{% trans 'Bad Gateway' %}{% endblock %}
+{% block error_description %}{% trans 'The server received an invalid response from an upstream server. Please try again later.' %}{% endblock %}
+{% block error_detail %}{% trans 'If this issue persists, please contact support.' %}{% endblock %}
+{% block error_actions %}
+<a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Return to Dashboard' %}</a>
+<button type="button" class="ifinmail-btn" onclick="window.location.reload()">{% trans 'Retry' %}</button>
 {% endblock %}

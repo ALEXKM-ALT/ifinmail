@@ -13,9 +13,6 @@ const STATIC_ASSETS = [
     '/static/css/ifinmail-layout.css',
     '/static/css/ifinmail-components.css',
     '/static/js/ifinmail-api.js',
-    '/static/js/ifinmail-theme.js',
-    '/static/js/mail-inbox.js',
-    '/static/js/components/ifinmail-message-card.js',
 ];
 
 self.addEventListener('install', (event) => {

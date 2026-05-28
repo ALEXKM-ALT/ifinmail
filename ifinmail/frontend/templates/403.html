@@ -1,14 +1,5 @@
-{% extends "base.html" %}
-
-{% block title %}Forbidden — {{ brand.name }}{% endblock %}
-
-{% block content %}
-<div class="ifinmail-error-page">
-  <h1>403</h1>
-  <p>You do not have permission to access this resource.</p>
-  <div class="ifinmail-error-actions">
-    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">Return to Dashboard</a>
-    <button type="button" class="ifinmail-btn" onclick="history.back()">Go Back</button>
-  </div>
-</div>
-{% endblock %}
+{% extends "error_base.html" %}
+{% load i18n %}
+{% block error_code %}403{% endblock %}
+{% block error_title %}{% trans 'Forbidden' %}{% endblock %}
+{% block error_description %}{% trans 'You do not have permission to access this resource.' %}{% endblock %}

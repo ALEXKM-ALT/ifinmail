@@ -18,10 +18,11 @@ class BrandingConfig:
 
     @classmethod
     def from_env(cls) -> "BrandingConfig":
+        raw_color = os.environ.get("BRAND_COLOR", "#0051d5").strip() or "#0051d5"
         return cls(
             name=os.environ.get("BRAND_NAME", "ifinmail").strip() or "ifinmail",
             tagline=os.environ.get("BRAND_TAGLINE", "mail infrastructure").strip(),
-            color=(os.environ.get("BRAND_COLOR", "#0051d5").strip() or "#0051d5"),
+            color=cls._sanitize_hex_color(raw_color),
             logo_url=os.environ.get("BRAND_LOGO_URL", "").strip(),
             favicon_url=os.environ.get("BRAND_FAVICON_URL", "").strip(),
         )
@@ -33,13 +34,14 @@ class BrandingConfig:
     @property
     def css_overrides(self) -> str:
         """Return a <style> block when brand color is overridden, else empty string."""
-        if self.color == "#0051d5":
+        safe_color = self._sanitize_hex_color(self.color)
+        if safe_color == "#0051d5":
             return ""
         return (
             f"<style>"
             f":root{{"
-            f"--ifinmail-secondary:{self.color};"
-            f"--ifinmail-focus-ring-color:{self._hex_to_rgba(self.color, 0.15)};"
+            f"--ifinmail-secondary:{safe_color};"
+            f"--ifinmail-focus-ring-color:{self._hex_to_rgba(safe_color, 0.15)};"
             f"}}"
             f"</style>"
         )
@@ -73,6 +75,14 @@ class BrandingConfig:
         )
 
     @staticmethod
+    def _sanitize_hex_color(color: str) -> str:
+        """Sanitize a hex color value to prevent XSS in inline styles."""
+        h = color.lstrip("#").strip()
+        if not h or len(h) not in (3, 6) or not all(c in "0123456789abcdefABCDEF" for c in h):
+            return "#0051d5"
+        return f"#{h.lower()}"
+
+    @staticmethod
     def _hex_to_rgba(hex_color: str, alpha: float) -> str:
         h = hex_color.lstrip("#")
         if len(h) == 3:
@@ -81,7 +91,7 @@ class BrandingConfig:
         return f"rgba({r},{g},{b},{alpha})"
 
 
-def brand_context(request):
+def brand_context(request: object) -> dict[str, object]:
     """Context processor — injects brand into every template context."""
     from django.conf import settings
 

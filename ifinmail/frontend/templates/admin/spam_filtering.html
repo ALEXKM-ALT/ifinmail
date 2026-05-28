@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Spam Filtering — {{ name }}{% endblocktrans %}{% endblock %}
+{% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
+{% block header %}{% include "includes/header.html" %}{% endblock %}
+
+{% block content %}
+<section class="ifinmail-admin-content">
+    <div class="ifinmail-admin-page">
+        <div class="ifinmail-page-header">
+            <h1 class="ifinmail-page-title">{% trans 'Spam Filtering' %}</h1>
+        </div>
+
+        <div class="ifinmail-admin-grid">
+            <article class="ifinmail-stat-panel ifinmail-span-3">
+                <span class="ifinmail-overline">{% trans 'Blocked Spam' %}</span>
+                <span class="ifinmail-stat-big">{{ blocked_spam|default:'0' }}</span>
+                <p class="ifinmail-trend">{{ blocked_spam_trend|default:'' }}</p>
+            </article>
+            <article class="ifinmail-stat-panel ifinmail-span-3">
+                <span class="ifinmail-overline">{% trans 'False Positives' %}</span>
+                <span class="ifinmail-stat-big">{{ false_positive_pct|default:'0%' }}</span>
+                <p class="ifinmail-trend">{{ fp_trend|default:'' }}</p>
+            </article>
+            <article class="ifinmail-panel ifinmail-span-6">
+                <span class="ifinmail-overline">{% trans 'Filtering Activity (24h)' %}</span>
+                <div class="ifinmail-chart-bars" style="height:160px;border:0;padding:18px 0 0">
+                    {% for h in filter_activity_bars %}<span style="height:{{ h }}%"></span>{% empty %}<span style="height:0%"></span>{% endfor %}
+                </div>
+            </article>
+
+            <article class="ifinmail-panel ifinmail-span-8">
+                <h2 class="ifinmail-panel-title">{% trans 'Global Sensitivity Control' %}</h2>
+                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:30px">
+                    <span>{% trans 'Heuristic Aggression Level' %}</span><strong id="sensitivity-label" style="font-size:var(--ifinmail-font-size-2xl);color:var(--ifinmail-color-primary)">{{ heuristic_level|default:'5.0' }}</strong>
+                </div>
+                <input type="range" id="sensitivity-slider" min="1" max="10" step="0.5" value="{{ heuristic_level|default:'5.0' }}" onchange="setSensitivity(this.value)" oninput="document.getElementById('sensitivity-label').textContent = parseFloat(this.value).toFixed(1)" style="width:100%;margin-top:24px">
+                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:18px;color:var(--ifinmail-color-text-muted)">
+                    <span>{% trans 'Permissive' %}</span><span>{% trans 'Standard' %}</span><span>{% trans 'Strict' %}</span><span>{% trans 'Zero-Tolerance' %}</span>
+                </div>
+                <div class="ifinmail-quote">{% trans 'Higher values increase the likelihood of catching sophisticated spam but may elevate false positive risks for encrypted attachments.' %}</div>
+            </article>
+            <aside class="ifinmail-panel ifinmail-span-4">
+                <h2 class="ifinmail-panel-title">{% trans 'Engines' %}</h2>
+                <div style="margin-top:20px">
+                    {% for engine in filter_engines %}
+                    <div class="ifinmail-engine-row"{% if not engine.enabled %} style="opacity:.55"{% endif %}><span><strong>{{ engine.name|default:'' }}</strong><br><small>{{ engine.detail|default:'' }}</small></span>{% if engine.enabled %}<span class="ifinmail-switch ifinmail-switch--on"></span>{% else %}<span>▣</span>{% endif %}</div>
+                    {% empty %}
+                    <p class="ifinmail-text--muted">{% trans 'No filter engines configured.' %}</p>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <article class="ifinmail-table-panel ifinmail-span-12">
+                <div class="ifinmail-table-panel-header">
+                    <div><h2 class="ifinmail-panel-title">{% trans 'DNSBL Blacklist Settings' %}</h2><p>{% trans 'Real-time domain reputation checking across global providers.' %}</p></div>
+                    <button class="ifinmail-btn ifinmail-btn--primary" type="button" onclick="toggleAddProvider()">{% trans 'Add Provider' %}</button>
+                </div>
+                {% include "includes/admin_table.html" with span=None title=None headers=provider_headers|default:'' rows=providers|default:'' row_template="admin/partials/provider_row.html" %}
+            </article>
+        </div>
+    </div>
+</section>
+
+<div id="add-provider-form" style="display:none;background:var(--ifinmail-color-bg-panel);border:1px solid var(--ifinmail-color-border);border-radius:8px;padding:16px;margin-top:12px">
+    <form onsubmit="event.preventDefault(); addProvider()" style="display:flex;gap:12px;align-items:flex-end">
+        <div style="flex:1">
+            <label class="ifinmail-label">{% trans 'Provider Host' %}</label>
+            <input id="provider-host" type="text" placeholder="dnsbl.example.com" style="width:100%;padding:8px 12px" required>
+        </div>
+        <div style="width:180px">
+            <label class="ifinmail-label">{% trans 'Type' %}</label>
+            <select id="provider-type" style="width:100%;padding:8px 12px">
+                <option value="CUSTOM">CUSTOM</option>
+                <option value="REPUTATION">REPUTATION</option>
+                <option value="AGGREGATE">AGGREGATE</option>
+                <option value="PASSIVE">PASSIVE</option>
+            </select>
+        </div>
+        <button type="submit" class="ifinmail-btn ifinmail-btn--primary" style="margin-bottom:0">{% trans 'Add' %}</button>
+        <button type="button" class="ifinmail-btn ifinmail-btn--outline" onclick="toggleAddProvider()" style="margin-bottom:0">{% trans 'Cancel' %}</button>
+    </form>
+</div>
+
+<script>
+(function() {
+    function getCSRFToken() {
+        var name = 'csrftoken';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf(name + '=') === 0) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    window.toggleAddProvider = function() {
+        var form = document.getElementById('add-provider-form');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        if (form.style.display === 'block') {
+            document.getElementById('provider-host').focus();
+        }
+    };
+
+    window.addProvider = function() {
+        var host = document.getElementById('provider-host').value.trim();
+        var ptype = document.getElementById('provider-type').value;
+        if (!host) return;
+        var formData = new FormData();
+        formData.append('host', host);
+        formData.append('type', ptype);
+        fetch('{% url "accounts:spam_add_provider" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()},
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                location.reload();
+            } else {
+                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
+            }
+        })
+        .catch(function() { alert('{% trans "Request failed" %}'); });
+    };
+
+    window.setSensitivity = function(value) {
+        var formData = new FormData();
+        formData.append('value', value);
+        fetch('{% url "accounts:spam_sensitivity" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCSRFToken()},
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                document.getElementById('sensitivity-label').textContent = parseFloat(data.value).toFixed(1);
+            }
+        });
+    };
+})();
+</script>
+{% endblock %}

@@ -1,2 +1,6 @@
+from typing import Any
+
+from django.urls import URLPattern
+
 app_name = "domains"
-urlpatterns = []
+urlpatterns: list[URLPattern] = []

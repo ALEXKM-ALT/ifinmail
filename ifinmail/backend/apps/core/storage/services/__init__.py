@@ -15,6 +15,7 @@ Usage:
 import logging
 import os
 
+from django.contrib.auth.models import AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 
@@ -61,7 +62,7 @@ class StorageService:
     def upload(
         *,
         file: UploadedFile,
-        user,
+        user: AbstractBaseUser,
         entity_type: str,
         entity_id: str = "",
         merchant_id: str = "",

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(post_delete, sender=StoredFile)
-def _delete_file_on_disk(sender, instance, **kwargs):
+def _delete_file_on_disk(sender: type[StoredFile], instance: StoredFile, **kwargs: object) -> None:
     """Delete the physical file from storage when a StoredFile record is
     removed (EC-77). Prevents orphaned files from consuming disk space.
     """

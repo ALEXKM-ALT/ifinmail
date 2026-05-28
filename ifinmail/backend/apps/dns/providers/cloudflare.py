@@ -12,7 +12,7 @@ CF_API_BASE = "https://api.cloudflare.com/client/v4"
 
 
 class CloudflareProvider:
-    provider_name = "cloudflare"
+    provider_name: str = "cloudflare"
 
     def __init__(self, api_token: str):
         self.api_token = api_token
@@ -22,7 +22,7 @@ class CloudflareProvider:
             "Content-Type": "application/json",
         })
 
-    def _request(self, method: str, path: str, **kwargs) -> dict:
+    def _request(self, method: str, path: str, **kwargs: object) -> dict:
         url = f"{CF_API_BASE}{path}"
         max_retries = 3
         for attempt in range(max_retries + 1):
@@ -47,6 +47,7 @@ class CloudflareProvider:
                 raise RuntimeError(f"Cloudflare API request failed: {e}") from e
             except requests.RequestException as e:
                 raise RuntimeError(f"Cloudflare API request failed: {e}") from e
+        raise RuntimeError("Cloudflare API request failed after max retries")
 
     def _get_zone_id(self, domain: str) -> str:
         data = self._request("GET", "/zones", params={"name": domain, "status": "active"})

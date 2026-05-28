@@ -4,6 +4,7 @@ import os
 import socket
 import subprocess
 from datetime import datetime, timezone
+from typing import Any
 
 logger = logging.getLogger("backend")
 
@@ -26,13 +27,13 @@ _DEFAULT_RESOLVERS = ["8.8.8.8", "1.1.1.1", "9.9.9.9"]
 
 class DeliverabilityService:
     @staticmethod
-    def run_all_checks(domain=None):
+    def run_all_checks(domain: str | None = None) -> dict[str, Any]:
         """Run all deliverability checks. Returns a dict of check results."""
         domain = domain or os.environ.get("DOMAIN", os.environ.get("MAIL_DOMAIN", ""))
         server_ip = DeliverabilityService._get_server_ip()
         mail_hostname = os.environ.get("MAIL_HOSTNAME", f"mail.{domain}" if domain else "")
 
-        results = {
+        results: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "domain": domain,
             "server_ip": server_ip,
@@ -57,21 +58,21 @@ class DeliverabilityService:
         return results
 
     @staticmethod
-    def _get_resolvers():
+    def _get_resolvers() -> list[str]:
         raw = os.environ.get("DELIVERABILITY_DNS_RESOLVERS", "")
         if raw:
             return [r.strip() for r in raw.split(",") if r.strip()]
         return list(_DEFAULT_RESOLVERS)
 
     @staticmethod
-    def _get_rbls():
+    def _get_rbls() -> list[str]:
         raw = os.environ.get("DELIVERABILITY_RBLS", "")
         if raw:
             return [r.strip() for r in raw.split(",") if r.strip()]
         return list(_DEFAULT_RBLS)
 
     @staticmethod
-    def _check_dns_propagation(domain):
+    def _check_dns_propagation(domain: str) -> dict[str, Any]:
         """Verify DNS records resolve from external resolvers."""
         if not domain:
             return {"status": "fail", "detail": "No domain configured", "fix": "Configure a domain first."}
@@ -112,7 +113,7 @@ class DeliverabilityService:
         }
 
     @staticmethod
-    def _check_blacklists(server_ip):
+    def _check_blacklists(server_ip: str) -> dict[str, Any]:
         """Check if the server IP is listed on common RBLs."""
         if not server_ip or server_ip in ("0.0.0.0", "127.0.0.1"):
             return {
@@ -156,7 +157,7 @@ class DeliverabilityService:
         }
 
     @staticmethod
-    def _check_reverse_dns(server_ip, mail_hostname):
+    def _check_reverse_dns(server_ip: str, mail_hostname: str) -> dict[str, Any]:
         """Check that the server IP has a PTR record matching the mail hostname."""
         if not server_ip or server_ip in ("0.0.0.0", "127.0.0.1"):
             return {
@@ -191,7 +192,7 @@ class DeliverabilityService:
         }
 
     @staticmethod
-    def _check_port25(mail_hostname):
+    def _check_port25(mail_hostname: str) -> dict[str, Any]:
         """Check if port 25 is reachable (critical for receiving email)."""
         host = mail_hostname or "localhost"
         port = int(os.environ.get("SMTP_PORT_CHECK", "25"))
@@ -219,7 +220,7 @@ class DeliverabilityService:
         return {"status": "warn", "detail": f"Unexpected banner: {banner[:80]}", "fix": "Postfix may need restarting."}
 
     @staticmethod
-    def _check_tls():
+    def _check_tls() -> dict[str, Any]:
         """Check TLS certificate validity."""
         mail_hostname = os.environ.get("MAIL_HOSTNAME", "")
         domain = os.environ.get("DOMAIN", os.environ.get("MAIL_DOMAIN", ""))
@@ -257,7 +258,7 @@ class DeliverabilityService:
         return {"status": "fail", "detail": "No TLS certificate found", "fix": "Run the SSL setup: docker compose run --rm certbot"}
 
     @staticmethod
-    def _get_server_ip():
+    def _get_server_ip() -> str:
         """Get the server's public IP."""
         ip_check_url = os.environ.get("IP_CHECK_URL", _IPIFY_URL)
         try:

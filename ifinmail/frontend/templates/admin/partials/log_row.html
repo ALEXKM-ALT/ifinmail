@@ -1,0 +1,7 @@
+{% load i18n %}
+<tr>
+    <td>{{ row.timestamp|default:'—' }}</td>
+    <td><span class="ifinmail-badge {% if row.level == 'ERROR' %}ifinmail-badge--warning{% elif row.level == 'INFO' %}ifinmail-badge--info{% else %}ifinmail-badge--success{% endif %}">{{ row.level|default:'—' }}</span></td>
+    <td><a class="ifinmail-link-strong">{{ row.service|default:'' }}</a></td>
+    <td>{{ row.message|default:'' }}</td>
+</tr>

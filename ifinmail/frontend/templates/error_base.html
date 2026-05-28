@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans %}{{ error_code }} {{ error_title }}{% endblocktrans %} — {{ brand.name|default:'ifinmail' }}{% endblock %}
+
+{% block body_class %} ifinmail-error-page{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-error-page" role="alert">
+  <h1>{% block error_code %}{{ error_code }}{% endblock %}</h1>
+  <p>{% block error_description %}{{ error_description }}{% endblock %}</p>
+  {% if error_detail %}
+  <p class="ifinmail-error-detail">{{ error_detail }}</p>
+  {% endif %}
+  <div class="ifinmail-error-actions">
+    {% block error_actions %}
+    <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Return to Dashboard' %}</a>
+    <button type="button" class="ifinmail-btn" onclick="window.history.back()">{% trans 'Go Back' %}</button>
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}
