@@ -178,3 +178,82 @@ class TestDownload:
         assert data["filename"] == "meta.txt"
         assert data["content_type"] == "text/plain"
         assert data["size"] == 4
+
+
+class TestDelete:
+    def test_delete_orphan_attachment(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        upload = client.post(
+            "/mail/attachments",
+            files={"file": ("orphan.txt", b"orphan data", "text/plain")},
+            headers=headers,
+        )
+        assert upload.status_code == 201
+        att_id = upload.json()["id"]
+
+        r = client.delete(f"/mail/attachments/{att_id}", headers=headers)
+        assert r.status_code == 204
+
+        meta = client.get(f"/mail/{99999}/attachments/{att_id}", headers=headers)
+        assert meta.status_code == 404
+
+    def test_delete_nonexistent_attachment(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.delete("/mail/attachments/99999", headers=headers)
+        assert r.status_code == 404
+
+    def test_delete_unauthorized(self, client):
+        r = client.delete("/mail/attachments/1")
+        assert r.status_code == 401
+
+    def test_delete_attachment_from_message(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        upload = client.post(
+            "/mail/attachments",
+            files={"file": ("msgfile.txt", b"attached data", "text/plain")},
+            headers=headers,
+        )
+        att_id = upload.json()["id"]
+
+        send = client.post(
+            "/mail",
+            json={
+                "to": "r@t.com",
+                "subject": "with attachment",
+                "body_text": "body",
+                "attachment_ids": [att_id],
+            },
+            headers=headers,
+        )
+        msg_id = send.json()["id"]
+
+        r = client.delete(f"/mail/attachments/{att_id}", headers=headers)
+        assert r.status_code == 204
+
+        list_r = client.get(f"/mail/{msg_id}/attachments", headers=headers)
+        assert list_r.json() == []
+
+    def test_delete_attachment_wrong_user(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        upload = client.post(
+            "/mail/attachments",
+            files={"file": ("mine.txt", b"data", "text/plain")},
+            headers=headers,
+        )
+        att_id = upload.json()["id"]
+
+        client.post(
+            "/auth/register",
+            json={"email": "other@mail.com", "password": "pass123"},
+        )
+        r2 = client.post(
+            "/auth/login",
+            json={"email": "other@mail.com", "password": "pass123"},
+        )
+        other_token = r2.json()["access_token"]
+
+        r = client.delete(
+            f"/mail/attachments/{att_id}",
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        assert r.status_code == 204

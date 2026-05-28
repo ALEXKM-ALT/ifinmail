@@ -169,6 +169,7 @@ function renderSidebar() {
 
   document.getElementById("composeBtn").addEventListener("click", () => showCompose());
   document.getElementById("logoutBtn").addEventListener("click", logout);
+  document.getElementById("darkModeToggle").addEventListener("click", toggleDark);
   document.getElementById("settingsNav").addEventListener("click", () => {
     state.currentMsg = null;
     showView("settings");
@@ -185,6 +186,23 @@ function renderSidebar() {
   }
 
   if (state.folder === "INBOX") fetchInboxCount();
+}
+
+function toggleDark() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  if (isDark) {
+    html.removeAttribute("data-theme");
+    localStorage.setItem("ifinmail_dark", "0");
+  } else {
+    html.setAttribute("data-theme", "dark");
+    localStorage.setItem("ifinmail_dark", "1");
+  }
+  const label = document.getElementById("darkModeLabel");
+  if (label) label.textContent = html.getAttribute("data-theme") === "dark" ? "Light" : "Dark";
+}
+if (localStorage.getItem("ifinmail_dark") === "1") {
+  document.documentElement.setAttribute("data-theme", "dark");
 }
 
 async function renderSettings() {
