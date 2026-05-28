@@ -237,8 +237,19 @@ def bulk_move(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    valid_folders = {"INBOX", "SENT", "DRAFTS", "TRASH", "SPAM", "ARCHIVE"}
     folder = req.folder.upper()
     mailbox = _get_mailbox(user, db)
+    if folder not in valid_folders:
+        custom = db.query(CustomFolder).filter(
+            CustomFolder.mailbox_id == mailbox.id,
+            CustomFolder.name == folder,
+        ).first()
+        if not custom:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid folder.",
+            )
     db.query(Message).filter(
         Message.id.in_(req.ids),
         Message.mailbox_id == mailbox.id,
@@ -547,13 +558,18 @@ def move_message(
 ):
     valid_folders = {"INBOX", "SENT", "DRAFTS", "TRASH", "SPAM", "ARCHIVE"}
     folder = req.folder.upper()
-    if folder not in valid_folders:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid folder. Choose from: {', '.join(sorted(valid_folders))}",
-        )
-
     mailbox = _get_mailbox(user, db)
+    if folder not in valid_folders:
+        custom = db.query(CustomFolder).filter(
+            CustomFolder.mailbox_id == mailbox.id,
+            CustomFolder.name == folder,
+        ).first()
+        if not custom:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid folder. Choose from: {', '.join(sorted(valid_folders))}",
+            )
+
     msg = db.query(Message).filter(Message.id == message_id, Message.mailbox_id == mailbox.id).first()
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
