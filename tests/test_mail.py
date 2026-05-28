@@ -131,3 +131,36 @@ class TestDelete:
 
         r = client.delete(f"/mail/{mid}", headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 204
+
+
+class TestFolderCounts:
+    def test_folder_counts_returns_counts(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+
+        r = client.get("/mail/folder-counts", headers=headers)
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, dict)
+        assert "INBOX" not in data or data["INBOX"] >= 0
+
+    def test_folder_counts_after_sending(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+
+        r = client.get("/mail/folder-counts", headers=headers)
+        assert r.status_code == 200
+        before = r.json()
+
+        client.post(
+            "/mail",
+            json={"to": "other@mail.com", "subject": "Count test", "body_text": "body"},
+            headers=headers,
+        )
+
+        r = client.get("/mail/folder-counts", headers=headers)
+        assert r.status_code == 200
+        after = r.json()
+        assert after.get("SENT", 0) >= before.get("SENT", 0)
+
+    def test_folder_counts_unauthorized(self, client):
+        r = client.get("/mail/folder-counts")
+        assert r.status_code == 401

@@ -21,6 +21,21 @@ logger = logging.getLogger("ifinmail.mail")
 
 router = APIRouter(prefix="/mail", tags=["mail"])
 
+STANDARD_FOLDERS = {"INBOX", "SENT", "DRAFTS", "TRASH", "SPAM", "ARCHIVE"}
+
+
+def _validate_folder(folder: str, mailbox: MailboxModel, db: Session) -> None:
+    if folder not in STANDARD_FOLDERS:
+        custom = db.query(CustomFolder).filter(
+            CustomFolder.mailbox_id == mailbox.id,
+            CustomFolder.name == folder,
+        ).first()
+        if not custom:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid folder. Choose from: {', '.join(sorted(STANDARD_FOLDERS))}",
+            )
+
 
 class MessageOut(BaseModel):
     id: int
@@ -255,19 +270,9 @@ def bulk_move(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    valid_folders = {"INBOX", "SENT", "DRAFTS", "TRASH", "SPAM", "ARCHIVE"}
     folder = req.folder.upper()
     mailbox = _get_mailbox(user, db)
-    if folder not in valid_folders:
-        custom = db.query(CustomFolder).filter(
-            CustomFolder.mailbox_id == mailbox.id,
-            CustomFolder.name == folder,
-        ).first()
-        if not custom:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid folder.",
-            )
+    _validate_folder(folder, mailbox, db)
     db.query(Message).filter(
         Message.id.in_(req.ids),
         Message.mailbox_id == mailbox.id,
@@ -574,19 +579,9 @@ def move_message(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    valid_folders = {"INBOX", "SENT", "DRAFTS", "TRASH", "SPAM", "ARCHIVE"}
     folder = req.folder.upper()
     mailbox = _get_mailbox(user, db)
-    if folder not in valid_folders:
-        custom = db.query(CustomFolder).filter(
-            CustomFolder.mailbox_id == mailbox.id,
-            CustomFolder.name == folder,
-        ).first()
-        if not custom:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid folder. Choose from: {', '.join(sorted(valid_folders))}",
-            )
+    _validate_folder(folder, mailbox, db)
 
     msg = db.query(Message).filter(Message.id == message_id, Message.mailbox_id == mailbox.id).first()
     if not msg:
