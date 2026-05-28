@@ -164,3 +164,94 @@ class TestFolderCounts:
     def test_folder_counts_unauthorized(self, client):
         r = client.get("/mail/folder-counts")
         assert r.status_code == 401
+
+
+class TestCustomFolders:
+    def test_create_folder(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post("/mail/folders", json={"name": "Work"}, headers=headers)
+        assert r.status_code == 201
+        data = r.json()
+        assert data["name"] == "WORK"
+
+    def test_create_duplicate_folder(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        client.post("/mail/folders", json={"name": "Work"}, headers=headers)
+        r = client.post("/mail/folders", json={"name": "Work"}, headers=headers)
+        assert r.status_code == 409
+
+    def test_create_reserved_name(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post("/mail/folders", json={"name": "INBOX"}, headers=headers)
+        assert r.status_code == 400
+
+    def test_list_folders(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        client.post("/mail/folders", json={"name": "Work"}, headers=headers)
+        client.post("/mail/folders", json={"name": "Personal"}, headers=headers)
+        r = client.get("/mail/folders", headers=headers)
+        assert r.status_code == 200
+        names = [f["name"] for f in r.json()]
+        assert "WORK" in names
+        assert "PERSONAL" in names
+
+    def test_delete_folder(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post("/mail/folders", json={"name": "Temp"}, headers=headers)
+        fid = r.json()["id"]
+        r = client.delete(f"/mail/folders/{fid}", headers=headers)
+        assert r.status_code == 204
+        r = client.get("/mail/folders", headers=headers)
+        assert all(f["name"] != "TEMP" for f in r.json())
+
+    def test_move_to_custom_folder(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        client.post("/mail/folders", json={"name": "Projects"}, headers=headers)
+        r = client.post(
+            "/mail",
+            json={"to": "x@y.com", "subject": "Project", "body_text": "body"},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+        r = client.put(
+            f"/mail/{mid}/move",
+            json={"folder": "Projects"},
+            headers=headers,
+        )
+        assert r.status_code == 200
+        r = client.get(f"/mail/{mid}", headers=headers)
+        assert r.json()["folder"] == "PROJECTS"
+
+    def test_bulk_move_to_custom_folder(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        client.post("/mail/folders", json={"name": "Archive"}, headers=headers)
+        ids = []
+        for i in range(3):
+            r = client.post(
+                "/mail",
+                json={"to": f"x{i}@y.com", "subject": f"Msg {i}", "body_text": "body"},
+                headers=headers,
+            )
+            ids.append(r.json()["id"])
+        r = client.post(
+            "/mail/bulk-move",
+            json={"ids": ids, "folder": "Archive"},
+            headers=headers,
+        )
+        assert r.status_code == 200
+        assert r.json()["moved"] == 3
+
+    def test_move_to_invalid_custom_folder(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post(
+            "/mail",
+            json={"to": "x@y.com", "subject": "Test", "body_text": "body"},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+        r = client.put(
+            f"/mail/{mid}/move",
+            json={"folder": "NonExistent"},
+            headers=headers,
+        )
+        assert r.status_code == 400
