@@ -31,7 +31,7 @@ class Settings:
     smtp_timeout: int = int(os.environ.get("IFINMAIL_SMTP_TIMEOUT", "30"))
     attachment_storage: str = os.environ.get(
         "IFINMAIL_ATTACHMENT_STORAGE",
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "attachments"),
+        os.path.expanduser("~/.ifinmail/attachments"),
     )
 
     def validate(self) -> None:

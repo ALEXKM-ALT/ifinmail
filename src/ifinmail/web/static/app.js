@@ -1471,11 +1471,14 @@ function showCompose(mode, msg) {
 }
 
 // Delegated click handler for removing compose attachments
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const btn = e.target.closest(".ifinmail-attach-remove");
   if (!btn) return;
   const attId = parseInt(btn.dataset.attId);
   if (!attId) return;
+  try {
+    await apiFetch(`${API}/mail/attachments/${attId}`, { method: "DELETE" });
+  } catch {}
   _composeAttachmentIds = _composeAttachmentIds.filter(id => id !== attId);
   btn.closest(".ifinmail-attach-item")?.remove();
 });

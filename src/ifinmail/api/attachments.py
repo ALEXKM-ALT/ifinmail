@@ -117,3 +117,24 @@ def download_attachment(
         filename=att.filename,
         media_type=att.content_type,
     )
+
+
+@router.delete("/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_attachment(
+    attachment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    att = db.query(Attachment).filter(Attachment.id == attachment_id).first()
+    if not att:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
+    if att.message_id is not None:
+        _get_mailbox(user, db)
+        msg = db.query(Message).filter(Message.id == att.message_id).first()
+        if not msg:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    storage_path = _storage_dir() / att.storage_path
+    if storage_path.exists():
+        storage_path.unlink()
+    db.delete(att)
+    db.commit()
