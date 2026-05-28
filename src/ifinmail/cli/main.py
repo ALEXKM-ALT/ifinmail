@@ -38,7 +38,7 @@ def cli(argv: list[str] | None = None) -> None:
 
     cmd_serve = sub.add_parser("serve", help="Start the API web server")
     cmd_serve.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
-    cmd_serve.add_argument("--port", type=int, default=8025, help="Bind port (default: 8025)")
+    cmd_serve.add_argument("--port", type=int, default=8000, help="Bind port (default: 8000)")
     cmd_serve.set_defaults(fn=cmd_serve_fn)
 
     args = parser.parse_args(argv)

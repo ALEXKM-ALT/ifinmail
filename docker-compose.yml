@@ -24,7 +24,6 @@ services:
   api:
     build:
       context: .
-      network: host
     ports:
       - "8000:8000"
     environment:
@@ -49,7 +48,6 @@ services:
   smtp:
     build:
       context: .
-      network: host
     ports:
       - "5025:25"
     environment:
