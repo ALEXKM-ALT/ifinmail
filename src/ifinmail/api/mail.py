@@ -7,7 +7,7 @@ from email.message import EmailMessage
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict, field_serializer
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
@@ -177,6 +177,24 @@ def unread_count(
         .count()
     )
     return {"count": count}
+
+
+@router.get("/folder-counts")
+def folder_counts(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    mailbox = _get_mailbox(user, db)
+    rows = (
+        db.query(Message.folder, func.count(Message.id))
+        .filter(
+            Message.mailbox_id == mailbox.id,
+            Message.read == 0,
+        )
+        .group_by(Message.folder)
+        .all()
+    )
+    return {row[0]: row[1] for row in rows}
 
 
 @router.post("/mark-all-read")
