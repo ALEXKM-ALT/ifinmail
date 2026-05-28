@@ -19,6 +19,23 @@
 }
 
 html, body { height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
+
+[data-theme="dark"] {
+  --sidebar-bg: #0d1117;
+  --sidebar-text: #8b949e;
+  --sidebar-hover: #161b22;
+  --sidebar-active: #1f2937;
+  --primary: #58a6ff;
+  --primary-hover: #79c0ff;
+  --danger: #f85149;
+  --bg: #0d1117;
+  --card-bg: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-light: #8b949e;
+  --unread-bg: #0d419d33;
+  --row-hover: #161b22;
+}
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
@@ -199,6 +216,7 @@ a:hover { text-decoration: underline; }
 .ifinmail-row:hover { background: var(--row-hover); }
 .ifinmail-row.unread { background: var(--unread-bg); font-weight: 600; }
 .ifinmail-row.unread:hover { background: #e8edff; }
+[data-theme="dark"] .ifinmail-row.unread:hover { background: #0d419d55; }
 .ifinmail-row-star { display:flex; align-items:center; justify-content:center; width:20px; height:20px; flex-shrink:0; cursor:pointer; color:#ccc; }
 .ifinmail-row-star svg { display:block; }
 .ifinmail-row-star.starred { color: #f59e0b; }
