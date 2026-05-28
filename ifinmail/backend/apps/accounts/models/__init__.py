@@ -5,7 +5,12 @@ from django.db import models
 
 
 class MailUserManager(BaseUserManager["MailUser"]):
-    def create_user(self, email: str, password: str | None = None, **extra_fields: object) -> "MailUser":
+    def create_user(
+        self,
+        email: str,
+        password: str | None = None,
+        **extra_fields: object,
+    ) -> "MailUser":
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
@@ -16,7 +21,12 @@ class MailUserManager(BaseUserManager["MailUser"]):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email: str, password: str | None = None, **extra_fields: object) -> "MailUser":
+    def create_superuser(
+        self,
+        email: str,
+        password: str | None = None,
+        **extra_fields: object,
+    ) -> "MailUser":
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -44,8 +54,25 @@ class MailUser(AbstractBaseUser):
     def __str__(self) -> str:
         return self.email
 
+    def set_password(self, raw_password: str | None) -> None:
+        """Store both Django and Dovecot-compatible password hashes."""
+        super().set_password(raw_password)
+        self.password_hash = _make_dovecot_password_hash(raw_password)
+
     def has_perm(self, perm: str, obj: object = None) -> bool:
         return self.is_superuser
 
     def has_module_perms(self, app_label: str) -> bool:
         return self.is_superuser
+
+
+def _make_dovecot_password_hash(raw_password: str | None) -> str:
+    if not raw_password:
+        return ""
+    try:
+        import crypt
+
+        return crypt.crypt(raw_password, crypt.mksalt(crypt.METHOD_SHA512))
+    except (AttributeError, ImportError, OSError):
+        # Dovecot must reject auth rather than silently accepting an unusable hash.
+        return ""

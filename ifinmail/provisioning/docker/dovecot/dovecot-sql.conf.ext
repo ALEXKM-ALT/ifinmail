@@ -2,7 +2,7 @@
 driver = pgsql
 connect = host=postgres dbname=ifinmail user=dovecot password=__DOVECOT_DB_PASSWORD__ sslmode=__PGSSLMODE__
 
-default_pass_scheme = ARGON2ID
+default_pass_scheme = SHA512-CRYPT
 
 # Password query: returns password hash and user metadata during auth
 password_query = \

@@ -1,18 +1,15 @@
 /**
  * Service Worker for ifinmail — offline read-only cache.
- * Caches: CSS, JS, images, and previously-read messages.
- * Does NOT cache: POST requests, auth tokens, sensitive data.
+ * Caches: CSS, JS, and static shell assets only.
+ * Does NOT cache: authenticated API responses, POST requests, auth tokens, sensitive data.
  */
 const CACHE_NAME = 'ifinmail-v0.3.0';
 const STATIC_ASSETS = [
-    '/',
-    '/offline',
     '/static/css/ifinmail-variables.css',
     '/static/css/ifinmail-reset.css',
     '/static/css/ifinmail-utilities.css',
     '/static/css/ifinmail-layout.css',
     '/static/css/ifinmail-components.css',
-    '/static/js/ifinmail-api.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -39,15 +36,14 @@ self.addEventListener('fetch', (event) => {
     // Never cache POST/PUT/DELETE or API writes
     if (event.request.method !== 'GET') return;
 
-    // Never cache auth endpoints
-    if (url.pathname.startsWith('/v1/auth/')) return;
+    // Never cache authenticated application endpoints
+    if (url.pathname.startsWith('/accounts/') || url.pathname.startsWith('/dns/')) return;
 
-    // Network first, fall back to cache, fall back to offline page
+    // Network first, fall back to static cache.
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                if (response.ok && (url.pathname.startsWith('/static/') ||
-                    url.pathname.startsWith('/v1/mail/'))) {
+                if (response.ok && url.pathname.startsWith('/static/')) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, clone);
@@ -57,7 +53,7 @@ self.addEventListener('fetch', (event) => {
             })
             .catch(() => {
                 return caches.match(event.request).then((cached) => {
-                    return cached || caches.match('/offline');
+                    return cached || new Response('', { status: 503, statusText: 'Offline' });
                 });
             })
     );

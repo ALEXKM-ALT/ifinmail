@@ -6,27 +6,41 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.sessions.models import Session
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from backend.apps.accounts.services import UserService
 from backend.services.audit import AuditService
 
 from .auth import _is_staff
-from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger("backend")
 
 
 def _admin_directory_rows() -> list[dict[str, str]]:
-    """Return empty directory rows (placeholder until real user data integration)."""
-    return []
+    rows: list[dict[str, str]] = []
+    for user in UserService.get_all_users():
+        if not (user.is_staff or user.is_superuser):
+            continue
+        rows.append({
+            "name": user.email,
+            "email": user.email,
+            "role": "Superuser" if user.is_superuser else "Staff",
+            "status": "Active" if user.is_active else "Inactive",
+            "last_active": user.last_login.isoformat() if user.last_login else "",
+        })
+    return rows
 
 
 @login_required
 @user_passes_test(_is_staff, login_url="accounts:login")
 def user_management(request: HttpRequest) -> HttpResponse:
     """User management and governance screen."""
+    admins = _admin_directory_rows()
+    active_sessions = Session.objects.count()
+    superuser_count = sum(1 for admin in admins if admin["role"] == "Superuser")
+    staff_count = sum(1 for admin in admins if admin["role"] == "Staff")
+
     return render(
         request,
         "admin/user_management.html",
@@ -35,35 +49,36 @@ def user_management(request: HttpRequest) -> HttpResponse:
             "header_search_placeholder": "Search users or permissions...",
             "show_user_profile": True,
             "admin_headers": [_("Administrator"), _("Role"), _("Status"), _("Last Active")],
-            "admins": _admin_directory_rows(),
-            "is_mock": True,
-            "mfa_adoption_pct": "98.2%",
-            "active_sessions": "1,240",
-            "session_domains": str(_("Across 42 domains")),
-            "failed_logins": "43",
-            "rbac_status": str(_("Optimal")),
-            "unassigned_roles": str(_("0 Unassigned roles")),
+            "admins": admins,
+            "is_mock": False,
+            "mfa_adoption_pct": "0%",
+            "active_sessions": str(active_sessions),
+            "session_domains": str(_("Current Django sessions")),
+            "failed_logins": "0",
+            "rbac_status": str(_("Configured")),
+            "unassigned_roles": str(_("No role audit configured")),
             "role_counts": [
-                {"name": str(_("Superuser")), "desc": str(_("Full system access")), "count": str(_("2 Users")), "badge_class": "ifinmail-badge--info"},
-                {"name": str(_("Security Audit")), "desc": str(_("Logs & Monitor only")), "count": str(_("5 Users")), "badge_class": ""},
-                {"name": str(_("Domain Operator")), "desc": str(_("Manage specific domains")), "count": str(_("12 Users")), "badge_class": ""},
+                {
+                    "name": str(_("Superuser")),
+                    "desc": str(_("Full system access")),
+                    "count": str(_("%(count)d Users") % {"count": superuser_count}),
+                    "badge_class": "ifinmail-badge--info",
+                },
+                {
+                    "name": str(_("Staff")),
+                    "desc": str(_("Admin console access")),
+                    "count": str(_("%(count)d Users") % {"count": staff_count}),
+                    "badge_class": "",
+                },
             ],
-            "live_sessions": [
-                {"device": "Chrome on macOS", "detail": "IP: 192.168.1.45", "live": True},
-                {"device": "iOS App v2.4", "detail": "IP: 72.14.21.102", "live": False, "ago": str(_("14m ago"))},
-                {"device": str(_("SSH Terminal")), "detail": str(_("Root Console Access")), "live": True},
-            ],
-            "governance_items": [
-                {"text": str(_("SSO Integration Active (Okta)")), "status": "ok"},
-                {"text": str(_("Password Complexity: Hardened")), "status": "ok"},
-                {"text": str(_("3 Keys expiring within 30 days")), "status": "warn"},
-            ],
-            "anomaly_bars": [45, 75, 66, 28, 82, 36],
-            "anomaly_description": str(_("Spike detected in API token rotation from HK-based proxies.")),
+            "live_sessions": [],
+            "governance_items": [],
+            "anomaly_bars": [],
+            "anomaly_description": "",
             "audit_stats": {
-                "jit_access": str(_("4 Approved")),
-                "key_rotation": str(_("Last: 12h ago")),
-                "manual_overrides": str(_("2 Pending Review")),
+                "jit_access": str(_("Not configured")),
+                "key_rotation": str(_("Not configured")),
+                "manual_overrides": str(_("0 Pending Review")),
             },
         },
     )

@@ -6,13 +6,12 @@ import os
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from backend.services.audit import AuditService
 
 from .auth import _is_staff
-from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger("backend")
 
@@ -54,26 +53,7 @@ def _save_spam_settings(settings: dict) -> None:
 def spam_filtering(request: HttpRequest) -> HttpResponse:
     """Spam filtering controls screen."""
     spam_settings = _load_spam_settings()
-    providers = spam_settings.get("providers", [
-        {
-            "host": "zen.spamhaus.org",
-            "type": "REPUTATION",
-            "latency": "12ms",
-            "tone": "success",
-        },
-        {
-            "host": "bl.spamcop.net",
-            "type": "AGGREGATE",
-            "latency": "28ms",
-            "tone": "neutral",
-        },
-        {
-            "host": "psbl.surriel.com",
-            "type": "PASSIVE",
-            "latency": "412ms",
-            "tone": "danger",
-        },
-    ])
+    providers = spam_settings.get("providers", [])
     heuristic_level = spam_settings.get("sensitivity", "5.0")
 
     return render(
@@ -84,16 +64,14 @@ def spam_filtering(request: HttpRequest) -> HttpResponse:
             "header_search_placeholder": "Search logs...",
             "provider_headers": [_("Provider Host"), _("Type"), _("Latency"), _("Actions")],
             "providers": providers,
-            "blocked_spam": spam_settings.get("blocked_spam", "84.2K"),
-            "blocked_spam_trend": str(_("+12.4% vs last week")),
-            "false_positive_pct": "0.03%",
-            "fp_trend": str(_("-0.01% stability")),
-            "filter_activity_bars": [42, 64, 48, 84, 100, 70, 58, 42, 31],
+            "blocked_spam": spam_settings.get("blocked_spam", "0"),
+            "blocked_spam_trend": "",
+            "false_positive_pct": "0%",
+            "fp_trend": "",
+            "filter_activity_bars": [],
             "heuristic_level": heuristic_level,
             "filter_engines": [
-                {"name": "SpamAssassin", "detail": "DAEMON ACTIVE", "enabled": True},
-                {"name": "ClamAV Antivirus", "detail": "v0.103.2", "enabled": True},
-                {"name": str(_("Deep Learning NLP")), "detail": str(_("REQUIRES PRO LICENSE")), "enabled": False},
+                {"name": "Rspamd", "detail": str(_("Configured in mail stack")), "enabled": True},
             ],
         },
     )

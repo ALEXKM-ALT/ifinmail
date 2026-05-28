@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import subprocess
+from contextlib import suppress
 from datetime import timezone
 from typing import Any
 
@@ -12,7 +13,7 @@ from django.core.paginator import Paginator
 from django.db.utils import OperationalError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from backend.apps.accounts.services import UserService
@@ -20,24 +21,11 @@ from backend.apps.domains.services import DomainService
 from backend.apps.mail.services import MailService
 from backend.services.audit import AuditService
 from backend.services.monitoring import MonitoringService
-from django.utils.translation import gettext_lazy as _
 
 from ._constants import _APP_DIR, _LETSENCRYPT_DIR, _MAIL_VHOSTS_DIR
 from .auth import _is_staff
 
 logger = logging.getLogger("backend")
-
-# Allowed command prefixes for the web shell (read-only inspection only).
-_SHELL_ALLOWLIST = (
-    "uptime", "free", "df", "ps", "netstat", "ss", "top -bn1",
-    "systemctl status", "systemctl is-active", "systemctl is-enabled",
-    "postqueue -p", "mailq", "tail", "head", "cat /etc/",
-    "cat /var/log/", "openssl x509 -text -noout -in",
-    "ls", "du", "who", "w", "last", "hostname", "date",
-    "uname", "ip addr", "ip route", "dmesg | tail",
-    "journalctl --no-pager -n", "docker ps", "docker logs",
-)
-
 
 def _make_check(code: str, status_bool: bool, label: str) -> dict[str, str]:
     if status_bool:
@@ -66,9 +54,8 @@ def _get_tls_expiry_days() -> dict[str, Any]:
         if not os.path.isfile(cert_path):
             continue
         try:
-            from datetime import datetime as dt
-
             import subprocess
+            from datetime import datetime as dt
 
             result = subprocess.run(
                 ["openssl", "x509", "-enddate", "-noout", "-in", cert_path],
@@ -77,7 +64,9 @@ def _get_tls_expiry_days() -> dict[str, Any]:
             if result.returncode != 0:
                 continue
             date_str = result.stdout.strip().split("=", 1)[1]
-            end_date = dt.strptime(date_str, "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+            end_date = dt.strptime(date_str, "%b %d %H:%M:%S %Y %Z").replace(
+                tzinfo=timezone.utc
+            )
             days = (end_date - dt.now(timezone.utc)).days
             return {
                 "days": days,
@@ -125,10 +114,8 @@ def _get_mail_volume_stats() -> dict[str, object]:
         for dirpath, _dirnames, filenames in os.walk(mail_root):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
-                try:
+                with suppress(OSError):
                     total_size += os.path.getsize(fp)
-                except OSError:
-                    pass
         mb = total_size / (1024 * 1024)
         if mb < 1:
             display = f"{total_size / 1024:.0f} KB"
@@ -273,7 +260,7 @@ def _get_domains(request: HttpRequest) -> list[dict[str, object]]:
         ]
 
     domains = []
-    for name, verified, mx, spf, dkim, dmarc in rows:
+    for name, _verified, mx, spf, dkim, dmarc in rows:
         checks = [
             _make_check("mx", mx, "MX record"),
             _make_check("spf", spf, "SPF record"),
@@ -425,7 +412,6 @@ def dashboard_rescan(request: HttpRequest) -> JsonResponse:
     """Force a full rescan of DNS and TLS health for all domains."""
     results: dict[str, Any] = {"status": "ok", "domains": {}, "tls": None}
     try:
-        from backend.apps.domains import services as domain_services
 
         domains = DomainService.get_all_domains()
         for d in domains:
@@ -449,60 +435,18 @@ def dashboard_rescan(request: HttpRequest) -> JsonResponse:
 @user_passes_test(_is_staff, login_url="accounts:login")
 @require_POST
 def dashboard_shell(request: HttpRequest) -> JsonResponse:
-    """Execute a read-only shell command from an allowlist."""
-    cmd = request.POST.get("cmd", "").strip()
-    if not cmd:
-        return JsonResponse(
-            {"error": "No command provided"}, status=400,
-            content_type="application/json; charset=utf-8",
-        )
-
-    # Validate against allowlist.
-    allowed = False
-    for prefix in _SHELL_ALLOWLIST:
-        if cmd.startswith(prefix):
-            allowed = True
-            break
-    if not allowed:
-        AuditService.record(
-            action="shell_blocked",
-            user=request.user.username if request.user.is_authenticated else None,
-            detail=f"Blocked: {cmd[:120]}",
-            severity="warning",
-        )
-        return JsonResponse(
-            {"error": f"Command not allowed. Permitted prefixes: {', '.join(_SHELL_ALLOWLIST[:6])}..."},
-            status=403,
-            content_type="application/json; charset=utf-8",
-        )
-
-    try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=15,
-        )
-        AuditService.record(
-            action="shell_executed",
-            user=request.user.username if request.user.is_authenticated else None,
-            detail=f"Executed: {cmd[:120]} (rc={result.returncode})",
-        )
-        return JsonResponse(
-            {
-                "stdout": result.stdout[-50000:] if result.stdout else "",
-                "stderr": result.stderr[-20000:] if result.stderr else "",
-                "returncode": result.returncode,
-            },
-            content_type="application/json; charset=utf-8",
-        )
-    except subprocess.TimeoutExpired:
-        return JsonResponse(
-            {"error": "Command timed out (15s limit)"}, status=504,
-            content_type="application/json; charset=utf-8",
-        )
-    except OSError as e:
-        return JsonResponse(
-            {"error": f"Command failed: {e}"}, status=500,
-            content_type="application/json; charset=utf-8",
-        )
+    """Disabled: shell execution from the web UI is not production-safe."""
+    AuditService.record(
+        action="shell_disabled",
+        user=request.user.username if request.user.is_authenticated else None,
+        detail="Blocked web shell invocation",
+        severity="warning",
+    )
+    return JsonResponse(
+        {"error": "The web shell is disabled in production."},
+        status=403,
+        content_type="application/json; charset=utf-8",
+    )
 
 
 @login_required
@@ -511,14 +455,14 @@ def dashboard_shell(request: HttpRequest) -> JsonResponse:
 def dashboard_log_purge(request: HttpRequest) -> JsonResponse:
     """Purge archived audit log entries, keeping the most recent 500."""
     try:
-        AuditEvent = _get_audit_model_for_write()
-        total_before = AuditEvent.objects.count()
+        audit_event = _get_audit_model_for_write()
+        total_before = audit_event.objects.count()
         if total_before > 500:
             keep_ids = list(
-                AuditEvent.objects.order_by("-time")
+                audit_event.objects.order_by("-time")
                 .values_list("id", flat=True)[:500]
             )
-            deleted, _ = AuditEvent.objects.exclude(id__in=keep_ids).delete()
+            deleted, _ = audit_event.objects.exclude(id__in=keep_ids).delete()
             AuditService.record(
                 action="log_purge",
                 user=request.user.username if request.user.is_authenticated else None,
@@ -546,42 +490,20 @@ def dashboard_log_purge(request: HttpRequest) -> JsonResponse:
 @user_passes_test(_is_staff, login_url="accounts:login")
 @require_POST
 def dashboard_reboot(request: HttpRequest) -> JsonResponse:
-    """Restart postfix and dovecot services."""
-    services = ["postfix", "dovecot"]
-    results: dict[str, str] = {}
-    all_ok = True
-    for svc in services:
-        try:
-            result = subprocess.run(
-                ["systemctl", "restart", svc],
-                capture_output=True, text=True, timeout=30,
-            )
-            ok = result.returncode == 0
-            results[svc] = "ok" if ok else f"failed (rc={result.returncode})"
-            if not ok:
-                all_ok = False
-                logger.error(
-                    "systemctl restart %s failed: stdout=%s stderr=%s",
-                    svc, result.stdout.strip(), result.stderr.strip(),
-                )
-        except FileNotFoundError:
-            results[svc] = "systemctl not found (container env?)"
-            all_ok = False
-        except subprocess.TimeoutExpired:
-            results[svc] = "timed out after 30s"
-            all_ok = False
-        except OSError as e:
-            results[svc] = f"os error: {e}"
-            all_ok = False
-
+    """Disabled: service restarts must go through deployment automation."""
     AuditService.record(
-        action="service_reboot",
+        action="service_reboot_disabled",
         user=request.user.username if request.user.is_authenticated else None,
-        detail=f"Restarted postfix/dovecot: {results}",
+        detail="Blocked web-triggered service restart",
         severity="warning",
     )
     return JsonResponse(
-        {"status": "ok" if all_ok else "partial", "services": results},
+        {
+            "status": "disabled",
+            "services": {},
+            "error": "Use deployment automation to restart services.",
+        },
+        status=403,
         content_type="application/json; charset=utf-8",
     )
 

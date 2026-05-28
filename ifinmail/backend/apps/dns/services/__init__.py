@@ -39,13 +39,19 @@ class DNSService:
             return None
 
     @staticmethod
-    def update_or_create_config(provider_name: str, credentials: dict) -> tuple[DNSProviderConfig, bool]:
-        # Encrypt credentials using Django signing before DB write
-        encrypted = signing.dumps(credentials)
-        return DNSProviderConfig.objects.update_or_create(
+    def update_or_create_config(
+        provider_name: str,
+        credentials: dict,
+    ) -> tuple[DNSProviderConfig, bool]:
+        # Sign credentials before DB write so tampering is detected on read.
+        signed_credentials = signing.dumps(credentials)
+        config, created = DNSProviderConfig.objects.update_or_create(
             provider=provider_name,
-            defaults={"credentials": encrypted},
+            defaults={"credentials": signed_credentials},
         )
+        # Return the usable in-memory shape while keeping the stored value signed.
+        config.credentials = credentials
+        return config, created
 
     @staticmethod
     def get_server_ip() -> str:
@@ -57,11 +63,17 @@ class DNSService:
             if resp.status_code == 200:
                 ip = resp.text.strip()
                 if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("127."):
-                    logger.warning("Detected private IP %s via ipify, trying MAIL_HOSTNAME fallback", ip)
+                    logger.warning(
+                        "Detected private IP %s via ipify, trying MAIL_HOSTNAME fallback",
+                        ip,
+                    )
                 elif ip.startswith("172."):
                     parts = ip.split(".")
                     if len(parts) == 4 and 16 <= int(parts[1]) <= 31:
-                        logger.warning("Detected private IP %s via ipify, trying MAIL_HOSTNAME fallback", ip)
+                        logger.warning(
+                            "Detected private IP %s via ipify, trying MAIL_HOSTNAME fallback",
+                            ip,
+                        )
                     else:
                         return ip
                 else:
@@ -82,7 +94,9 @@ class DNSService:
             return "0.0.0.0"
 
     @staticmethod
-    def get_provider(provider_name: str) -> CloudflareProvider | DigitalOceanProvider | PorkbunProvider | None:
+    def get_provider(
+        provider_name: str,
+    ) -> CloudflareProvider | DigitalOceanProvider | PorkbunProvider | None:
         config = DNSService.get_config_by_provider(provider_name)
         if not config:
             return None
@@ -90,7 +104,10 @@ class DNSService:
         try:
             decrypted = signing.loads(config.credentials)
         except (signing.BadSignature, TypeError):
-            logger.exception("Failed to decrypt credentials for %s; falling back to raw value", provider_name)
+            logger.exception(
+                "Failed to decrypt credentials for %s; falling back to raw value",
+                provider_name,
+            )
             decrypted = config.credentials
         return cls(**decrypted)
 
@@ -114,15 +131,11 @@ class DNSService:
         ).hexdigest()[:16]
 
         dkim_txt_prefix = "v=DKIM1; k=rsa; p="
-        dkim_txt_value = dkim_txt_prefix + dkim_value if dkim_value else "v=DKIM1; k=rsa; p=<add-dkim-key>"
-        if len(dkim_txt_value) > 255:
-            max_key_len = 255 - len(dkim_txt_prefix)
-            dkim_txt_value = dkim_txt_prefix + dkim_value[:max_key_len]
-            logger.warning(
-                "DKIM key for %s exceeds 255 chars; truncated to fit single TXT segment. "
-                "Full key requires provider-specific multi-segment DKIM handling.",
-                domain,
-            )
+        dkim_txt_value = (
+            dkim_txt_prefix + dkim_value
+            if dkim_value
+            else "v=DKIM1; k=rsa; p=<add-dkim-key>"
+        )
 
         return [
             DNSRecord(type="A", name="@", value=server_ip, ttl=ttl),
@@ -130,7 +143,12 @@ class DNSService:
             DNSRecord(type="A", name="mta-sts", value=server_ip, ttl=ttl),
             DNSRecord(type="MX", name="@", value=mail_hostname, priority=10, ttl=ttl),
             DNSRecord(type="TXT", name="@", value="v=spf1 mx -all", ttl=ttl),
-            DNSRecord(type="TXT", name="_dmarc", value=f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}", ttl=ttl),
+            DNSRecord(
+                type="TXT",
+                name="_dmarc",
+                value=f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}",
+                ttl=ttl,
+            ),
             DNSRecord(type="TXT", name="_mta-sts", value=f"v=STSv1; id={mta_sts_id}", ttl=ttl),
             DNSRecord(
                 type="TXT", name=f"{dkim_selector}._domainkey",

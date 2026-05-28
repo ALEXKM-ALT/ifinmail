@@ -158,7 +158,16 @@ echo "=== Backup complete: $ARCHIVE_NAME ($SIZE) ==="
 # Verify checksums
 echo "Verifying backup integrity..."
 TMP_VERIFY=$(mktemp -d)
-tar -xzf "$ARCHIVE_NAME" -C "$TMP_VERIFY" 2>/dev/null || true
+VERIFY_ARCHIVE="$ARCHIVE_NAME"
+if [[ "$ARCHIVE_NAME" == *.gpg ]]; then
+    VERIFY_ARCHIVE="$TMP_VERIFY/backup.tar.gz"
+    if ! gpg --batch --quiet --decrypt --output "$VERIFY_ARCHIVE" "$ARCHIVE_NAME" 2>/dev/null; then
+        echo "  Checksum verification: SKIPPED (encrypted archive could not be decrypted)"
+        rm -rf "$TMP_VERIFY"
+        exit 0
+    fi
+fi
+tar -xzf "$VERIFY_ARCHIVE" -C "$TMP_VERIFY" 2>/dev/null || true
 if [ -f "$TMP_VERIFY/SHA256SUMS" ]; then
     (cd "$TMP_VERIFY" && sha256sum -c SHA256SUMS --quiet 2>/dev/null) && \
         echo "  Checksum verification: PASS" || \

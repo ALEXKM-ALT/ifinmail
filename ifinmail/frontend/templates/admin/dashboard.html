@@ -16,7 +16,6 @@
             </div>
             <div class="ifinmail-page-actions">
                 <button class="ifinmail-btn" onclick="forceRescan()">{% trans 'Force Rescan' %}</button>
-                <button class="ifinmail-btn ifinmail-btn--outline" onclick="toggleShell()">{% trans 'Open Shell' %}</button>
             </div>
         </div>
 
@@ -66,7 +65,6 @@
                     <a href="{% url 'accounts:user_management' %}" class="ifinmail-quick-action"><span class="ifinmail-icon-tile">+</span><span><strong>{% trans 'Provision User' %}</strong><br>{% trans 'Create new mailbox' %}</span></a>
                     <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionSSL()"><span class="ifinmail-icon-tile">↓</span><span><strong>{% trans 'SSL Certificate' %}</strong><br>{% trans 'Renew or update' %}</span></a>
                     <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionPurge()"><span class="ifinmail-icon-tile">⌁</span><span><strong>{% trans 'Purge Logs' %}</strong><br>{% trans 'Clear archival data' %}</span></a>
-                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionReboot()"><span class="ifinmail-icon-tile">↻</span><span><strong>{% trans 'Reboot Service' %}</strong><br>{% trans 'Restart postfix/dovecot' %}</span></a>
                 </div>
             </aside>
 
@@ -86,19 +84,6 @@
     </div>
 </section>
 
-<div id="shell-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ifinmail-color-bg-panel);border-top:2px solid var(--ifinmail-color-primary);padding:16px 24px;z-index:1000;max-height:320px;overflow:auto;box-shadow:0 -4px 20px rgba(0,0,0,0.15)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <strong>{% trans 'Web Shell' %}</strong>
-        <button class="ifinmail-btn" onclick="toggleShell()">{% trans 'Close' %}</button>
-    </div>
-    <form onsubmit="event.preventDefault(); execShell()" style="display:flex;gap:8px;margin-bottom:10px">
-        <span style="color:var(--ifinmail-color-primary);font-weight:600;align-self:center">$</span>
-        <input id="shell-cmd" type="text" placeholder="uptime" style="flex:1;font-family:monospace;padding:6px 10px" autofocus>
-        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Run' %}</button>
-    </form>
-    <pre id="shell-output" style="background:#0d1117;color:#c9d1d9;padding:12px;border-radius:6px;max-height:180px;overflow:auto;font-size:var(--ifinmail-font-size-code);margin:0;white-space:pre-wrap;word-break:break-all">{% trans 'Ready. Type a command and press Run.' %}</pre>
-</div>
-
 <script>
 (function() {
     function getCSRFToken() {
@@ -112,40 +97,6 @@
         }
         return '';
     }
-
-    window.toggleShell = function() {
-        var panel = document.getElementById('shell-panel');
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block') {
-            document.getElementById('shell-cmd').focus();
-        }
-    };
-
-    window.execShell = function() {
-        var cmd = document.getElementById('shell-cmd').value.trim();
-        var output = document.getElementById('shell-output');
-        if (!cmd) return;
-        output.textContent = 'Running…';
-        var formData = new FormData();
-        formData.append('cmd', cmd);
-        fetch('{% url "accounts:shell" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()},
-            body: formData
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.error) {
-                output.textContent = 'Error: ' + data.error;
-            } else {
-                output.textContent = (data.stdout || '') + (data.stderr ? '\n[stderr]\n' + data.stderr : '');
-                if (!data.stdout && !data.stderr) output.textContent = '(no output)';
-            }
-        })
-        .catch(function(err) {
-            output.textContent = 'Request failed. Please try again.';
-        });
-    };
 
     window.forceRescan = function() {
         var btn = event.target;
@@ -197,23 +148,6 @@
         .catch(function() { alert('{% trans "Request failed" %}'); });
     };
 
-    window.quickActionReboot = function() {
-        if (!confirm('{% trans "Restart postfix and dovecot services? This will briefly interrupt mail delivery." %}')) return;
-        fetch('{% url "accounts:reboot" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()}
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            var msg = '';
-            for (var svc in data.services) {
-                msg += svc + ': ' + data.services[svc] + '\n';
-            }
-            alert(msg);
-            location.reload();
-        })
-        .catch(function() { alert('{% trans "Request failed" %}'); });
-    };
 })();
 </script>
 {% endblock %}

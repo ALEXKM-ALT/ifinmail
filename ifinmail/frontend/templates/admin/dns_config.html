@@ -83,10 +83,10 @@
                 </div>
                 <div class="ifinmail-toolbox-record">
                     <div style="width:100%">
-                        <strong class="ifinmail-link-strong">{% trans 'MX Record' %}</strong>
+                        <strong class="ifinmail-link-strong">{% trans 'SPF Record' %}</strong>
                         <div class="ifinmail-codebox">{{ toolbox_spf_record|default:'—' }}</div>
                         <button class="ifinmail-btn ifinmail-btn--sm" type="button" onclick="copyToClipboard('{{ toolbox_spf_record|escapejs }}')">{% trans 'Copy' %}</button>
-                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" onclick="editRecord('MX')">{% trans 'Edit' %}</button>
+                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" onclick="editRecord('TXT')">{% trans 'Edit' %}</button>
                     </div>
                 </div>
                 <div class="ifinmail-toolbox-record">
