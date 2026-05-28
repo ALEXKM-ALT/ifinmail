@@ -1,43 +1,117 @@
-# Python
+# --- Python ---
 __pycache__/
 *.py[cod]
+*$py.class
 *.so
 *.egg-info/
+*.egg
 dist/
 build/
 .eggs/
+pip-wheel-metadata/
+wheelhouse/
+MANIFEST
 
-# Django
-staticfiles/
-media/
-
-# Environment
-.env
+# Virtual environments
 .venv/
 venv/
+env/
+ENV/
+.envrc
 
-# IDE
+# Python tooling caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.tox/
+.nox/
+.hypothesis/
+.pyre/
+.pytype/
+dmypy.json
+dmypy.json.*
+
+# --- Django / runtime ---
+staticfiles/
+media/
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
+*.sqlite
+*.sqlite-journal
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.secrets
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# --- Frontend ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.parcel-cache/
+.next/
+.nuxt/
+.svelte-kit/
+coverage/
+playwright-report/
+test-results/
+
+# --- IDE / editors ---
 .idea/
 .vscode/
 *.swp
 *.swo
+*.swn
+*~
+.fleet/
+.zed/
 
-# OS
+# --- OS ---
 .DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Logs
-logs/
+# --- Logs ---
+logs/*
+!logs/.gitkeep
 *.log
+*.log.*
 
-# Coverage
+# --- Coverage / reports ---
 htmlcov/
 .coverage
 .coverage.*
+coverage.xml
+*.cover
+*.py,cover
+junit.xml
+test-report.xml
 
 # --- ifinmail provisioning ---
 # Environment (contains secrets)
 provisioning/.env
+provisioning/.env.*
+!provisioning/.env.example
 
 # DKIM private keys
 provisioning/docker/dkim/*.key
