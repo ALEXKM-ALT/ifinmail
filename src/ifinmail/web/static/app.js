@@ -185,7 +185,7 @@ function renderSidebar() {
     });
   }
 
-  if (state.folder === "INBOX") fetchInboxCount();
+  fetchFolderCounts();
 }
 
 function toggleDark() {
@@ -395,13 +395,20 @@ async function renderSettings() {
   loadBilling();
 }
 
-async function fetchInboxCount() {
+async function fetchFolderCounts() {
   try {
-    const res = await apiFetch(`${API}/mail/unread-count`);
+    const res = await apiFetch(`${API}/mail/folder-counts`);
     if (res.ok) {
-      const data = await res.json();
-      const badge = document.getElementById("inboxCount");
-      if (badge) badge.textContent = data.count > 0 ? data.count : "";
+      const counts = await res.json();
+      document.querySelectorAll(".ifinmail-badge[id^='count-']").forEach(el => {
+        const folder = el.id.replace("count-", "");
+        el.textContent = counts[folder] > 0 ? counts[folder] : "";
+      });
+      document.querySelectorAll("#customFoldersSidebar .ifinmail-nav-item").forEach(el => {
+        const folder = el.dataset.folder;
+        const badge = el.querySelector(".ifinmail-badge");
+        if (badge) badge.textContent = counts[folder] > 0 ? counts[folder] : "";
+      });
     }
   } catch {}
 }
@@ -416,7 +423,7 @@ async function renderCustomFolders() {
     if (!res.ok) { container.innerHTML = ""; return; }
     const folders = await res.json();
     container.innerHTML = folders.map(f =>
-      `<a class="ifinmail-nav-item" data-folder="${f.name}"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span> ${f.name}</a>`
+      `<a class="ifinmail-nav-item" data-folder="${f.name}"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span> ${f.name} <span class="ifinmail-badge" id="count-${f.name}"></span></a>`
     ).join("");
     container.querySelectorAll(".ifinmail-nav-item").forEach(el => {
       el.addEventListener("click", () => {
@@ -439,7 +446,7 @@ async function markAllRead() {
     const res = await apiFetch(`${API}/mail/mark-all-read?folder=${state.folder}`, { method: "POST" });
     if (res.ok) {
       fetchMessages();
-      fetchInboxCount();
+      fetchFolderCounts();
       showToast("All marked as read");
     }
   } catch {}
@@ -1866,7 +1873,7 @@ function connectWS() {
       if (msg.event === "new_mail") {
         if (state.folder === "INBOX" || state.folder === "SENT") {
           fetchMessages();
-          fetchInboxCount();
+          fetchFolderCounts();
         }
         // Browser notification
         if (document.hidden && "Notification" in window && Notification.permission === "granted") {
