@@ -874,5 +874,57 @@
     color: var(--ifinmail-color-text-primary) !important; /* Exceeds 12.0:1 contrast ratio */
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Immersive Registration Flow (Max Height 100vh)
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-reg {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: var(--ifinmail-space-4) !important;
+}
+
+.ifinmail-reg-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    box-sizing: border-box;
+    max-height: calc(100vh - var(--ifinmail-space-8)) !important;
+    overflow-y: auto !important; /* Safeguard scroll for tiny screens */
+}
+
+/* Ensure focus states on registration forms have no outlines or offsets */
+.ifinmail-reg .ifinmail-form-group input:focus,
+.ifinmail-reg .ifinmail-login-form__input:focus {
+    outline: none !important;
+    outline-offset: 0 !important;
+    border-color: var(--ifinmail-color-primary) !important;
+}
+
+@media (max-width: 600px) {
+    .ifinmail-reg {
+        padding: 0 !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
+    .ifinmail-reg-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        max-height: 100vh !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: var(--ifinmail-space-6) var(--ifinmail-space-5) !important;
+        overflow-y: auto !important;
+    }
+}
+
+
 
 

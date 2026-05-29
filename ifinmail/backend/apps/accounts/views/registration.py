@@ -268,10 +268,11 @@ def step_verify_confirm(request: HttpRequest, uidb64: str, token: str) -> HttpRe
     from django.contrib.auth import get_user_model
 
     user_model = get_user_model()
+    from django.core.exceptions import ValidationError
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = user_model.objects.get(pk=uid)
-    except (user_model.DoesNotExist, ValueError, TypeError):
+    except (user_model.DoesNotExist, ValueError, TypeError, ValidationError):
         return render(
             request,
             'registration/step_verify.html',
@@ -363,6 +364,8 @@ def step_complete(request: HttpRequest) -> HttpResponse:
     user_model = get_user_model()
     user = user_model.objects.filter(email=email, is_active=True).first()
     if user:
+        if not hasattr(user, 'backend'):
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
         auth_login(request, user)
 
     email_address = f'{username}@{domain}' if username and domain else email
