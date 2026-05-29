@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ brand.name|default:'ifinmail' }} — {% trans 'Premium Email Infrastructure' %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-landing">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Navigation Bar
+       ═══════════════════════════════════════════════════════════ -->
+  <nav class="ifinmail-landing-nav">
+    <div class="ifinmail-landing-nav__inner">
+      <div class="ifinmail-landing-nav__brand">
+        <span class="ifinmail-landing-nav__logo">if</span>
+        <span class="ifinmail-landing-nav__name">{{ brand.name|default:'ifinmail' }}</span>
+      </div>
+      <div class="ifinmail-landing-nav__links">
+        <a href="#features" class="ifinmail-landing-nav__link">{% trans 'Features' %}</a>
+        <a href="#pricing" class="ifinmail-landing-nav__link">{% trans 'Pricing' %}</a>
+        <a href="#security" class="ifinmail-landing-nav__link">{% trans 'Security' %}</a>
+        <a href="{% url 'accounts:login' %}" class="ifinmail-btn ifinmail-btn--ghost ifinmail-landing-nav__cta">{% trans 'Sign In' %}</a>
+        <a href="{% url 'accounts:setup_wizard' %}" class="ifinmail-btn ifinmail-btn--primary ifinmail-landing-nav__cta">{% trans 'Get Started' %}</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Hero Section
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="ifinmail-landing-hero">
+    <div class="ifinmail-landing-hero__inner">
+      <div class="ifinmail-landing-hero__badge">{% trans 'Premium Grade Infrastructure' %}</div>
+      <h1 class="ifinmail-landing-hero__title">{% trans 'Your email, your server, your rules.' %}</h1>
+      <p class="ifinmail-landing-hero__subtitle">{% trans 'Run a professional email infrastructure without the complexity. ifinmail handles DNS, spam filtering, deliverability, and monitoring — so you can focus on what matters.' %}</p>
+      <div class="ifinmail-landing-hero__actions">
+        <a href="{% url 'accounts:setup_wizard' %}" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--lg">{% trans 'Get Started Free' %}</a>
+        <a href="#features" class="ifinmail-btn ifinmail-btn--ghost ifinmail-btn--lg">{% trans 'See How It Works' %}</a>
+      </div>
+      <div class="ifinmail-landing-hero__visual">
+        <div class="ifinmail-landing-hero__window">
+          <div class="ifinmail-landing-hero__window-bar">
+            <span class="ifinmail-landing-hero__dot ifinmail-landing-hero__dot--red"></span>
+            <span class="ifinmail-landing-hero__dot ifinmail-landing-hero__dot--yellow"></span>
+            <span class="ifinmail-landing-hero__dot ifinmail-landing-hero__dot--green"></span>
+          </div>
+          <div class="ifinmail-landing-hero__window-content">
+            <div class="ifinmail-landing-hero__mock-sidebar">
+              <div class="ifinmail-landing-hero__mock-nav-item ifinmail-landing-hero__mock-nav-item--active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <span>{% trans 'Inbox' %}</span>
+              </div>
+              <div class="ifinmail-landing-hero__mock-nav-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <span>{% trans 'Dashboard' %}</span>
+              </div>
+              <div class="ifinmail-landing-hero__mock-nav-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>{% trans 'Settings' %}</span>
+              </div>
+            </div>
+            <div class="ifinmail-landing-hero__mock-main">
+              <div class="ifinmail-landing-hero__mock-header">
+                <span class="ifinmail-landing-hero__mock-title">{% trans 'Server Dashboard' %}</span>
+                <div class="ifinmail-landing-hero__mock-status">
+                  <span class="ifinmail-landing-hero__mock-dot"></span>
+                  {% trans 'All systems operational' %}
+                </div>
+              </div>
+              <div class="ifinmail-landing-hero__mock-stats">
+                <div class="ifinmail-landing-hero__mock-stat">
+                  <span class="ifinmail-landing-hero__mock-stat-value">2.4k</span>
+                  <span class="ifinmail-landing-hero__mock-stat-label">{% trans 'Emails today' %}</span>
+                </div>
+                <div class="ifinmail-landing-hero__mock-stat">
+                  <span class="ifinmail-landing-hero__mock-stat-value">99.9%</span>
+                  <span class="ifinmail-landing-hero__mock-stat-label">{% trans 'Delivery rate' %}</span>
+                </div>
+                <div class="ifinmail-landing-hero__mock-stat">
+                  <span class="ifinmail-landing-hero__mock-stat-value">0</span>
+                  <span class="ifinmail-landing-hero__mock-stat-label">{% trans 'Bounced' %}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Features Section
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="ifinmail-landing-features" id="features">
+    <div class="ifinmail-landing-features__inner">
+      <div class="ifinmail-landing-section-header">
+        <h2 class="ifinmail-landing-section-title">{% trans 'Everything you need to deliver' %}</h2>
+        <p class="ifinmail-landing-section-subtitle">{% trans 'A complete email infrastructure platform built for teams that demand reliability and control.' %}</p>
+      </div>
+
+      <div class="ifinmail-landing-features__grid">
+        <div class="ifinmail-landing-feature-card">
+          <div class="ifinmail-landing-feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          </div>
+          <h3 class="ifinmail-landing-feature-card__title">{% trans 'Spam Filtering' %}</h3>
+          <p class="ifinmail-landing-feature-card__desc">{% trans 'Multi-layered spam protection with configurable provider weights. Real-time threat intelligence keeps your inbox clean.' %}</p>
+        </div>
+
+        <div class="ifinmail-landing-feature-card">
+          <div class="ifinmail-landing-feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <h3 class="ifinmail-landing-feature-card__title">{% trans 'Deliverability Monitoring' %}</h3>
+          <p class="ifinmail-landing-feature-card__desc">{% trans 'Track DNS propagation, blacklist status, rDNS, and port 25 health. Get alerts before deliverability degrades.' %}</p>
+        </div>
+
+        <div class="ifinmail-landing-feature-card">
+          <div class="ifinmail-landing-feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3 class="ifinmail-landing-feature-card__title">{% trans 'DNS Management' %}</h3>
+          <p class="ifinmail-landing-feature-card__desc">{% trans 'Automatic DNS configuration with one-click setup. Manual override for advanced users. SPF, DKIM, DMARC handled.' %}</p>
+        </div>
+
+        <div class="ifinmail-landing-feature-card">
+          <div class="ifinmail-landing-feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="ifinmail-landing-feature-card__title">{% trans 'Multi-User Management' %}</h3>
+          <p class="ifinmail-landing-feature-card__desc">{% trans 'Role-based access control, user provisioning, and team management. Scale from solo to enterprise with ease.' %}</p>
+        </div>
+
+        <div class="ifinmail-landing-feature-card">
+          <div class="ifinmail-landing-feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/></svg>
+          </div>
+          <h3 class="ifinmail-landing-feature-card__title">{% trans 'Live Log Viewer' %}</h3>
+          <p class="ifinmail-landing-feature-card__desc">{% trans 'Real-time mail queue monitoring and log streaming. Diagnose delivery issues in seconds, not hours.' %}</p>
+        </div>
+
+        <div class="ifinmail-landing-feature-card">
+          <div class="ifinmail-landing-feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3 class="ifinmail-landing-feature-card__title">{% trans 'TLS Encryption' %}</h3>
+          <p class="ifinmail-landing-feature-card__desc">{% trans 'Automatic TLS certificate management. All mail encrypted in transit and at rest. Zero-config security.' %}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Pricing Section
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="ifinmail-landing-pricing" id="pricing">
+    <div class="ifinmail-landing-pricing__inner">
+      <div class="ifinmail-landing-section-header">
+        <h2 class="ifinmail-landing-section-title">{% trans 'Simple, transparent pricing' %}</h2>
+        <p class="ifinmail-landing-section-subtitle">{% blocktrans %}Start free. Scale when you're ready.{% endblocktrans %}</p>
+      </div>
+
+      <div class="ifinmail-landing-pricing__grid">
+        <div class="ifinmail-landing-pricing-card">
+          <div class="ifinmail-landing-pricing-card__header">
+            <h3 class="ifinmail-landing-pricing-card__name">{% trans 'Starter' %}</h3>
+            <p class="ifinmail-landing-pricing-card__desc">{% trans 'For personal projects and small teams getting started.' %}</p>
+          </div>
+          <div class="ifinmail-landing-pricing-card__price">
+            <span class="ifinmail-landing-pricing-card__amount">{% trans 'Free' %}</span>
+          </div>
+          <ul class="ifinmail-landing-pricing-card__features">
+            <li>{% trans '1 domain' %}</li>
+            <li>{% trans '1,000 emails/month' %}</li>
+            <li>{% trans 'Spam filtering' %}</li>
+            <li>{% trans 'Basic DNS setup' %}</li>
+            <li>{% trans 'Community support' %}</li>
+          </ul>
+          <a href="{% url 'accounts:setup_wizard' %}" class="ifinmail-btn ifinmail-btn--ghost ifinmail-btn--full">{% trans 'Get Started' %}</a>
+        </div>
+
+        <div class="ifinmail-landing-pricing-card ifinmail-landing-pricing-card--featured">
+          <div class="ifinmail-landing-pricing-card__badge">{% trans 'Most Popular' %}</div>
+          <div class="ifinmail-landing-pricing-card__header">
+            <h3 class="ifinmail-landing-pricing-card__name">{% trans 'Professional' %}</h3>
+            <p class="ifinmail-landing-pricing-card__desc">{% trans 'For growing teams that need reliability and control.' %}</p>
+          </div>
+          <div class="ifinmail-landing-pricing-card__price">
+            <span class="ifinmail-landing-pricing-card__amount">$29</span>
+            <span class="ifinmail-landing-pricing-card__period">/mo</span>
+          </div>
+          <ul class="ifinmail-landing-pricing-card__features">
+            <li>{% trans 'Up to 5 domains' %}</li>
+            <li>{% trans '50,000 emails/month' %}</li>
+            <li>{% trans 'Advanced spam filtering' %}</li>
+            <li>{% trans 'Auto DNS + manual override' %}</li>
+            <li>{% trans 'Deliverability monitoring' %}</li>
+            <li>{% trans 'Priority support' %}</li>
+          </ul>
+          <a href="{% url 'accounts:setup_wizard' %}" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full">{% trans 'Get Started' %}</a>
+        </div>
+
+        <div class="ifinmail-landing-pricing-card">
+          <div class="ifinmail-landing-pricing-card__header">
+            <h3 class="ifinmail-landing-pricing-card__name">{% trans 'Enterprise' %}</h3>
+            <p class="ifinmail-landing-pricing-card__desc">{% trans 'For organizations with high-volume and compliance needs.' %}</p>
+          </div>
+          <div class="ifinmail-landing-pricing-card__price">
+            <span class="ifinmail-landing-pricing-card__amount">Custom</span>
+          </div>
+          <ul class="ifinmail-landing-pricing-card__features">
+            <li>{% trans 'Unlimited domains' %}</li>
+            <li>{% trans 'Unlimited emails' %}</li>
+            <li>{% trans 'Full security suite' %}</li>
+            <li>{% trans 'Custom integrations' %}</li>
+            <li>{% trans 'Dedicated support' %}</li>
+            <li>{% trans 'SLA guarantee' %}</li>
+          </ul>
+          <a href="mailto:{{ brand.support_email|default:'support@ifinmail.com' }}" class="ifinmail-btn ifinmail-btn--ghost ifinmail-btn--full">{% trans 'Contact Sales' %}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Security / Trust Section
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="ifinmail-landing-security" id="security">
+    <div class="ifinmail-landing-security__inner">
+      <div class="ifinmail-landing-section-header">
+        <h2 class="ifinmail-landing-section-title">{% trans 'Built for trust' %}</h2>
+        <p class="ifinmail-landing-section-subtitle">{% trans 'Enterprise-grade security and compliance at every layer.' %}</p>
+      </div>
+
+      <div class="ifinmail-landing-security__grid">
+        <div class="ifinmail-landing-security-item">
+          <div class="ifinmail-landing-security-item__number">01</div>
+          <h3 class="ifinmail-landing-security-item__title">{% trans 'End-to-end encryption' %}</h3>
+          <p class="ifinmail-landing-security-item__desc">{% trans 'TLS 1.3 for all connections. Optional PGP encryption for message content at rest.' %}</p>
+        </div>
+        <div class="ifinmail-landing-security-item">
+          <div class="ifinmail-landing-security-item__number">02</div>
+          <h3 class="ifinmail-landing-security-item__title">{% trans 'Your data stays yours' %}</h3>
+          <p class="ifinmail-landing-security-item__desc">{% trans 'Self-hosted option. No third-party data access. Full audit logs for every action.' %}</p>
+        </div>
+        <div class="ifinmail-landing-security-item">
+          <div class="ifinmail-landing-security-item__number">03</div>
+          <h3 class="ifinmail-landing-security-item__title">{% trans 'Zero-trust architecture' %}</h3>
+          <p class="ifinmail-landing-security-item__desc">{% trans 'Role-based access, MFA support, and session management built into every account.' %}</p>
+        </div>
+        <div class="ifinmail-landing-security-item">
+          <div class="ifinmail-landing-security-item__number">04</div>
+          <h3 class="ifinmail-landing-security-item__title">{% trans 'Compliance ready' %}</h3>
+          <p class="ifinmail-landing-security-item__desc">{% trans 'SOC 2 aligned. GDPR compliant. Full data export and deletion capabilities.' %}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CTA Section
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="ifinmail-landing-cta">
+    <div class="ifinmail-landing-cta__inner">
+      <h2 class="ifinmail-landing-cta__title">{% trans 'Ready to take control of your email?' %}</h2>
+      <p class="ifinmail-landing-cta__subtitle">{% trans 'Set up your email infrastructure in minutes. No credit card required.' %}</p>
+      <a href="{% url 'accounts:setup_wizard' %}" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--lg">{% trans 'Start Free Trial' %}</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Footer
+       ═══════════════════════════════════════════════════════════ -->
+  <footer class="ifinmail-landing-footer">
+    <div class="ifinmail-landing-footer__inner">
+      <div class="ifinmail-landing-footer__brand">
+        <span class="ifinmail-landing-footer__logo">if</span>
+        <span class="ifinmail-landing-footer__name">{{ brand.name|default:'ifinmail' }}</span>
+        <span class="ifinmail-landing-footer__tagline">{{ brand.tagline|default:'mail infrastructure' }}</span>
+      </div>
+      <div class="ifinmail-landing-footer__links">
+        <a href="#features">{% trans 'Features' %}</a>
+        <a href="#pricing">{% trans 'Pricing' %}</a>
+        <a href="#security">{% trans 'Security' %}</a>
+        <a href="{% url 'accounts:login' %}">{% trans 'Sign In' %}</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+{% endblock %}

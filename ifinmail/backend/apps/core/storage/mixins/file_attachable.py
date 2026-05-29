@@ -18,7 +18,7 @@ class FileAttachableMixin(models.Model):
     _files = models.ManyToManyField(
         StoredFile,
         blank=True,
-        related_name="+",
+        related_name='+',
     )
 
     @property
@@ -27,7 +27,7 @@ class FileAttachableMixin(models.Model):
 
     @property
     def images(self) -> models.QuerySet[StoredFile]:
-        return self._files.filter(content_type__startswith="image/")
+        return self._files.filter(content_type__startswith='image/')
 
     class Meta:
         abstract = True

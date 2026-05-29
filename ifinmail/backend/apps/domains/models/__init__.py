@@ -15,8 +15,8 @@ class Domain(models.Model):
 
     class Meta:
         managed = False
-        db_table = "domains"
-        ordering = ["name"]
+        db_table = 'domains'
+        ordering = ['name']
 
     def __str__(self) -> str:
         return self.name
@@ -24,10 +24,8 @@ class Domain(models.Model):
 
 class DKIMKey(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    domain = models.ForeignKey(
-        Domain, on_delete=models.CASCADE, db_column="domain_id"
-    )
-    selector = models.CharField(max_length=64, default="default")
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE, db_column='domain_id')
+    selector = models.CharField(max_length=64, default='default')
     private_key = models.TextField()
     public_key = models.TextField()
     active = models.BooleanField(default=True)
@@ -35,5 +33,5 @@ class DKIMKey(models.Model):
 
     class Meta:
         managed = False
-        db_table = "dkim_keys"
-        unique_together = [("domain", "selector")]
+        db_table = 'dkim_keys'
+        unique_together = [('domain', 'selector')]

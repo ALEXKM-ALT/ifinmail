@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Privacy Policy — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-landing">
+
+  <nav class="ifinmail-landing-nav">
+    <div class="ifinmail-landing-nav__inner">
+      <div class="ifinmail-landing-nav__brand">
+        <span class="ifinmail-landing-nav__logo">if</span>
+        <span class="ifinmail-landing-nav__name">{{ brand.name|default:'ifinmail' }}</span>
+      </div>
+      <div class="ifinmail-landing-nav__links">
+        <a href="/" class="ifinmail-landing-nav__link">{% trans 'Home' %}</a>
+        <a href="{% url 'accounts:login' %}" class="ifinmail-btn ifinmail-btn--ghost ifinmail-landing-nav__cta">{% trans 'Sign In' %}</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="ifinmail-legal">
+    <div class="ifinmail-legal__inner">
+      <h1 class="ifinmail-legal__title">{% trans 'Privacy Policy' %}</h1>
+      <p class="ifinmail-legal__date">{% trans 'Last updated: May 29, 2026' %}</p>
+
+      <div class="ifinmail-legal__content">
+
+        <h2>{% trans '1. Information We Collect' %}</h2>
+        <p>{% trans 'We collect information you provide directly to us, including your email address, name, and account credentials when you register for the Service. We also collect information about your use of the Service, such as server configurations, DNS settings, and usage statistics.' %}</p>
+
+        <h2>{% trans '2. How We Use Your Information' %}</h2>
+        <p>{% trans 'We use the information we collect to provide, maintain, and improve the Service; to send you technical notices, updates, and support messages; and to respond to your comments and questions.' %}</p>
+        <ul>
+          <li>{% trans 'To operate and maintain the email infrastructure you configure' %}</li>
+          <li>{% trans 'To monitor and improve service reliability and performance' %}</li>
+          <li>{% trans 'To communicate with you about your account and the Service' %}</li>
+          <li>{% trans 'To enforce our Terms of Service and prevent abuse' %}</li>
+        </ul>
+
+        <h2>{% trans '3. Data Storage and Security' %}</h2>
+        <p>{% trans 'We implement industry-standard security measures to protect your data, including encryption in transit (TLS 1.3) and at rest. You retain full ownership of your data. We do not sell your personal information to third parties.' %}</p>
+
+        <h2>{% trans '4. Data Retention' %}</h2>
+        <p>{% trans 'We retain your account information for as long as your account is active. Email logs and audit trails are retained for 90 days. You may request deletion of your data at any time by contacting our support team.' %}</p>
+
+        <h2>{% trans '5. Third-Party Services' %}</h2>
+        <p>{% trans 'The Service may integrate with third-party services you explicitly configure (such as DNS providers or spam filtering services). Those services operate under their own privacy policies, and we encourage you to review them.' %}</p>
+
+        <h2>{% trans '6. Cookies' %}</h2>
+        <p>{% trans 'We use essential cookies to maintain your session and authenticate your access to the Service. We do not use tracking cookies or third-party analytics cookies. You can configure your browser to refuse cookies, but this may affect functionality.' %}</p>
+
+        <h2>{% trans '7. Your Rights' %}</h2>
+        <p>{% trans 'You have the right to access, correct, or delete your personal data. You may also restrict or object to processing of your data. To exercise these rights, please contact us at the email address below.' %}</p>
+
+        <h2>{% trans '8. Changes to This Policy' %}</h2>
+        <p>{% trans 'We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date.' %}</p>
+
+        <h2>{% trans '9. Contact Us' %}</h2>
+        <p>{% trans 'If you have any questions about this Privacy Policy, please contact us at' %} <a href="mailto:{{ brand.support_email|default:'support@ifinmail.com' }}">{{ brand.support_email|default:'support@ifinmail.com' }}</a>.</p>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="ifinmail-landing-footer">
+    <div class="ifinmail-landing-footer__inner">
+      <div class="ifinmail-landing-footer__brand">
+        <span class="ifinmail-landing-footer__logo">if</span>
+        <span class="ifinmail-landing-footer__name">{{ brand.name|default:'ifinmail' }}</span>
+        <span class="ifinmail-landing-footer__tagline">{{ brand.tagline|default:'mail infrastructure' }}</span>
+      </div>
+      <div class="ifinmail-landing-footer__links">
+        <a href="{% url 'terms' %}">{% trans 'Terms' %}</a>
+        <a href="{% url 'privacy' %}">{% trans 'Privacy' %}</a>
+        <a href="{% url 'accounts:login' %}">{% trans 'Sign In' %}</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+{% endblock %}

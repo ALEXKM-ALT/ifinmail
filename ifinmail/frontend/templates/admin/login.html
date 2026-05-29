@@ -8,24 +8,153 @@
 {% block footer %}{% endblock %}
 
 {% block content %}
-<div class="ifinmail-login-container">
-  <div class="ifinmail-login-card">
-    <h1>{{ brand.name|default:'ifinmail' }}</h1>
+<div class="ifinmail-login">
+
+  <div class="ifinmail-login-card ifinmail-fade-in">
+    <div class="ifinmail-login-card__brand">
+      {% if brand.logo_url %}
+        <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="ifinmail-login-card__logo-img">
+      {% else %}
+        <span class="ifinmail-login-card__logo">{{ brand.logo_svg|safe }}</span>
+      {% endif %}
+    </div>
+
+    <h1 class="ifinmail-login-card__title">{% trans 'Welcome back' %}</h1>
+    <p class="ifinmail-login-card__subtitle">{% trans 'Sign in to your account' %}</p>
+
     {% if error %}
       <div class="ifinmail-login-error">{{ error }}</div>
     {% endif %}
-    <form method="post" action="{% url 'accounts:login' %}">
+
+    {% if inactive %}
+      <div class="ifinmail-login-inactive">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        {% if resent %}
+          <span>{% blocktrans %}Verification email resent to {{ resent_email }}.{% endblocktrans %}</span>
+        {% else %}
+          <span>{% trans "Didn't receive the verification email?" %}</span>
+          <form method="post" action="{% url 'accounts:login' %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="resend" value="1">
+            <input type="hidden" name="email" value="{{ inactive_email }}">
+            <button type="submit" class="ifinmail-login-inactive__link">{% trans 'Resend' %}</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:login' %}" class="ifinmail-login-form ifinmail-form-submit">
       {% csrf_token %}
-      <div class="ifinmail-form-group">
-        <label class="ifinmail-label" for="email">{% trans 'Email' %}</label>
-        <input type="email" name="email" id="email" class="ifinmail-input" required autofocus autocomplete="email">
+
+      <div class="ifinmail-login-form__group">
+        <label class="ifinmail-login-form__label" for="email">{% trans 'Email' %}</label>
+        <input type="email" name="email" id="email" class="ifinmail-login-form__input" required autofocus autocomplete="email" placeholder="you@example.com">
       </div>
-      <div class="ifinmail-form-group">
-        <label class="ifinmail-label" for="password">{% trans 'Password' %}</label>
-        <input type="password" name="password" id="password" class="ifinmail-input" required autocomplete="current-password">
+
+      <div class="ifinmail-login-form__group">
+        <div class="ifinmail-login-form__label-row">
+          <label class="ifinmail-login-form__label" for="password">{% trans 'Password' %}</label>
+          <a href="{% url 'accounts:password_reset' %}" class="ifinmail-login-form__forgot">{% trans 'Forgot password?' %}</a>
+        </div>
+        <input type="password" name="password" id="password" class="ifinmail-login-form__input" required autocomplete="current-password" placeholder="Enter your password">
       </div>
-      <button type="submit" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full">{% trans 'Sign In' %}</button>
+
+      <div class="ifinmail-login-form__checkbox-row">
+        <label class="ifinmail-login-form__checkbox-label">
+          <input type="checkbox" name="remember" id="remember" class="ifinmail-login-form__checkbox">
+          <span>{% trans 'Remember me' %}</span>
+        </label>
+      </div>
+
+      <button type="submit" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full ifinmail-login-form__submit" id="submit-btn">
+        <span class="ifinmail-btn__spinner"></span>
+        <span class="ifinmail-btn__text">{% trans 'Sign In' %}</span>
+      </button>
     </form>
+
+    <p class="ifinmail-login-card__terms">
+      {% trans "By signing in, you agree to our" %} <a href="{% url 'terms' %}">{% trans 'Terms of Service' %}</a> {% trans 'and' %} <a href="{% url 'privacy' %}">{% trans 'Privacy Policy' %}</a>.
+    </p>
   </div>
+
+  <p class="ifinmail-login-card__register">
+    {% trans "Don't have an account?" %} <a href="{% url 'accounts:reg_profile' %}">{% trans 'Create account' %}</a>
+  </p>
+
 </div>
+
+<style>
+.ifinmail-fade-in {
+  animation: ifinmail-fade-up 0.35s ease-out;
+}
+@keyframes ifinmail-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ifinmail-login-inactive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ifinmail-on-surface-variant);
+  background: var(--ifinmail-surface-container-high, #f3f4f6);
+  border: 1px solid var(--ifinmail-outline-variant);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+  flex-wrap: wrap;
+}
+.ifinmail-login-inactive svg {
+  flex-shrink: 0;
+  color: var(--ifinmail-color-primary);
+}
+.ifinmail-login-inactive__link {
+  background: none;
+  border: none;
+  color: var(--ifinmail-color-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.ifinmail-login-inactive__link:hover {
+  text-decoration: underline;
+}
+.ifinmail-btn--loading .ifinmail-btn__spinner {
+  display: inline-block;
+}
+.ifinmail-btn--loading .ifinmail-btn__text {
+  opacity: 0.7;
+}
+.ifinmail-btn__spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: ifinmail-spin 0.6s linear infinite;
+}
+@keyframes ifinmail-spin {
+  to { transform: rotate(360deg); }
+}
+.ifinmail-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>
+
+<script>
+(function() {
+  var btn = document.getElementById('submit-btn');
+  var form = btn && btn.closest('form');
+  if (form) {
+    form.addEventListener('submit', function() {
+      btn.disabled = true;
+      btn.classList.add('ifinmail-btn--loading');
+    });
+  }
+})();
+</script>
 {% endblock %}

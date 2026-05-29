@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Choose Your Email — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-reg">
+
+  <div class="ifinmail-reg-card ifinmail-fade-in">
+    {% include "registration/_stepper.html" with current=4 %}
+
+    <h1 class="ifinmail-reg-card__title">{% trans 'Choose your email address' %}</h1>
+    <p class="ifinmail-reg-card__subtitle">{% trans 'Pick the local part for your new email address.' %}</p>
+
+    {% if error %}
+      <div class="ifinmail-error-banner">{{ error }}</div>
+    {% endif %}
+
+    {% if domain %}
+    <div class="ifinmail-reg-username-preview">
+      <span class="ifinmail-reg-username-preview__part" id="preview-local">{{ chosen }}</span>
+      <span class="ifinmail-reg-username-preview__at">@</span>
+      <span class="ifinmail-reg-username-preview__domain">{{ domain }}</span>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:reg_username' %}" class="ifinmail-login-form ifinmail-form-submit">
+      {% csrf_token %}
+
+      <div class="ifinmail-login-form__group">
+        <label class="ifinmail-login-form__label" for="username">{% trans 'Username' %}</label>
+        <div class="ifinmail-reg-username-input">
+          <input type="text" name="username" id="username" class="ifinmail-login-form__input" required autofocus autocomplete="off" placeholder="{% trans 'Enter username' %}" value="{{ chosen }}" pattern="^[a-z0-9][a-z0-9._-]{1,30}[a-z0-9]$" maxlength="32">
+          <span class="ifinmail-reg-username-input__domain">@{{ domain|default:_('domain') }}</span>
+        </div>
+        <div class="ifinmail-reg-availability" id="avail-indicator"></div>
+        <p class="ifinmail-setup-hint">{% trans 'Use letters, numbers, dots, hyphens, or underscores. 3-32 characters.' %}</p>
+      </div>
+
+      <button type="submit" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full ifinmail-login-form__submit" id="submit-btn">
+        <span class="ifinmail-btn__spinner"></span>
+        <span class="ifinmail-btn__text">{% trans 'Finish Setup' %}</span>
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<style>
+.ifinmail-error-banner {
+  background: var(--ifinmail-error-container, #fef2f2);
+  border: 1px solid var(--ifinmail-color-error, #dc2626);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+  font-size: 14px;
+  color: var(--ifinmail-color-error, #dc2626);
+}
+.ifinmail-btn--loading .ifinmail-btn__spinner {
+  display: inline-block;
+}
+.ifinmail-btn--loading .ifinmail-btn__text {
+  opacity: 0.7;
+}
+.ifinmail-btn__spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: ifinmail-spin 0.6s linear infinite;
+}
+@keyframes ifinmail-spin {
+  to { transform: rotate(360deg); }
+}
+.ifinmail-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ifinmail-reg-card.ifinmail-fade-in {
+  animation: ifinmail-fade-up 0.35s ease-out;
+}
+@keyframes ifinmail-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+(function() {
+  var input = document.getElementById('username');
+  var preview = document.getElementById('preview-local');
+  var avail = document.getElementById('avail-indicator');
+  var domain = {{ domain|default:''|escapejs }};
+  var submitBtn = document.getElementById('submit-btn');
+  var form = submitBtn.closest('form');
+  var currentRequest = null;
+
+  input.addEventListener('input', function() {
+    if (preview) preview.textContent = input.value || '{% trans "username" %}';
+    var val = input.value.trim().toLowerCase();
+
+    if (val.length >= 3) {
+      avail.innerHTML = '<span class="ifinmail-reg-availability__checking"><span class="ifinmail-spinner-xs"></span> {% trans "Checking..." %}</span>';
+
+      // Abort previous request to avoid race condition
+      if (currentRequest) {
+        currentRequest.abort();
+      }
+
+      clearTimeout(window._availTimer);
+      window._availTimer = setTimeout(function() {
+        var xhr = new XMLHttpRequest();
+        currentRequest = xhr;
+        xhr.open('GET', '/accounts/registration/check-username/?username=' + encodeURIComponent(val), true);
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            if (xhr === currentRequest || !currentRequest) {
+              var data = JSON.parse(xhr.responseText);
+              if (data.available) {
+                avail.innerHTML = '<span class="ifinmail-reg-availability__ok">{% trans "Available" %}</span>';
+              } else {
+                avail.innerHTML = '<span class="ifinmail-reg-availability__taken">{% trans "Taken" %}</span>';
+              }
+            }
+          }
+        };
+        xhr.onerror = function() {
+          avail.innerHTML = '';
+        };
+        xhr.send();
+      }, 400);
+    } else {
+      avail.innerHTML = '';
+      if (currentRequest) {
+        currentRequest.abort();
+        currentRequest = null;
+      }
+    }
+  });
+
+  form.addEventListener('submit', function() {
+    submitBtn.disabled = true;
+    submitBtn.classList.add('ifinmail-btn--loading');
+  });
+})();
+</script>
+{% endblock %}

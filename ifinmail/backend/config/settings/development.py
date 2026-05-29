@@ -1,3 +1,4 @@
+# ruff: noqa: F403,F405
 import os
 
 os.environ.setdefault('DJANGO_SECRET_KEY', 'dev-insecure-key-change-in-production')
@@ -5,7 +6,7 @@ os.environ.setdefault('DB_NAME', 'ifinmail')
 os.environ.setdefault('DB_USER', 'ifinmail')
 os.environ.setdefault('DB_PASSWORD', 'ifinmail')
 
-from .base import *  # noqa: F403
+from .base import *
 
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Terms of Service — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-landing">
+
+  <nav class="ifinmail-landing-nav">
+    <div class="ifinmail-landing-nav__inner">
+      <div class="ifinmail-landing-nav__brand">
+        <span class="ifinmail-landing-nav__logo">if</span>
+        <span class="ifinmail-landing-nav__name">{{ brand.name|default:'ifinmail' }}</span>
+      </div>
+      <div class="ifinmail-landing-nav__links">
+        <a href="/" class="ifinmail-landing-nav__link">{% trans 'Home' %}</a>
+        <a href="{% url 'accounts:login' %}" class="ifinmail-btn ifinmail-btn--ghost ifinmail-landing-nav__cta">{% trans 'Sign In' %}</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="ifinmail-legal">
+    <div class="ifinmail-legal__inner">
+      <h1 class="ifinmail-legal__title">{% trans 'Terms of Service' %}</h1>
+      <p class="ifinmail-legal__date">{% trans 'Last updated: May 29, 2026' %}</p>
+
+      <div class="ifinmail-legal__content">
+
+        <h2>{% trans '1. Acceptance of Terms' %}</h2>
+        <p>{% trans 'By accessing or using the ifinmail platform ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to all the terms, you may not access or use the Service.' %}</p>
+
+        <h2>{% trans '2. Description of Service' %}</h2>
+        <p>{% trans 'ifinmail provides email infrastructure management tools, including server configuration, DNS management, spam filtering, deliverability monitoring, and related services. The Service is provided on an "as is" and "as available" basis.' %}</p>
+
+        <h2>{% trans '3. User Responsibilities' %}</h2>
+        <p>{% trans 'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.' %}</p>
+        <ul>
+          <li>{% trans 'Provide accurate and complete registration information' %}</li>
+          <li>{% trans 'Maintain and update your account information as needed' %}</li>
+          <li>{% trans 'Use the Service in compliance with all applicable laws and regulations' %}</li>
+          <li>{% trans 'Not use the Service for sending spam, malware, or any illegal content' %}</li>
+        </ul>
+
+        <h2>{% trans '4. Service Level' %}</h2>
+        <p>{% trans 'We strive to maintain high availability of the Service but do not guarantee uninterrupted access. We reserve the right to temporarily suspend access for maintenance, upgrades, or emergency repairs.' %}</p>
+
+        <h2>{% trans '5. Data Privacy' %}</h2>
+        <p>{% trans 'Your use of the Service is also governed by our Privacy Policy, which explains how we collect, use, and protect your personal information. By using the Service, you consent to the practices described in the Privacy Policy.' %}</p>
+
+        <h2>{% trans '6. Intellectual Property' %}</h2>
+        <p>{% trans 'The Service, including its code, design, and branding, is owned by ifinmail and is protected by applicable intellectual property laws. You may not copy, modify, distribute, or reverse engineer any part of the Service without prior written consent.' %}</p>
+
+        <h2>{% trans '7. Limitation of Liability' %}</h2>
+        <p>{% trans 'ifinmail shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or relating to your use of the Service, even if advised of the possibility of such damages.' %}</p>
+
+        <h2>{% trans '8. Termination' %}</h2>
+        <p>{% trans 'We reserve the right to suspend or terminate your access to the Service at any time, without prior notice, for conduct that we believe violates these Terms or is harmful to other users, third parties, or the Service itself.' %}</p>
+
+        <h2>{% trans '9. Changes to Terms' %}</h2>
+        <p>{% trans 'We may modify these Terms at any time. Changes will be posted on this page with an updated revision date. Continued use of the Service after changes constitutes acceptance of the new Terms.' %}</p>
+
+        <h2>{% trans '10. Contact' %}</h2>
+        <p>{% trans 'If you have any questions about these Terms, please contact us at' %} <a href="mailto:{{ brand.support_email|default:'support@ifinmail.com' }}">{{ brand.support_email|default:'support@ifinmail.com' }}</a>.</p>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="ifinmail-landing-footer">
+    <div class="ifinmail-landing-footer__inner">
+      <div class="ifinmail-landing-footer__brand">
+        <span class="ifinmail-landing-footer__logo">if</span>
+        <span class="ifinmail-landing-footer__name">{{ brand.name|default:'ifinmail' }}</span>
+        <span class="ifinmail-landing-footer__tagline">{{ brand.tagline|default:'mail infrastructure' }}</span>
+      </div>
+      <div class="ifinmail-landing-footer__links">
+        <a href="{% url 'terms' %}">{% trans 'Terms' %}</a>
+        <a href="{% url 'privacy' %}">{% trans 'Privacy' %}</a>
+        <a href="{% url 'accounts:login' %}">{% trans 'Sign In' %}</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+{% endblock %}

@@ -20,6 +20,8 @@ def _delete_file_on_disk(sender: type[StoredFile], instance: StoredFile, **kwarg
             instance.file.delete(save=False)
         except (OSError, FileNotFoundError) as exc:
             logger.warning(
-                "Could not delete file %s for StoredFile %s: %s",
-                instance.file.name, instance.id, exc,
+                'Could not delete file %s for StoredFile %s: %s',
+                instance.file.name,
+                instance.id,
+                exc,
             )

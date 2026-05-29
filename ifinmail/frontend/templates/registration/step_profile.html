@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Create Your Account — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-reg">
+
+  <div class="ifinmail-reg-card ifinmail-fade-in">
+    {% include "registration/_stepper.html" with current=1 %}
+
+    <h1 class="ifinmail-reg-card__title">{% trans 'Create your profile' %}</h1>
+    <p class="ifinmail-reg-card__subtitle">{% trans "Start with your email address. You'll set up the rest in a moment." %}</p>
+
+    {% if error %}
+      <div class="ifinmail-error-banner">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:reg_profile' %}" class="ifinmail-login-form ifinmail-form-submit">
+      {% csrf_token %}
+
+      <div class="ifinmail-login-form__group">
+        <label class="ifinmail-login-form__label" for="email">{% trans 'Email address' %}</label>
+        <input type="email" name="email" id="email" class="ifinmail-login-form__input" required autofocus autocomplete="email" placeholder="you@example.com" value="{{ email }}">
+        <span class="ifinmail-field-hint" id="email-hint"></span>
+      </div>
+
+      <button type="submit" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full ifinmail-login-form__submit" id="submit-btn">
+        <span class="ifinmail-btn__spinner"></span>
+        <span class="ifinmail-btn__text">{% trans 'Continue' %}</span>
+      </button>
+    </form>
+
+    <p class="ifinmail-reg-card__footer-link">
+      {% trans 'Already have an account?' %} <a href="{% url 'accounts:login' %}">{% trans 'Sign in' %}</a>
+    </p>
+  </div>
+
+</div>
+
+<style>
+.ifinmail-field-hint {
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+  min-height: 16px;
+}
+.ifinmail-field-hint--ok {
+  color: var(--ifinmail-color-success, #16a34a);
+}
+.ifinmail-field-hint--err {
+  color: var(--ifinmail-color-error, #dc2626);
+}
+.ifinmail-error-banner {
+  background: var(--ifinmail-error-container, #fef2f2);
+  border: 1px solid var(--ifinmail-color-error, #dc2626);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+  font-size: 14px;
+  color: var(--ifinmail-color-error, #dc2626);
+}
+.ifinmail-btn--loading .ifinmail-btn__spinner {
+  display: inline-block;
+}
+.ifinmail-btn--loading .ifinmail-btn__text {
+  opacity: 0.7;
+}
+.ifinmail-btn__spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: ifinmail-spin 0.6s linear infinite;
+}
+@keyframes ifinmail-spin {
+  to { transform: rotate(360deg); }
+}
+.ifinmail-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ifinmail-reg-card.ifinmail-fade-in {
+  animation: ifinmail-fade-up 0.35s ease-out;
+}
+@keyframes ifinmail-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+(function() {
+  var email = document.getElementById('email');
+  var hint = document.getElementById('email-hint');
+  var submitBtn = document.getElementById('submit-btn');
+  var form = submitBtn.closest('form');
+
+  email.addEventListener('input', function() {
+    var val = email.value.trim();
+    if (!val) {
+      hint.textContent = '';
+      hint.className = 'ifinmail-field-hint';
+      return;
+    }
+    if (val.length > 254) {
+      hint.textContent = '{% trans "Email address is too long" %}';
+      hint.className = 'ifinmail-field-hint ifinmail-field-hint--err';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      hint.textContent = '{% trans "Enter a valid email address" %}';
+      hint.className = 'ifinmail-field-hint ifinmail-field-hint--err';
+      return;
+    }
+    hint.textContent = '{% trans "Valid email format" %}';
+    hint.className = 'ifinmail-field-hint ifinmail-field-hint--ok';
+  });
+
+  form.addEventListener('submit', function() {
+    submitBtn.disabled = true;
+    submitBtn.classList.add('ifinmail-btn--loading');
+  });
+})();
+</script>
+{% endblock %}

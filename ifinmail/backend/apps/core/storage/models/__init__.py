@@ -1,3 +1,3 @@
 from .stored_file import StoredFile
 
-__all__ = ["StoredFile"]
+__all__ = ['StoredFile']

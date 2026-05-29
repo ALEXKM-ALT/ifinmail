@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Registration Complete — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-reg">
+
+  <div class="ifinmail-reg-card ifinmail-fade-in">
+    {% include "registration/_stepper.html" with current=5 %}
+
+    <div class="ifinmail-reg-icon ifinmail-reg-icon--success ifinmail-celebrate">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+
+    <h1 class="ifinmail-reg-card__title">{% trans "You're all set!" %}</h1>
+    <p class="ifinmail-reg-card__subtitle">
+      {% blocktrans %}Your account is ready. Your email address is <strong>{{ email_address }}</strong>.{% endblocktrans %}
+    </p>
+
+    <div class="ifinmail-reg-complete-actions">
+      <a href="{% url 'accounts:dashboard' %}" class="ifinmail-btn ifinmail-btn--primary ifinmail-btn--full ifinmail-login-form__submit">{% trans 'Go to Dashboard' %}</a>
+      <p class="ifinmail-reg-complete-note">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        {% trans "You've been signed in automatically." %}
+      </p>
+    </div>
+  </div>
+
+  <p class="ifinmail-reg-card__footer-link">
+    {% trans 'Want to use a different account?' %} <a href="{% url 'accounts:login' %}">{% trans 'Sign in' %}</a>
+  </p>
+
+</div>
+
+<style>
+.ifinmail-reg-card.ifinmail-fade-in {
+  animation: ifinmail-fade-up 0.35s ease-out;
+}
+@keyframes ifinmail-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ifinmail-celebrate {
+  animation: ifinmail-celebrate 0.6s ease-out;
+}
+@keyframes ifinmail-celebrate {
+  0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+  50% { transform: scale(1.15) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.ifinmail-reg-complete-actions {
+  margin-top: var(--ifinmail-space-4);
+}
+.ifinmail-reg-complete-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--ifinmail-on-surface-variant);
+  margin-top: var(--ifinmail-space-3);
+}
+.ifinmail-reg-complete-note svg {
+  flex-shrink: 0;
+  color: var(--ifinmail-color-primary);
+}
+</style>
+{% endblock %}

@@ -1,19 +1,21 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class EntityType(str, Enum):
+class EntityType(StrEnum):
     """Entity types for StoredFile association (AGENTS.md § Storage)."""
-    PRODUCT = "PRODUCT"
-    USER = "USER"
-    MESSAGE = "MESSAGE"
-    DOCUMENT = "DOCUMENT"
+
+    PRODUCT = 'PRODUCT'
+    USER = 'USER'
+    MESSAGE = 'MESSAGE'
+    DOCUMENT = 'DOCUMENT'
 
 
-class StorageVisibility(str, Enum):
+class StorageVisibility(StrEnum):
     """Visibility levels for stored files."""
-    PRIVATE = "PRIVATE"
-    INTERNAL = "INTERNAL"
-    PUBLIC = "PUBLIC"
+
+    PRIVATE = 'PRIVATE'
+    INTERNAL = 'INTERNAL'
+    PUBLIC = 'PUBLIC'
 
 
-__all__ = ["EntityType", "StorageVisibility"]
+__all__ = ['EntityType', 'StorageVisibility']

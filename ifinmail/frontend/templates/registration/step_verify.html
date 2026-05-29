@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Verify Your Email — {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block sidebar_wrapper %}{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="ifinmail-reg">
+
+  <div class="ifinmail-reg-card ifinmail-fade-in">
+    {% include "registration/_stepper.html" with current=3 %}
+
+    <div class="ifinmail-reg-icon ifinmail-bounce-in">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+      </svg>
+    </div>
+
+    {% if email_sent %}
+    <h1 class="ifinmail-reg-card__title">{% trans 'Check your email' %}</h1>
+    <p class="ifinmail-reg-card__subtitle">
+      {% blocktrans %}We sent a verification link to <strong>{{ email }}</strong>.{% endblocktrans %}
+    </p>
+    <div class="ifinmail-verify-tip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      {% trans "If you don't see it, check your spam folder." %}
+    </div>
+    {% else %}
+    <h1 class="ifinmail-reg-card__title">{% trans 'Verify your email' %}</h1>
+    <p class="ifinmail-reg-card__subtitle">
+      {% blocktrans %}We couldn't send an email to <strong>{{ email }}</strong>. Use the link below to verify your account.{% endblocktrans %}
+    </p>
+    {% if fallback_url %}
+    <div class="ifinmail-verify-fallback">
+      <p class="ifinmail-verify-fallback__label">{% trans 'Verification link:' %}</p>
+      <a href="{{ fallback_url }}" class="ifinmail-verify-fallback__link">{{ fallback_url }}</a>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if error %}
+      <div class="ifinmail-error-banner">{{ error }}</div>
+    {% endif %}
+
+    {% if resent %}
+      <div class="ifinmail-verify-success">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 4 12 14.01 9 11.01"/><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>
+        {% trans 'Verification email resent.' %}
+      </div>
+    {% endif %}
+
+    <div class="ifinmail-login-form__group ifinmail-reg-verify-actions">
+      <form method="post" action="{% url 'accounts:reg_verify' %}" class="ifinmail-form-submit">
+        {% csrf_token %}
+        <input type="hidden" name="resend" value="1">
+        <button type="submit" class="ifinmail-btn ifinmail-btn--ghost ifinmail-btn--full" id="resend-btn">
+          <span class="ifinmail-btn__spinner"></span>
+          <span class="ifinmail-btn__text">{% trans 'Resend email' %}</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <p class="ifinmail-reg-card__footer-link">
+    <a href="{% url 'accounts:reg_profile' %}">{% trans 'Use a different email' %}</a>
+  </p>
+
+</div>
+
+<style>
+.ifinmail-verify-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ifinmail-on-surface-variant);
+  background: var(--ifinmail-surface-container-high, #f3f4f6);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+}
+.ifinmail-verify-tip svg {
+  flex-shrink: 0;
+  color: var(--ifinmail-color-primary);
+}
+.ifinmail-verify-success {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ifinmail-color-success, #16a34a);
+  background: var(--ifinmail-success-container, #f0fdf4);
+  border: 1px solid var(--ifinmail-color-success, #16a34a);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+}
+.ifinmail-verify-success svg {
+  flex-shrink: 0;
+  color: var(--ifinmail-color-success, #16a34a);
+}
+.ifinmail-verify-fallback {
+  background: var(--ifinmail-surface-container-high, #fff7ed);
+  border: 1px solid var(--ifinmail-outline-variant);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 12px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+  word-break: break-all;
+}
+.ifinmail-verify-fallback__label {
+  font-size: 12px;
+  color: var(--ifinmail-on-surface-variant);
+  margin-bottom: 4px;
+}
+.ifinmail-verify-fallback__link {
+  font-size: 13px;
+  color: var(--ifinmail-color-primary);
+  text-decoration: underline;
+}
+.ifinmail-error-banner {
+  background: var(--ifinmail-error-container, #fef2f2);
+  border: 1px solid var(--ifinmail-color-error, #dc2626);
+  border-radius: var(--ifinmail-border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: var(--ifinmail-space-4);
+  font-size: 14px;
+  color: var(--ifinmail-color-error, #dc2626);
+}
+.ifinmail-btn--loading .ifinmail-btn__spinner {
+  display: inline-block;
+}
+.ifinmail-btn--loading .ifinmail-btn__text {
+  opacity: 0.7;
+}
+.ifinmail-btn__spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.15);
+  border-top: 2px solid var(--ifinmail-on-surface-variant);
+  border-radius: 50%;
+  animation: ifinmail-spin 0.6s linear infinite;
+}
+@keyframes ifinmail-spin {
+  to { transform: rotate(360deg); }
+}
+.ifinmail-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ifinmail-reg-card.ifinmail-fade-in {
+  animation: ifinmail-fade-up 0.35s ease-out;
+}
+@keyframes ifinmail-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ifinmail-bounce-in {
+  animation: ifinmail-bounce 0.4s ease-out;
+}
+@keyframes ifinmail-bounce {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+</style>
+
+<script>
+(function() {
+  var form = document.querySelector('.ifinmail-reg-verify-actions form');
+  var btn = document.getElementById('resend-btn');
+  if (form) {
+    form.addEventListener('submit', function() {
+      btn.disabled = true;
+      btn.classList.add('ifinmail-btn--loading');
+    });
+  }
+})();
+</script>
+{% endblock %}

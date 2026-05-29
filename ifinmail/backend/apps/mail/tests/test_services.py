@@ -1,7 +1,9 @@
 """Tests for mail services."""
+
+from unittest.mock import patch
+
 from django.db import connection
 from django.test import TransactionTestCase
-from unittest.mock import patch
 
 from backend.apps.domains.models import Domain
 
@@ -10,14 +12,18 @@ from ..services import MailService
 
 
 def create_unmanaged_table(model: type) -> None:
-    with patch.object(model._meta, "managed", True), \
-         connection.schema_editor(atomic=False) as schema_editor:
+    with (
+        patch.object(model._meta, 'managed', True),
+        connection.schema_editor(atomic=False) as schema_editor,
+    ):
         schema_editor.create_model(model)
 
 
 def drop_unmanaged_table(model: type) -> None:
-    with patch.object(model._meta, "managed", True), \
-         connection.schema_editor(atomic=False) as schema_editor:
+    with (
+        patch.object(model._meta, 'managed', True),
+        connection.schema_editor(atomic=False) as schema_editor,
+    ):
         schema_editor.delete_model(model)
 
 
@@ -31,11 +37,11 @@ class MailServiceTests(TransactionTestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
+        import contextlib
+
         for tbl in (Alias, Mailbox, Domain):
-            try:
+            with contextlib.suppress(Exception):
                 drop_unmanaged_table(tbl)
-            except Exception:
-                pass
         super().tearDownClass()
 
     def _fixture_teardown(self) -> None:
@@ -46,27 +52,27 @@ class MailServiceTests(TransactionTestCase):
 
     def tearDown(self) -> None:
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM aliases")
-            cursor.execute("DELETE FROM mailboxes")
-            cursor.execute("DELETE FROM domains")
+            cursor.execute('DELETE FROM aliases')
+            cursor.execute('DELETE FROM mailboxes')
+            cursor.execute('DELETE FROM domains')
         super().tearDown()
 
     def test_get_mailbox_count(self) -> None:
-        domain = Domain.objects.create(name="count.example")
-        Mailbox.objects.create(domain=domain, local_part="user1")
-        Mailbox.objects.create(domain=domain, local_part="user2")
+        domain = Domain.objects.create(name='count.example')
+        Mailbox.objects.create(domain=domain, local_part='user1')
+        Mailbox.objects.create(domain=domain, local_part='user2')
         self.assertEqual(MailService.get_mailbox_count(), 2)
 
     def test_get_or_create_mailbox(self) -> None:
-        domain = Domain.objects.create(name="mb.example")
-        mb, created = MailService.get_or_create_mailbox(domain=domain, local_part="test")
+        domain = Domain.objects.create(name='mb.example')
+        mb, created = MailService.get_or_create_mailbox(domain=domain, local_part='test')
         self.assertTrue(created)
-        self.assertEqual(mb.local_part, "test")
-        mb2, created2 = MailService.get_or_create_mailbox(domain=domain, local_part="test")
+        self.assertEqual(mb.local_part, 'test')
+        mb2, created2 = MailService.get_or_create_mailbox(domain=domain, local_part='test')
         self.assertFalse(created2)
 
     def test_create_mailbox(self) -> None:
-        domain = Domain.objects.create(name="create.example")
-        mb = MailService.create_mailbox(domain=domain, local_part="newuser")
-        self.assertEqual(mb.local_part, "newuser")
+        domain = Domain.objects.create(name='create.example')
+        mb = MailService.create_mailbox(domain=domain, local_part='newuser')
+        self.assertEqual(mb.local_part, 'newuser')
         self.assertEqual(mb.quota_bytes, 0)

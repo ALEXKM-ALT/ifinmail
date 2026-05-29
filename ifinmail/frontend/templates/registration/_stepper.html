@@ -1,0 +1,30 @@
+{% load i18n %}
+<div class="ifinmail-reg-stepper">
+  <div class="ifinmail-reg-stepper__steps">
+    <div class="ifinmail-reg-stepper__step{% if current >= 1 %} ifinmail-reg-stepper__step--done{% endif %}{% if current == 1 %} ifinmail-reg-stepper__step--active{% endif %}">
+      <span class="ifinmail-reg-stepper__dot">{% if current > 1 %}&#10003;{% else %}1{% endif %}</span>
+      <span class="ifinmail-reg-stepper__label">{% trans 'Profile' %}</span>
+    </div>
+    <div class="ifinmail-reg-stepper__connector{% if current >= 2 %} ifinmail-reg-stepper__connector--done{% endif %}"></div>
+    <div class="ifinmail-reg-stepper__step{% if current >= 2 %} ifinmail-reg-stepper__step--done{% endif %}{% if current == 2 %} ifinmail-reg-stepper__step--active{% endif %}">
+      <span class="ifinmail-reg-stepper__dot">{% if current > 2 %}&#10003;{% else %}2{% endif %}</span>
+      <span class="ifinmail-reg-stepper__label">{% trans 'Password' %}</span>
+    </div>
+    <div class="ifinmail-reg-stepper__connector{% if current >= 3 %} ifinmail-reg-stepper__connector--done{% endif %}"></div>
+    <div class="ifinmail-reg-stepper__step{% if current >= 3 %} ifinmail-reg-stepper__step--done{% endif %}{% if current == 3 %} ifinmail-reg-stepper__step--active{% endif %}">
+      <span class="ifinmail-reg-stepper__dot">{% if current > 3 %}&#10003;{% else %}3{% endif %}</span>
+      <span class="ifinmail-reg-stepper__label">{% trans 'Verify' %}</span>
+    </div>
+    <div class="ifinmail-reg-stepper__connector{% if current >= 4 %} ifinmail-reg-stepper__connector--done{% endif %}"></div>
+    <div class="ifinmail-reg-stepper__step{% if current >= 4 %} ifinmail-reg-stepper__step--done{% endif %}{% if current == 4 %} ifinmail-reg-stepper__step--active{% endif %}">
+      <span class="ifinmail-reg-stepper__dot">{% if current > 4 %}&#10003;{% else %}4{% endif %}</span>
+      <span class="ifinmail-reg-stepper__label">{% trans 'Username' %}</span>
+    </div>
+    <div class="ifinmail-reg-stepper__connector{% if current >= 5 %} ifinmail-reg-stepper__connector--done{% endif %}"></div>
+    <div class="ifinmail-reg-stepper__step{% if current >= 5 %} ifinmail-reg-stepper__step--done{% endif %}{% if current == 5 %} ifinmail-reg-stepper__step--active{% endif %}">
+      <span class="ifinmail-reg-stepper__dot">{% if current >= 5 %}&#10003;{% else %}5{% endif %}</span>
+      <span class="ifinmail-reg-stepper__label">{% trans 'Done' %}</span>
+    </div>
+  </div>
+  <div class="ifinmail-reg-stepper__counter">{% blocktrans with n=current total=5 %}Step {{ n }} of {{ total }}{% endblocktrans %}</div>
+</div>

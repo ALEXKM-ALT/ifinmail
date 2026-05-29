@@ -1,5 +1,6 @@
 """Shared helpers for DNS views — re-exports from DNS service layer."""
-from backend.apps.dns.services import PROVIDER_MAP, DNSService
+
+from backend.apps.dns.services import DNSService
 
 build_records = DNSService.build_records
 get_server_ip = DNSService.get_server_ip

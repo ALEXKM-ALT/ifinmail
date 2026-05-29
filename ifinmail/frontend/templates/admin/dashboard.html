@@ -9,75 +9,187 @@
 {% block content %}
 <section class="ifinmail-admin-content">
     <div class="ifinmail-admin-page">
-        <div class="ifinmail-page-header">
+        <!-- Page Header -->
+        <div class="ifinmail-page-header" style="border-bottom: 0; padding-bottom: 0; margin-bottom: var(--ifinmail-space-2)">
             <div>
                 <h1 class="ifinmail-page-title">{% trans 'Server Dashboard' %}</h1>
-                <p class="ifinmail-page-subtitle">{% trans 'Real-time telemetry and management cluster' %}</p>
+                <p class="ifinmail-page-subtitle">{% trans 'Real-time infrastructure health and operational telemetry' %}</p>
             </div>
             <div class="ifinmail-page-actions">
                 <button class="ifinmail-btn" onclick="forceRescan()">{% trans 'Force Rescan' %}</button>
             </div>
         </div>
 
+        <!-- ROW A: Health Banner -->
+        <div class="ifinmail-health-banner">
+            <span class="ifinmail-overline" style="margin-bottom: 0; color: var(--ifinmail-color-text-secondary)">{% trans 'System status' %}</span>
+            <div class="ifinmail-health-pills">
+                {% for key, service in services.items %}
+                <span class="ifinmail-health-pill ifinmail-health-pill--{{ service.status }}">
+                    {{ service.label }} · {{ service.detail }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ROW B: Stat Row -->
+        <div class="ifinmail-stat-row">
+            {% for stat in stats %}
+            <div class="ifinmail-stat-cell">
+                <span class="ifinmail-stat-cell__label">{{ stat.label }}</span>
+                <div class="ifinmail-stat-cell__value-wrapper">
+                    <span class="ifinmail-stat-cell__dot ifinmail-stat-cell__dot--{{ stat.status }}"></span>
+                    <span class="ifinmail-stat-cell__value">{{ stat.value }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ROW C & D: Main Content Grid -->
         <div class="ifinmail-admin-grid">
-            <article class="ifinmail-stat-panel ifinmail-span-6">
-                <div class="ifinmail-stat-topline">
-                    <span class="ifinmail-overline">{% trans 'Storage Usage' %}</span>
-                    <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <!-- ROW C: Domain Directory & Health (8 columns) -->
+            <article class="ifinmail-table-panel ifinmail-span-8">
+                <div class="ifinmail-table-panel-header">
+                    <h2 class="ifinmail-panel-title">{% trans 'Domain Directory & Health' %}</h2>
+                    <span class="ifinmail-overline" style="margin-bottom: 0">{% trans 'Live Resolver Validation' %}</span>
                 </div>
-                <span class="ifinmail-stat-big">{{ storage_used|default:'0' }}</span>
-                <div class="ifinmail-progress"><span style="width:{{ storage_pct|default:'0%' }}"></span></div>
-                <div class="ifinmail-action-row" style="justify-content:space-between">
-                    <strong>{% blocktrans trimmed with pct=storage_pct|default:'0%' %}{{ pct }} Used{% endblocktrans %}</strong><strong>{% blocktrans trimmed with total=storage_total|default:'0' %}{{ total }} Total{% endblocktrans %}</strong>
-                </div>
-                {% if storage_warning %}<p class="ifinmail-trend--danger">{{ storage_warning }}</p>{% endif %}
-            </article>
-            <article class="ifinmail-stat-panel ifinmail-span-3">
-                <span class="ifinmail-overline">{% trans 'Traffic (24h)' %}</span>
-                <span class="ifinmail-stat-big">{{ traffic_stats.count|default:'0' }}</span>
-                <p class="ifinmail-stat-detail">{{ traffic_stats.label|default:'' }}</p>
-                <p class="ifinmail-trend">{{ traffic_stats.trend|default:'' }}</p>
-            </article>
-            <article class="ifinmail-stat-panel ifinmail-span-3">
-                <span class="ifinmail-overline">{% trans 'Uptime' %}</span>
-                <span class="ifinmail-stat-big">{{ uptime_stats.pct|default:'0%' }}</span>
-                <p class="ifinmail-stat-detail">{{ uptime_stats.detail|default:'' }}</p>
-                <p class="ifinmail-trend">{{ uptime_stats.status|default:'' }}</p>
+                <table class="ifinmail-admin-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans 'Domain Name' %}</th>
+                            <th>{% trans 'MX' %}</th>
+                            <th>{% trans 'SPF' %}</th>
+                            <th>{% trans 'DKIM' %}</th>
+                            <th>{% trans 'DMARC' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for domain in domains %}
+                        <tr>
+                            <td><strong class="ifinmail-link-strong">{{ domain.name }}</strong></td>
+                            {% for check in domain.checks %}
+                            <td>
+                                <span class="ifinmail-badge {% if check.status == 'pass' %}ifinmail-badge--success{% else %}ifinmail-badge--warning{% endif %}">
+                                    {{ check.check|upper }}
+                                </span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="ifinmail-admin-table-empty">
+                                <div class="ifinmail-empty-state">
+                                    <svg class="ifinmail-empty-state-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>
+                                    <p>{% trans 'No domains configured on this appliance.' %}</p>
+                                    <a class="ifinmail-link-strong" href="{% url 'dns:config' %}">{% trans 'Configure first domain →' %}</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </article>
 
-            <article class="ifinmail-table-panel ifinmail-span-8 ifinmail-watermark">
-                <div class="ifinmail-table-panel-header" style="padding-bottom:0">
-                    <span class="ifinmail-overline">{% trans 'System Telemetry' %}</span>
-                    <div class="ifinmail-action-row"><span class="ifinmail-trend">CPU</span><span class="ifinmail-trend">Memory</span></div>
-                </div>
-                <div class="ifinmail-chart-bars">
-                    {% for h in telemetry_bars %}<span style="height:{{ h }}%"></span>{% empty %}<span style="height:0%"></span>{% endfor %}
-                </div>
-                <div class="ifinmail-admin-grid" style="padding:26px 30px">
-                    <div class="ifinmail-span-6"><span class="ifinmail-overline">{% trans 'Processor Usage' %}</span><strong style="font-size:var(--ifinmail-font-size-h1)">{{ system_load.cpu_pct|default:'0' }}%</strong> <span>{{ system_load.cpu_label|default:'' }}</span></div>
-                    <div class="ifinmail-span-6"><span class="ifinmail-overline">{% trans 'Memory Usage' %}</span><strong style="font-size:var(--ifinmail-font-size-h1)">{{ system_load.mem_used|default:'0' }}<span style="font-size:var(--ifinmail-font-size-body)">{{ system_load.mem_unit|default:'GB' }}</span></strong> <span>{{ system_load.mem_total|default:'' }}</span></div>
-                </div>
-            </article>
-
+            <!-- ROW C: Quick Actions (4 columns) -->
             <aside class="ifinmail-panel ifinmail-span-4">
                 <h2 class="ifinmail-panel-title">{% trans 'Quick Actions' %}</h2>
-                <div style="margin-top:22px">
-                    <a href="{% url 'accounts:user_management' %}" class="ifinmail-quick-action"><span class="ifinmail-icon-tile">+</span><span><strong>{% trans 'Provision User' %}</strong><br>{% trans 'Create new mailbox' %}</span></a>
-                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionSSL()"><span class="ifinmail-icon-tile">↓</span><span><strong>{% trans 'SSL Certificate' %}</strong><br>{% trans 'Renew or update' %}</span></a>
-                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionPurge()"><span class="ifinmail-icon-tile">⌁</span><span><strong>{% trans 'Purge Logs' %}</strong><br>{% trans 'Clear archival data' %}</span></a>
+                <div style="margin-top: 22px">
+                    <a href="{% url 'accounts:user_management' %}" class="ifinmail-quick-action">
+                        <span class="ifinmail-icon-tile">+</span>
+                        <span>
+                            <strong>{% trans 'Provision User' %}</strong><br>
+                            <span style="font-size: 11px; color: var(--ifinmail-color-text-muted)">{% trans 'Create new mailbox' %}</span>
+                        </span>
+                    </a>
+                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionSSL()">
+                        <span class="ifinmail-icon-tile">↓</span>
+                        <span>
+                            <strong>{% trans 'TLS Certificate' %}</strong><br>
+                            <span style="font-size: 11px; color: var(--ifinmail-color-text-muted)">{% trans 'View details & status' %}</span>
+                        </span>
+                    </a>
+                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionPurge()">
+                        <span class="ifinmail-icon-tile">⌁</span>
+                        <span>
+                            <strong>{% trans 'Purge Logs' %}</strong><br>
+                            <span style="font-size: 11px; color: var(--ifinmail-color-text-muted)">{% trans 'Clear archival data' %}</span>
+                        </span>
+                    </a>
                 </div>
             </aside>
 
-            <article class="ifinmail-table-panel ifinmail-span-8">
-                <div class="ifinmail-table-panel-header"><span class="ifinmail-overline">{% trans 'Active Queues' %}</span></div>
-                {% include "includes/admin_table.html" with span=None title=None headers=queue_headers|default:'' rows=queue_rows|default:'' row_template="admin/partials/queue_row.html" %}
-            </article>
-            <article class="ifinmail-table-panel ifinmail-span-4">
-                <div class="ifinmail-hero-media"></div>
-                <div id="security" style="scroll-margin-top:80px"></div>
-                <div class="ifinmail-panel">
-                    <span class="ifinmail-overline" style="color:var(--ifinmail-color-primary)">{% trans 'Security Node' %}</span>
-                    <h3>{% trans 'DC Connectivity Status' %}</h3>
+            <!-- ROW D: Recent Activity & Audits (7 columns) -->
+            <aside class="ifinmail-panel ifinmail-span-7">
+                <h2 class="ifinmail-panel-title" style="margin-bottom: var(--ifinmail-space-3)">{% trans 'Recent Activity & Audits' %}</h2>
+                <div class="ifinmail-timeline">
+                    {% for item in events %}
+                    <article class="ifinmail-timeline-item" style="padding-left: var(--ifinmail-space-4); position: relative; margin-bottom: var(--ifinmail-space-3)">
+                        <span class="ifinmail-status-dot {% if item.severity == 'error' or item.severity == 'err' %}ifinmail-status-dot--danger{% elif item.severity == 'warning' or item.severity == 'warn' %}ifinmail-status-dot--warning{% elif item.severity == 'success' %}ifinmail-status-dot--success{% else %}ifinmail-status-dot--info{% endif %}" style="position: absolute; left: 0; top: 4px; width: 6px; height: 6px"></span>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--ifinmail-color-text-muted)">
+                            <strong>{{ item.user }}</strong>
+                            <span>{{ item.time|slice:":16" }}</span>
+                        </div>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--ifinmail-color-text-primary)">{{ item.description }}</p>
+                    </article>
+                    {% empty %}
+                    <div class="ifinmail-empty-state ifinmail-empty-state--compact">
+                        <p>{% trans 'No audit entries yet.' %}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div style="margin-top: 16px; border-top: 1px solid var(--ifinmail-color-border); padding-top: var(--ifinmail-space-3); text-align: right">
+                    <a class="ifinmail-link-strong" href="{% url 'accounts:logs' %}">{% trans 'View All Logs →' %}</a>
+                </div>
+            </aside>
+
+            <!-- ROW D: System Telemetry & SSL (5 columns) -->
+            <article class="ifinmail-panel ifinmail-span-5">
+                <h2 class="ifinmail-panel-title" style="margin-bottom: var(--ifinmail-space-4)">{% trans 'System Telemetry & SSL' %}</h2>
+                <div style="display: flex; flex-direction: column; gap: 18px">
+                    <!-- Disk storage info -->
+                    <div>
+                        <span class="ifinmail-overline" style="margin-bottom: var(--ifinmail-space-1)">{% trans 'Disk Space' %}</span>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--ifinmail-space-1); font-size: 12px">
+                            <strong>{{ storage_pct }} {% trans 'Used' %}</strong>
+                            <span style="color: var(--ifinmail-color-text-muted)">{{ storage_used }} / {{ storage_total }}</span>
+                        </div>
+                        <div class="ifinmail-progress">
+                            <span class="{% if storage_status == 'err' %}bg-danger{% elif storage_status == 'warn' %}bg-warning{% endif %}" style="width: {{ storage_pct }}"></span>
+                        </div>
+                    </div>
+
+                    <!-- SSL/TLS certificate info -->
+                    <div>
+                        <span class="ifinmail-overline" style="margin-bottom: var(--ifinmail-space-1)">{% trans 'Active SSL/TLS Certificate' %}</span>
+                        {% if tls_info.issuer %}
+                        <div style="font-size: 12px; display: flex; flex-direction: column; gap: 6px">
+                            <div>
+                                <strong style="color: var(--ifinmail-color-text-secondary)">{% trans 'Mail Hostname' %}:</strong> 
+                                <code style="font-family: var(--ifinmail-font-mono)">{{ mail_hostname|default:'Not configured' }}</code>
+                            </div>
+                            <div>
+                                <strong style="color: var(--ifinmail-color-text-secondary)">{% trans 'Issuer' %}:</strong> 
+                                <code style="font-family: var(--ifinmail-font-mono); font-size: 11px">{{ tls_info.issuer }}</code>
+                            </div>
+                            <div>
+                                <strong style="color: var(--ifinmail-color-text-secondary)">{% trans 'Expiry Status' %}:</strong> 
+                                <span class="ifinmail-badge {% if tls_info.expiry_status == 'ok' %}ifinmail-badge--success{% elif tls_info.expiry_status == 'warn' %}ifinmail-badge--warning{% else %}ifinmail-badge--danger{% endif %}">
+                                    {{ tls_info.expiry_days }} {% trans 'days remaining' %}
+                                </span>
+                            </div>
+                            {% if tls_info.sans %}
+                            <div style="word-break: break-all">
+                                <strong style="color: var(--ifinmail-color-text-secondary)">{% trans 'SAN domains' %}:</strong> <br>
+                                <code style="font-family: var(--ifinmail-font-mono); font-size: 11px; color: var(--ifinmail-color-text-muted)">{{ tls_info.sans|join:', ' }}</code>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="ifinmail-empty-state ifinmail-empty-state--compact" style="padding: 12px; border: 1px dashed var(--ifinmail-color-danger)">
+                            <p style="color: var(--ifinmail-color-danger); margin: 0">{% trans 'No SSL/TLS certificate found on this server.' %}</p>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </article>
         </div>
@@ -121,7 +233,7 @@
     };
 
     window.quickActionSSL = function() {
-        var tls = {{ tls_info|safe|default:'{}' }};
+        var tls = {{ tls_info_json|safe|default:'{}' }};
         var msg = '{% trans "TLS Certificate Info" %}' + '\n\n';
         if (tls.issuer) msg += '{% trans "Issuer" %}: ' + tls.issuer + '\n';
         if (tls.sans && tls.sans.length) msg += '{% trans "Domains" %}: ' + tls.sans.join(', ') + '\n';

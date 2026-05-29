@@ -1162,39 +1162,249 @@ select.ifinmail-input {
 /* ══════════════════════════════════════════════════════════════
    Login Page
    ══════════════════════════════════════════════════════════════ */
-.ifinmail-login-container {
+.ifinmail-login {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    min-height: 60vh;
+    justify-content: center;
+    flex: 1;
     padding: var(--ifinmail-space-6);
+    background-color: var(--ifinmail-surface-1);
+    background-image:
+        linear-gradient(rgba(26, 86, 219, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26, 86, 219, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
 }
 
 .ifinmail-login-card {
-    background: var(--ifinmail-surface-container-lowest);
-    border: 1px solid var(--ifinmail-outline-variant);
-    border-radius: var(--ifinmail-radius-lg);
-    padding: var(--ifinmail-space-6);
     width: 100%;
     max-width: 400px;
+    padding: var(--ifinmail-space-8);
+    background: var(--ifinmail-surface-container-lowest);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius-xl);
 }
 
-.ifinmail-login-card h1 {
+.ifinmail-login-card__brand {
     text-align: center;
-    margin-bottom: var(--ifinmail-space-6);
-    font-size: var(--ifinmail-font-size-h2);
-    font-weight: var(--ifinmail-font-weight-semibold);
+    margin-bottom: var(--ifinmail-space-8);
+}
+
+.ifinmail-login-card__logo-img {
+    height: 32px;
+    width: auto;
+}
+
+.ifinmail-login-card__logo svg {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+}
+
+.ifinmail-login-card__title {
+    text-align: center;
+    font-size: var(--ifinmail-font-size-display);
+    font-weight: var(--ifinmail-font-weight-bold);
     color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-1);
+    line-height: var(--ifinmail-line-height-tight);
+}
+
+.ifinmail-login-card__subtitle {
+    text-align: center;
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    margin-bottom: var(--ifinmail-space-6);
 }
 
 .ifinmail-login-error {
     background: var(--ifinmail-error-container);
     color: var(--ifinmail-error);
-    padding: var(--ifinmail-space-3);
+    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
     border-radius: var(--ifinmail-radius);
     border: 1px solid var(--ifinmail-error);
     margin-bottom: var(--ifinmail-space-4);
     font-size: var(--ifinmail-font-size-body);
+}
+
+/* ── Form ── */
+.ifinmail-login-form__group {
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-login-form__label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-login-form__label {
+    display: block;
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-medium);
+    color: var(--ifinmail-on-surface);
+}
+
+.ifinmail-login-form__forgot {
+    font-size: var(--ifinmail-font-size-body-small);
+    color: var(--ifinmail-color-primary);
+    text-decoration: none;
+    font-weight: var(--ifinmail-font-weight-medium);
+    transition: color var(--ifinmail-transition-fast);
+}
+
+.ifinmail-login-form__forgot:hover {
+    color: var(--ifinmail-color-primary-hover);
+    text-decoration: underline;
+}
+
+.ifinmail-login-form__input {
+    display: block;
+    width: 100%;
+    height: 44px;
+    padding: var(--ifinmail-space-2) var(--ifinmail-space-4);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius);
+    background: var(--ifinmail-surface-container-lowest);
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface);
+    transition: border-color var(--ifinmail-transition-fast);
+    box-sizing: border-box;
+}
+
+.ifinmail-login-form__input::placeholder {
+    color: var(--ifinmail-outline);
+}
+
+.ifinmail-login-form__input:hover {
+    border-color: var(--ifinmail-on-surface-variant);
+}
+
+.ifinmail-login-form__input:focus,
+.ifinmail-login-form__input:focus-visible {
+    outline: var(--ifinmail-focus-ring-width) solid var(--ifinmail-focus-ring-color);
+    outline-offset: 2px;
+    border-color: var(--ifinmail-color-primary);
+}
+
+/* ── Remember me ── */
+.ifinmail-login-form__checkbox-row {
+    margin-bottom: var(--ifinmail-space-5);
+}
+
+.ifinmail-login-form__checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    cursor: pointer;
+    user-select: none;
+}
+
+.ifinmail-login-form__checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--ifinmail-color-primary);
+    cursor: pointer;
+}
+
+/* ── Submit button ── */
+.ifinmail-login-form__submit {
+    height: 44px !important;
+    font-size: var(--ifinmail-font-size-body) !important;
+    font-weight: var(--ifinmail-font-weight-semibold) !important;
+}
+
+/* ── Divider ── */
+.ifinmail-login-card__divider {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-3);
+    margin: var(--ifinmail-space-6) 0;
+    color: var(--ifinmail-outline);
+    font-size: var(--ifinmail-font-size-body-small);
+}
+
+.ifinmail-login-card__divider::before,
+.ifinmail-login-card__divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--ifinmail-outline-variant);
+}
+
+/* ── Social button ── */
+.ifinmail-login-card__social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ifinmail-space-3);
+    width: 100%;
+    height: 44px;
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius);
+    background: var(--ifinmail-surface-container-lowest);
+    color: var(--ifinmail-on-surface-variant);
+    font-family: var(--ifinmail-font-ui);
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-medium);
+    cursor: pointer;
+    transition: background var(--ifinmail-transition-fast),
+                border-color var(--ifinmail-transition-fast);
+}
+
+.ifinmail-login-card__social-btn:hover {
+    background: var(--ifinmail-surface-container);
+    border-color: var(--ifinmail-outline);
+}
+
+/* ── Terms ── */
+.ifinmail-login-card__terms {
+    text-align: center;
+    font-size: var(--ifinmail-font-size-caption);
+    color: var(--ifinmail-outline);
+    margin-top: var(--ifinmail-space-6);
+    line-height: 1.5;
+}
+
+.ifinmail-login-card__terms a {
+    color: var(--ifinmail-color-text-secondary);
+    text-decoration: none;
+}
+
+.ifinmail-login-card__terms a:hover {
+    text-decoration: underline;
+}
+
+/* ── Register link ── */
+.ifinmail-login-card__register {
+    text-align: center;
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    margin-top: var(--ifinmail-space-8);
+}
+
+.ifinmail-login-card__register a {
+    color: var(--ifinmail-color-primary);
+    text-decoration: none;
+    font-weight: var(--ifinmail-font-weight-medium);
+}
+
+.ifinmail-login-card__register a:hover {
+    text-decoration: underline;
+}
+
+/* ── Password reset icon ── */
+.ifinmail-pw-reset-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--ifinmail-space-5);
+    color: var(--ifinmail-color-primary);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2045,6 +2255,93 @@ select.ifinmail-input {
     padding: 20px;
 }
 
+/* Compact dashboard stat-row & cells */
+.ifinmail-stat-row {
+    display: flex;
+    background: #ffffff;
+    border: 1px solid var(--ifinmail-color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-stat-cell {
+    flex: 1;
+    padding: 12px 16px;
+    border-right: 1px solid var(--ifinmail-color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ifinmail-stat-cell:last-child {
+    border-right: 0;
+}
+
+.ifinmail-stat-cell__label {
+    font-size: var(--ifinmail-font-size-overline);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ifinmail-color-text-secondary);
+}
+
+.ifinmail-stat-cell__value-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ifinmail-stat-cell__value {
+    font-size: var(--ifinmail-font-size-h2);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-color-text-primary);
+}
+
+.ifinmail-stat-cell__dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.ifinmail-stat-cell__dot--ok { background: var(--ifinmail-color-success); }
+.ifinmail-stat-cell__dot--warn { background: var(--ifinmail-color-warning); }
+.ifinmail-stat-cell__dot--err { background: var(--ifinmail-color-danger); }
+
+/* Health banner & pills */
+.ifinmail-health-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-3);
+    padding: var(--ifinmail-space-3) 0;
+    border-bottom: 1px solid var(--ifinmail-color-border);
+    flex-wrap: wrap;
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-health-pills {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+    flex-wrap: wrap;
+}
+
+.ifinmail-health-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: var(--ifinmail-font-size-caption);
+    font-weight: var(--ifinmail-font-weight-medium);
+    border: 1px solid currentColor;
+}
+
+.ifinmail-health-pill--ok   { color: var(--ifinmail-color-success); background: var(--ifinmail-color-success-tint); }
+.ifinmail-health-pill--warn { color: var(--ifinmail-color-warning); background: var(--ifinmail-color-warning-tint); }
+.ifinmail-health-pill--err  { color: var(--ifinmail-color-danger);  background: var(--ifinmail-color-danger-tint); }
+
 .ifinmail-stat-topline {
     display: flex;
     align-items: center;
@@ -2585,4 +2882,1301 @@ select.ifinmail-input {
     .ifinmail-table-panel {
         overflow-x: auto;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Landing Page — Windows 11 / Gmail inspired
+   Sleek, flat, no box-shadows. Smooth transitions only.
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing {
+    min-height: 100vh;
+    background: var(--ifinmail-surface-container-lowest);
+    font-family: var(--ifinmail-font-ui);
+    color: var(--ifinmail-on-surface);
+}
+
+/* ── Navigation ── */
+.ifinmail-landing-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--ifinmail-outline-variant);
+}
+
+.ifinmail-landing-nav__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ifinmail-space-4) var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-nav__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+}
+
+.ifinmail-landing-nav__logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--ifinmail-color-primary);
+    color: #fff;
+    font-weight: var(--ifinmail-font-weight-bold);
+    font-size: var(--ifinmail-font-size-body);
+    border-radius: var(--ifinmail-radius-md);
+}
+
+.ifinmail-landing-nav__name {
+    font-size: var(--ifinmail-font-size-lg);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+}
+
+.ifinmail-landing-nav__links {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-nav__link {
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-medium);
+    color: var(--ifinmail-on-surface-variant);
+    text-decoration: none;
+    transition: color var(--ifinmail-transition-fast);
+}
+
+.ifinmail-landing-nav__link:hover {
+    color: var(--ifinmail-on-surface);
+    text-decoration: none;
+}
+
+.ifinmail-landing-nav__cta {
+    font-size: var(--ifinmail-font-size-body);
+}
+
+/* ── Section Headers ── */
+.ifinmail-landing-section-header {
+    text-align: center;
+    margin-bottom: var(--ifinmail-space-12);
+}
+
+.ifinmail-landing-section-title {
+    font-size: var(--ifinmail-font-size-3xl);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-3);
+    line-height: var(--ifinmail-line-height-tight);
+}
+
+.ifinmail-landing-section-subtitle {
+    font-size: var(--ifinmail-font-size-body-large);
+    color: var(--ifinmail-on-surface-variant);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: var(--ifinmail-line-height);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Hero Section
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing-hero {
+    padding: var(--ifinmail-space-16) var(--ifinmail-space-6) var(--ifinmail-space-12);
+    background: linear-gradient(180deg, var(--ifinmail-color-primary-tint) 0%, var(--ifinmail-surface-container-lowest) 100%);
+}
+
+.ifinmail-landing-hero__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.ifinmail-landing-hero__badge {
+    display: inline-block;
+    padding: var(--ifinmail-space-1) var(--ifinmail-space-3);
+    background: var(--ifinmail-secondary-fixed-dim);
+    color: var(--ifinmail-color-primary);
+    font-size: var(--ifinmail-font-size-caption);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    border-radius: var(--ifinmail-radius-full);
+    margin-bottom: var(--ifinmail-space-6);
+    letter-spacing: 0.02em;
+}
+
+.ifinmail-landing-hero__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-on-surface);
+    line-height: 1.15;
+    margin-bottom: var(--ifinmail-space-5);
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ifinmail-landing-hero__subtitle {
+    font-size: var(--ifinmail-font-size-body-large);
+    color: var(--ifinmail-on-surface-variant);
+    max-width: 580px;
+    margin: 0 auto var(--ifinmail-space-8);
+    line-height: var(--ifinmail-line-height);
+}
+
+.ifinmail-landing-hero__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ifinmail-space-3);
+    margin-bottom: var(--ifinmail-space-16);
+}
+
+/* ── Hero Window Mock ── */
+.ifinmail-landing-hero__visual {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.ifinmail-landing-hero__window {
+    background: var(--ifinmail-surface-container-lowest);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius-xl);
+    overflow: hidden;
+}
+
+.ifinmail-landing-hero__window-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+    background: var(--ifinmail-surface-container);
+    border-bottom: 1px solid var(--ifinmail-outline-variant);
+}
+
+.ifinmail-landing-hero__dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--ifinmail-radius-full);
+}
+
+.ifinmail-landing-hero__dot--red {
+    background: #e74c3c;
+}
+
+.ifinmail-landing-hero__dot--yellow {
+    background: #f1c40f;
+}
+
+.ifinmail-landing-hero__dot--green {
+    background: #2ecc71;
+}
+
+.ifinmail-landing-hero__window-content {
+    display: flex;
+    min-height: 320px;
+}
+
+.ifinmail-landing-hero__mock-sidebar {
+    width: 180px;
+    padding: var(--ifinmail-space-3);
+    border-right: 1px solid var(--ifinmail-outline-variant);
+    background: var(--ifinmail-surface-container);
+    flex-shrink: 0;
+}
+
+.ifinmail-landing-hero__mock-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+    padding: var(--ifinmail-space-2) var(--ifinmail-space-3);
+    border-radius: var(--ifinmail-radius);
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-landing-hero__mock-nav-item--active {
+    background: var(--ifinmail-secondary-fixed-dim);
+    color: var(--ifinmail-color-primary);
+    font-weight: var(--ifinmail-font-weight-medium);
+}
+
+.ifinmail-landing-hero__mock-main {
+    flex: 1;
+    padding: var(--ifinmail-space-5);
+}
+
+.ifinmail-landing-hero__mock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-hero__mock-title {
+    font-size: var(--ifinmail-font-size-h3);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+}
+
+.ifinmail-landing-hero__mock-status {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+    font-size: var(--ifinmail-font-size-caption);
+    color: var(--ifinmail-success);
+}
+
+.ifinmail-landing-hero__mock-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ifinmail-radius-full);
+    background: var(--ifinmail-success);
+}
+
+.ifinmail-landing-hero__mock-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ifinmail-space-4);
+}
+
+.ifinmail-landing-hero__mock-stat {
+    padding: var(--ifinmail-space-5);
+    background: var(--ifinmail-surface-container);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius-lg);
+    text-align: center;
+}
+
+.ifinmail-landing-hero__mock-stat-value {
+    display: block;
+    font-family: var(--ifinmail-font-mono);
+    font-size: var(--ifinmail-font-size-3xl);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-landing-hero__mock-stat-label {
+    font-size: var(--ifinmail-font-size-caption);
+    color: var(--ifinmail-on-surface-variant);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Features Section
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing-features {
+    padding: var(--ifinmail-space-16) var(--ifinmail-space-6);
+    background: var(--ifinmail-surface-container-lowest);
+}
+
+.ifinmail-landing-features__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ifinmail-landing-features__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-feature-card {
+    padding: var(--ifinmail-space-6);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius-lg);
+    background: var(--ifinmail-surface-container-lowest);
+    transition: border-color var(--ifinmail-transition);
+}
+
+.ifinmail-landing-feature-card:hover {
+    border-color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-landing-feature-card__icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ifinmail-secondary-fixed-dim);
+    color: var(--ifinmail-color-primary);
+    border-radius: var(--ifinmail-radius-lg);
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-landing-feature-card__title {
+    font-size: var(--ifinmail-font-size-h3);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-2);
+}
+
+.ifinmail-landing-feature-card__desc {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    line-height: var(--ifinmail-line-height);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Pricing Section
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing-pricing {
+    padding: var(--ifinmail-space-16) var(--ifinmail-space-6);
+    background: var(--ifinmail-surface-container);
+}
+
+.ifinmail-landing-pricing__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ifinmail-landing-pricing__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ifinmail-space-6);
+    align-items: start;
+}
+
+.ifinmail-landing-pricing-card {
+    padding: var(--ifinmail-space-8);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-radius-xl);
+    background: var(--ifinmail-surface-container-lowest);
+    position: relative;
+    transition: border-color var(--ifinmail-transition);
+}
+
+.ifinmail-landing-pricing-card:hover {
+    border-color: var(--ifinmail-outline);
+}
+
+.ifinmail-landing-pricing-card--featured {
+    border-color: var(--ifinmail-color-primary);
+    background: var(--ifinmail-surface-container-lowest);
+}
+
+.ifinmail-landing-pricing-card--featured:hover {
+    border-color: var(--ifinmail-color-primary-hover);
+}
+
+.ifinmail-landing-pricing-card__badge {
+    position: absolute;
+    top: calc(-1 * var(--ifinmail-space-3));
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--ifinmail-space-1) var(--ifinmail-space-3);
+    background: var(--ifinmail-color-primary);
+    color: #fff;
+    font-size: var(--ifinmail-font-size-caption);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    border-radius: var(--ifinmail-radius-full);
+    white-space: nowrap;
+}
+
+.ifinmail-landing-pricing-card__header {
+    margin-bottom: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-pricing-card__name {
+    font-size: var(--ifinmail-font-size-h2);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-landing-pricing-card__desc {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    line-height: var(--ifinmail-line-height);
+}
+
+.ifinmail-landing-pricing-card__price {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ifinmail-space-1);
+    margin-bottom: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-pricing-card__amount {
+    font-family: var(--ifinmail-font-mono);
+    font-size: var(--ifinmail-font-size-4xl);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-on-surface);
+}
+
+.ifinmail-landing-pricing-card--featured .ifinmail-landing-pricing-card__amount {
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-landing-pricing-card__period {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+}
+
+.ifinmail-landing-pricing-card__features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--ifinmail-space-8) 0;
+}
+
+.ifinmail-landing-pricing-card__features li {
+    padding: var(--ifinmail-space-2) 0;
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    border-bottom: 1px solid var(--ifinmail-outline-variant);
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+}
+
+.ifinmail-landing-pricing-card__features li::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    background: var(--ifinmail-success-container);
+    border-radius: var(--ifinmail-radius-full);
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.ifinmail-landing-pricing-card__features li:last-child {
+    border-bottom: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Security Section
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing-security {
+    padding: var(--ifinmail-space-16) var(--ifinmail-space-6);
+    background: var(--ifinmail-surface-container-lowest);
+}
+
+.ifinmail-landing-security__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ifinmail-landing-security__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-security-item {
+    padding: var(--ifinmail-space-6);
+    border-left: 2px solid var(--ifinmail-outline-variant);
+    transition: border-color var(--ifinmail-transition);
+}
+
+.ifinmail-landing-security-item:hover {
+    border-color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-landing-security-item__number {
+    font-family: var(--ifinmail-font-mono);
+    font-size: var(--ifinmail-font-size-caption);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-color-primary);
+    margin-bottom: var(--ifinmail-space-3);
+    letter-spacing: 0.05em;
+}
+
+.ifinmail-landing-security-item__title {
+    font-size: var(--ifinmail-font-size-h3);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-2);
+}
+
+.ifinmail-landing-security-item__desc {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    line-height: var(--ifinmail-line-height);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CTA Section
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing-cta {
+    padding: var(--ifinmail-space-16) var(--ifinmail-space-6);
+    background: var(--ifinmail-color-brand);
+    text-align: center;
+}
+
+.ifinmail-landing-cta__inner {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.ifinmail-landing-cta__title {
+    font-size: var(--ifinmail-font-size-3xl);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: #fff;
+    margin-bottom: var(--ifinmail-space-3);
+}
+
+.ifinmail-landing-cta__subtitle {
+    font-size: var(--ifinmail-font-size-body-large);
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: var(--ifinmail-space-8);
+    line-height: var(--ifinmail-line-height);
+}
+
+.ifinmail-landing-cta .ifinmail-btn--primary {
+    background: #fff;
+    color: var(--ifinmail-color-brand);
+}
+
+.ifinmail-landing-cta .ifinmail-btn--primary:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Footer
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-landing-footer {
+    padding: var(--ifinmail-space-8) var(--ifinmail-space-6);
+    border-top: 1px solid var(--ifinmail-outline-variant);
+    background: var(--ifinmail-surface-container-lowest);
+}
+
+.ifinmail-landing-footer__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ifinmail-landing-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-2);
+}
+
+.ifinmail-landing-footer__logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--ifinmail-color-primary);
+    color: #fff;
+    font-weight: var(--ifinmail-font-weight-bold);
+    font-size: var(--ifinmail-font-size-caption);
+    border-radius: var(--ifinmail-radius-sm);
+}
+
+.ifinmail-landing-footer__name {
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+}
+
+.ifinmail-landing-footer__tagline {
+    font-size: var(--ifinmail-font-size-caption);
+    color: var(--ifinmail-on-surface-variant);
+}
+
+.ifinmail-landing-footer__links {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-6);
+}
+
+.ifinmail-landing-footer__links a {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    text-decoration: none;
+    transition: color var(--ifinmail-transition-fast);
+}
+
+.ifinmail-landing-footer__links a:hover {
+    color: var(--ifinmail-on-surface);
+    text-decoration: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Landing Responsive — Tablet
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    .ifinmail-landing-features__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ifinmail-landing-pricing__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ifinmail-landing-pricing-card:last-child {
+        grid-column: span 2;
+        max-width: 400px;
+        justify-self: center;
+    }
+
+    .ifinmail-landing-security__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Landing Responsive — Mobile
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+    .ifinmail-landing-nav__inner {
+        padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+    }
+
+    .ifinmail-landing-nav__links .ifinmail-landing-nav__link {
+        display: none;
+    }
+
+    .ifinmail-landing-hero {
+        padding: var(--ifinmail-space-10) var(--ifinmail-space-4) var(--ifinmail-space-8);
+    }
+
+    .ifinmail-landing-hero__title {
+        font-size: 1.75rem;
+    }
+
+    .ifinmail-landing-hero__actions {
+        flex-direction: column;
+    }
+
+    .ifinmail-landing-hero__window-content {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .ifinmail-landing-hero__mock-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--ifinmail-outline-variant);
+    }
+
+    .ifinmail-landing-hero__mock-stats {
+        grid-template-columns: 1fr;
+        gap: var(--ifinmail-space-3);
+    }
+
+    .ifinmail-landing-features,
+    .ifinmail-landing-pricing,
+    .ifinmail-landing-security {
+        padding: var(--ifinmail-space-10) var(--ifinmail-space-4);
+    }
+
+    .ifinmail-landing-features__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ifinmail-landing-pricing__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ifinmail-landing-pricing-card:last-child {
+        grid-column: span 1;
+        max-width: none;
+    }
+
+    .ifinmail-landing-security__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ifinmail-landing-cta {
+        padding: var(--ifinmail-space-10) var(--ifinmail-space-4);
+    }
+
+    .ifinmail-landing-footer__inner {
+        flex-direction: column;
+        gap: var(--ifinmail-space-4);
+        text-align: center;
+    }
+
+    .ifinmail-landing-footer__links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--ifinmail-space-4);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Landing Dark Mode
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .ifinmail-landing-nav {
+        background: rgba(17, 24, 39, 0.85);
+    }
+
+    .ifinmail-landing-hero {
+        background: linear-gradient(180deg, rgba(30, 58, 138, 0.2) 0%, var(--ifinmail-surface-container-lowest) 100%);
+    }
+
+    .ifinmail-landing-hero__window-bar {
+        background: var(--ifinmail-surface-container);
+    }
+
+    .ifinmail-landing-hero__dot--red {
+        background: #c0392b;
+    }
+
+    .ifinmail-landing-hero__dot--yellow {
+        background: #d4ac0d;
+    }
+
+    .ifinmail-landing-hero__dot--green {
+        background: #27ae60;
+    }
+
+    .ifinmail-landing-cta .ifinmail-btn--primary:hover {
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    /* ── Login / Password reset pages dark mode ── */
+    .ifinmail-login {
+        background-color: var(--ifinmail-surface-container);
+        background-image:
+            linear-gradient(rgba(59, 130, 246, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
+    }
+
+    .ifinmail-login-card {
+        background: var(--ifinmail-surface-container-high);
+        border-color: var(--ifinmail-outline-variant);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Terms / Privacy Legal Pages
+   ══════════════════════════════════════════════════════════════ */
+.ifinmail-legal {
+    padding: var(--ifinmail-space-12) var(--ifinmail-space-6) var(--ifinmail-space-16);
+    background: var(--ifinmail-surface-container-lowest);
+}
+
+.ifinmail-legal__inner {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.ifinmail-legal__title {
+    font-size: var(--ifinmail-font-size-3xl);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-2);
+}
+
+.ifinmail-legal__date {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    margin-bottom: var(--ifinmail-space-10);
+}
+
+.ifinmail-legal__content h2 {
+    font-size: var(--ifinmail-font-size-h2);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-on-surface);
+    margin-top: var(--ifinmail-space-8);
+    margin-bottom: var(--ifinmail-space-3);
+}
+
+.ifinmail-legal__content p {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    line-height: 1.7;
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-legal__content ul {
+    padding-left: var(--ifinmail-space-6);
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-legal__content li {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    line-height: 1.7;
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-legal__content a {
+    color: var(--ifinmail-color-primary);
+    text-decoration: none;
+}
+
+.ifinmail-legal__content a:hover {
+    text-decoration: underline;
+}
+
+/* ── Registration (graph background, same as login) ── */
+.ifinmail-reg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: var(--ifinmail-surface-container-low);
+    background-image:
+        linear-gradient(var(--ifinmail-outline-variant) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ifinmail-outline-variant) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+    padding: var(--ifinmail-space-4);
+}
+
+.ifinmail-reg-card {
+    width: 100%;
+    max-width: 420px;
+    padding: var(--ifinmail-space-8);
+    background: var(--ifinmail-surface-container-lowest);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-border-radius-lg);
+}
+
+.ifinmail-reg-card__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--ifinmail-space-5);
+}
+
+.ifinmail-reg-card__logo span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--ifinmail-color-primary);
+    color: var(--ifinmail-on-primary);
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: var(--ifinmail-border-radius-md);
+}
+
+.ifinmail-reg-card__title {
+    font-size: var(--ifinmail-font-size-2xl);
+    font-weight: var(--ifinmail-font-weight-bold);
+    color: var(--ifinmail-on-surface);
+    text-align: center;
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-reg-card__subtitle {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    text-align: center;
+    margin-bottom: var(--ifinmail-space-7);
+}
+
+.ifinmail-reg-card__footer-link {
+    text-align: center;
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    margin-top: var(--ifinmail-space-4);
+}
+
+.ifinmail-reg-card__footer-link a {
+    color: var(--ifinmail-color-primary);
+    text-decoration: none;
+}
+
+.ifinmail-reg-card__footer-link a:hover {
+    text-decoration: underline;
+}
+
+/* ── Stepper ── */
+.ifinmail-reg-stepper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--ifinmail-space-7);
+}
+
+.ifinmail-reg-stepper__steps {
+    display: flex;
+    align-items: center;
+}
+
+.ifinmail-reg-stepper__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ifinmail-space-1);
+    min-width: 48px;
+}
+
+.ifinmail-reg-stepper__dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--ifinmail-outline-variant);
+    color: var(--ifinmail-on-surface-variant);
+    transition: background 0.2s, color 0.2s;
+}
+
+.ifinmail-reg-stepper__step--active .ifinmail-reg-stepper__dot {
+    background: var(--ifinmail-color-primary);
+    color: var(--ifinmail-on-primary);
+}
+
+.ifinmail-reg-stepper__step--done .ifinmail-reg-stepper__dot {
+    background: var(--ifinmail-color-primary);
+    color: var(--ifinmail-on-primary);
+}
+
+.ifinmail-reg-stepper__label {
+    font-size: 11px;
+    color: var(--ifinmail-on-surface-variant);
+    white-space: nowrap;
+}
+
+.ifinmail-reg-stepper__step--active .ifinmail-reg-stepper__label {
+    color: var(--ifinmail-on-surface);
+    font-weight: 600;
+}
+
+.ifinmail-reg-stepper__connector {
+    width: 32px;
+    height: 2px;
+    background: var(--ifinmail-outline-variant);
+    margin-bottom: 20px;
+    border-radius: 1px;
+    transition: background 0.2s;
+}
+
+.ifinmail-reg-stepper__connector--done {
+    background: var(--ifinmail-color-primary);
+}
+
+.ifinmail-reg-stepper__counter {
+    font-size: 11px;
+    color: var(--ifinmail-on-surface-variant);
+    margin-top: var(--ifinmail-space-2);
+}
+
+/* ── Registration icon ── */
+.ifinmail-reg-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--ifinmail-space-5);
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-reg-icon--success {
+    color: var(--ifinmail-color-success, #16a34a);
+}
+
+/* ── Password meter ── */
+.ifinmail-reg-pw-meter {
+    margin-top: var(--ifinmail-space-2);
+}
+
+.ifinmail-reg-pw-meter__bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--ifinmail-outline-variant);
+    overflow: hidden;
+    margin-bottom: var(--ifinmail-space-1);
+}
+
+.ifinmail-reg-pw-meter__fill {
+    height: 100%;
+    width: 0;
+    border-radius: 2px;
+    transition: width 0.3s, background 0.3s;
+}
+
+.ifinmail-reg-pw-meter__text {
+    font-size: 11px;
+    color: var(--ifinmail-on-surface-variant);
+}
+
+/* ── Username preview ── */
+.ifinmail-reg-username-preview {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+    background: var(--ifinmail-surface-container-high, #f3f4f6);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-border-radius-md);
+    margin-bottom: var(--ifinmail-space-4);
+    word-break: break-all;
+    text-align: center;
+    font-size: 15px;
+}
+
+.ifinmail-reg-username-preview__part {
+    color: var(--ifinmail-on-surface);
+    font-weight: 600;
+}
+
+.ifinmail-reg-username-preview__at {
+    color: var(--ifinmail-on-surface-variant);
+    margin: 0 1px;
+}
+
+.ifinmail-reg-username-preview__domain {
+    color: var(--ifinmail-on-surface-variant);
+}
+
+.ifinmail-reg-username-input {
+    position: relative;
+}
+
+.ifinmail-reg-username-input input {
+    padding-right: calc(8px + var(--ifinmail-space-4) + 8ch);
+}
+
+.ifinmail-reg-username-input__domain {
+    position: absolute;
+    right: var(--ifinmail-space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-on-surface-variant);
+    pointer-events: none;
+}
+
+.ifinmail-reg-availability {
+    font-size: 12px;
+    margin-top: var(--ifinmail-space-1);
+}
+
+.ifinmail-reg-availability__ok {
+    color: var(--ifinmail-color-success, #16a34a);
+}
+
+.ifinmail-reg-availability__taken {
+    color: var(--ifinmail-color-error, #dc2626);
+}
+
+.ifinmail-reg-availability__checking {
+    color: var(--ifinmail-on-surface-variant);
+}
+
+/* ── Verify screen ── */
+.ifinmail-reg-success {
+    font-size: var(--ifinmail-font-size-body);
+    color: var(--ifinmail-color-success, #16a34a);
+    text-align: center;
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-reg-verify-actions {
+    margin-top: var(--ifinmail-space-4);
+}
+
+/* ── Form fields shared with login ── */
+.ifinmail-reg .ifinmail-form-group {
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-reg .ifinmail-form-group label {
+    display: block;
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-medium);
+    color: var(--ifinmail-on-surface);
+    margin-bottom: var(--ifinmail-space-2);
+}
+
+.ifinmail-reg .ifinmail-form-group input[type="email"],
+.ifinmail-reg .ifinmail-form-group input[type="password"],
+.ifinmail-reg .ifinmail-form-group input[type="text"] {
+    width: 100%;
+    padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+    background: var(--ifinmail-surface-container-high, #f3f4f6);
+    border: 1px solid var(--ifinmail-outline-variant);
+    border-radius: var(--ifinmail-border-radius-md);
+    font-size: var(--ifinmail-font-size-body);
+    font-family: inherit;
+    color: var(--ifinmail-on-surface);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    box-sizing: border-box;
+}
+
+.ifinmail-reg .ifinmail-form-group input:focus {
+    border-color: var(--ifinmail-color-primary);
+    background: var(--ifinmail-surface-container-lowest);
+}
+
+.ifinmail-reg .ifinmail-form-group input.error {
+    border-color: var(--ifinmail-color-error, #dc2626);
+}
+
+.ifinmail-reg .ifinmail-error-msg {
+    font-size: var(--ifinmail-font-size-caption);
+    color: var(--ifinmail-color-error, #dc2626);
+    margin-top: var(--ifinmail-space-1);
+}
+
+/* ── Verify screen resend link ── */
+.ifinmail-reg-card__resend {
+    text-align: center;
+    margin-top: var(--ifinmail-space-4);
+}
+
+.ifinmail-reg-card__resend button {
+    background: none;
+    border: none;
+    color: var(--ifinmail-color-primary);
+    font-size: var(--ifinmail-font-size-body);
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.ifinmail-reg-card__resend button:hover {
+    text-decoration: underline;
+}
+
+/* ── Shared animations ── */
+@keyframes ifinmail-fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ifinmail-bounce {
+    0% { opacity: 0; transform: scale(0.8); }
+    60% { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ifinmail-celebrate {
+    0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+    50% { transform: scale(1.15) rotate(2deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes ifinmail-spin {
+    to { transform: rotate(360deg); }
+}
+
+.ifinmail-fade-in {
+    animation: ifinmail-fade-up 0.35s ease-out;
+}
+
+.ifinmail-bounce-in {
+    animation: ifinmail-bounce 0.4s ease-out;
+}
+
+/* ── Spinner (ghost variant uses darker border) ── */
+.ifinmail-btn--ghost .ifinmail-btn__spinner {
+    border-color: rgba(0,0,0,0.15);
+    border-top-color: var(--ifinmail-on-surface-variant);
+}
+
+/* ── Button disabled / loading ── */
+.ifinmail-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.ifinmail-btn--loading .ifinmail-btn__spinner {
+    display: inline-block;
+}
+
+.ifinmail-btn--loading .ifinmail-btn__text {
+    opacity: 0.7;
+}
+
+.ifinmail-btn__spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: ifinmail-spin 0.6s linear infinite;
+}
+
+/* ── Error banner ── */
+.ifinmail-error-banner {
+    background: var(--ifinmail-error-container, #fef2f2);
+    border: 1px solid var(--ifinmail-color-error, #dc2626);
+    border-radius: var(--ifinmail-border-radius-md);
+    padding: 10px 14px;
+    margin-bottom: var(--ifinmail-space-4);
+    font-size: 14px;
+    color: var(--ifinmail-color-error, #dc2626);
+}
+
+/* ── Inline field hint ── */
+.ifinmail-field-hint {
+    display: block;
+    font-size: 12px;
+    margin-top: 2px;
+    min-height: 16px;
+}
+
+.ifinmail-field-hint--ok {
+    color: var(--ifinmail-color-success, #16a34a);
+}
+
+.ifinmail-field-hint--err {
+    color: var(--ifinmail-color-error, #dc2626);
+}
+
+/* ── Verify tip / success banners ── */
+.ifinmail-verify-tip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ifinmail-on-surface-variant);
+    background: var(--ifinmail-surface-container-high, #f3f4f6);
+    border-radius: var(--ifinmail-border-radius-md);
+    padding: 10px 14px;
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-verify-tip svg {
+    flex-shrink: 0;
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-verify-success {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--ifinmail-color-success, #16a34a);
+    background: var(--ifinmail-success-container, #f0fdf4);
+    border: 1px solid var(--ifinmail-color-success, #16a34a);
+    border-radius: var(--ifinmail-border-radius-md);
+    padding: 10px 14px;
+    margin-bottom: var(--ifinmail-space-4);
+}
+
+.ifinmail-verify-success svg {
+    flex-shrink: 0;
+    color: var(--ifinmail-color-success, #16a34a);
+}
+
+/* ── Spinner inline (username check) ── */
+.ifinmail-spinner-xs {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--ifinmail-outline-variant);
+    border-top: 1.5px solid var(--ifinmail-on-surface-variant);
+    border-radius: 50%;
+    animation: ifinmail-spin 0.6s linear infinite;
+    vertical-align: middle;
 }

@@ -12,10 +12,10 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="StoredFile",
+            name='StoredFile',
             fields=[
                 (
-                    "id",
+                    'id',
                     models.UUIDField(
                         default=uuid.uuid4,
                         editable=False,
@@ -23,53 +23,53 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 (
-                    "file",
+                    'file',
                     models.FileField(
                         upload_to=backend.apps.core.storage.models.stored_file._upload_to
                     ),
                 ),
-                ("original_filename", models.CharField(max_length=255)),
-                ("content_type", models.CharField(max_length=255)),
-                ("size_bytes", models.BigIntegerField()),
+                ('original_filename', models.CharField(max_length=255)),
+                ('content_type', models.CharField(max_length=255)),
+                ('size_bytes', models.BigIntegerField()),
                 (
-                    "entity_type",
+                    'entity_type',
                     models.CharField(
                         choices=[
-                            ("PRODUCT", "PRODUCT"),
-                            ("USER", "USER"),
-                            ("MESSAGE", "MESSAGE"),
-                            ("DOCUMENT", "DOCUMENT"),
+                            ('PRODUCT', 'PRODUCT'),
+                            ('USER', 'USER'),
+                            ('MESSAGE', 'MESSAGE'),
+                            ('DOCUMENT', 'DOCUMENT'),
                         ],
                         max_length=32,
                     ),
                 ),
-                ("entity_id", models.UUIDField(blank=True, null=True)),
+                ('entity_id', models.UUIDField(blank=True, null=True)),
                 (
-                    "visibility",
+                    'visibility',
                     models.CharField(
                         choices=[
-                            ("PRIVATE", "PRIVATE"),
-                            ("INTERNAL", "INTERNAL"),
-                            ("PUBLIC", "PUBLIC"),
+                            ('PRIVATE', 'PRIVATE'),
+                            ('INTERNAL', 'INTERNAL'),
+                            ('PUBLIC', 'PUBLIC'),
                         ],
-                        default="PRIVATE",
+                        default='PRIVATE',
                         max_length=16,
                     ),
                 ),
             ],
             options={
-                "db_table": "ifinmail_stored_file",
-                "ordering": ["-created_at"],
+                'db_table': 'ifinmail_stored_file',
+                'ordering': ['-created_at'],
             },
         ),
         migrations.AddIndex(
-            model_name="storedfile",
+            model_name='storedfile',
             index=models.Index(
-                fields=["entity_type", "entity_id"],
-                name="ifinmail_st_entity_93fa19_idx",
+                fields=['entity_type', 'entity_id'],
+                name='ifinmail_st_entity_93fa19_idx',
             ),
         ),
     ]

@@ -10,10 +10,10 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Device",
+            name='Device',
             fields=[
                 (
-                    "id",
+                    'id',
                     models.UUIDField(
                         default=uuid.uuid4,
                         editable=False,
@@ -21,16 +21,16 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                ("name", models.CharField(max_length=255)),
-                ("device_type", models.CharField(blank=True, default="", max_length=64)),
-                ("identifier", models.CharField(max_length=512, unique=True)),
-                ("is_active", models.BooleanField(default=True)),
-                ("last_seen", models.DateTimeField(blank=True, null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=255)),
+                ('device_type', models.CharField(blank=True, default='', max_length=64)),
+                ('identifier', models.CharField(max_length=512, unique=True)),
+                ('is_active', models.BooleanField(default=True)),
+                ('last_seen', models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                "ordering": ["-last_seen"],
+                'ordering': ['-last_seen'],
             },
         ),
     ]

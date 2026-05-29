@@ -6,9 +6,9 @@ from django.db import models
 class Mailbox(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     domain = models.ForeignKey(
-        "domains.Domain",
+        'domains.Domain',
         on_delete=models.CASCADE,
-        db_column="domain_id",
+        db_column='domain_id',
     )
     local_part = models.CharField(max_length=128)
     quota_bytes = models.BigIntegerField(default=0)
@@ -16,28 +16,28 @@ class Mailbox(models.Model):
 
     class Meta:
         managed = False
-        db_table = "mailboxes"
-        unique_together = [("domain", "local_part")]
+        db_table = 'mailboxes'
+        unique_together = [('domain', 'local_part')]
 
     def __str__(self) -> str:
-        return f"{self.local_part}@{self.domain.name}"
+        return f'{self.local_part}@{self.domain.name}'
 
 
 class Alias(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     domain = models.ForeignKey(
-        "domains.Domain",
+        'domains.Domain',
         on_delete=models.CASCADE,
-        db_column="domain_id",
+        db_column='domain_id',
     )
     source = models.CharField(max_length=128)
     destination = models.CharField(max_length=255)
 
     class Meta:
         managed = False
-        db_table = "aliases"
-        verbose_name_plural = "aliases"
-        ordering = ["domain", "source"]
+        db_table = 'aliases'
+        verbose_name_plural = 'aliases'
+        ordering = ['domain', 'source']
 
     def __str__(self) -> str:
-        return f"{self.source} → {self.destination}"
+        return f'{self.source} → {self.destination}'

@@ -4,15 +4,15 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 
-class MailUserManager(BaseUserManager["MailUser"]):
+class MailUserManager(BaseUserManager['MailUser']):
     def create_user(
         self,
         email: str,
         password: str | None = None,
         **extra_fields: object,
-    ) -> "MailUser":
+    ) -> 'MailUser':
         if not email:
-            raise ValueError("The Email field must be set")
+            raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         if user.id is None:
@@ -26,10 +26,10 @@ class MailUserManager(BaseUserManager["MailUser"]):
         email: str,
         password: str | None = None,
         **extra_fields: object,
-    ) -> "MailUser":
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)
+    ) -> 'MailUser':
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
         return self.create_user(email, password, **extra_fields)
 
 
@@ -44,12 +44,12 @@ class MailUser(AbstractBaseUser):
 
     objects = MailUserManager()
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS: list[str] = []
 
     class Meta:
         managed = False
-        db_table = "users"
+        db_table = 'users'
 
     def __str__(self) -> str:
         return self.email
@@ -68,11 +68,11 @@ class MailUser(AbstractBaseUser):
 
 def _make_dovecot_password_hash(raw_password: str | None) -> str:
     if not raw_password:
-        return ""
+        return ''
     try:
         import crypt
 
         return crypt.crypt(raw_password, crypt.mksalt(crypt.METHOD_SHA512))
     except (AttributeError, ImportError, OSError):
         # Dovecot must reject auth rather than silently accepting an unusable hash.
-        return ""
+        return ''

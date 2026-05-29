@@ -1,13 +1,13 @@
 """Mail service layer."""
+
 import logging
 
-from django.db import transaction
 from django.db.models import QuerySet
 from django.db.utils import OperationalError
 
 from ..models import Alias, Mailbox
 
-logger = logging.getLogger("backend")
+logger = logging.getLogger('backend')
 
 
 class MailService:
@@ -16,20 +16,16 @@ class MailService:
         try:
             return Mailbox.objects.count()
         except OperationalError:
-            logger.exception("Failed to fetch mailbox count")
+            logger.exception('Failed to fetch mailbox count')
             return 0
 
     @staticmethod
     def get_mailboxes_for_domain(domain_name: str) -> QuerySet[Mailbox]:
-        return Mailbox.objects.filter(
-            domain__name=domain_name
-        ).order_by("local_part")
+        return Mailbox.objects.filter(domain__name=domain_name).order_by('local_part')
 
     @staticmethod
     def get_aliases_for_domain(domain_name: str) -> QuerySet[Alias]:
-        return Alias.objects.filter(
-            domain__name=domain_name
-        ).order_by("source")
+        return Alias.objects.filter(domain__name=domain_name).order_by('source')
 
     @staticmethod
     def create_mailbox(domain: object, local_part: str, quota_bytes: int = 0) -> Mailbox:
@@ -42,7 +38,8 @@ class MailService:
     @staticmethod
     def get_or_create_mailbox(domain: object, local_part: str) -> tuple[Mailbox, bool]:
         return Mailbox.objects.get_or_create(
-            domain=domain, local_part=local_part,
+            domain=domain,
+            local_part=local_part,
         )
 
     @staticmethod

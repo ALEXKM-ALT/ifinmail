@@ -1,4 +1,5 @@
 """Mail views for ifinmail — autoconfig endpoints only."""
+
 import os
 from xml.sax.saxutils import escape as xml_escape
 
@@ -9,11 +10,11 @@ from django.views.decorators.http import require_GET
 
 def _get_mail_settings() -> dict[str, str]:
     """Return IMAP/SMTP server settings from environment."""
-    hostname = os.environ.get("MAIL_HOSTNAME", "")
-    domain = os.environ.get("MAIL_DOMAIN", os.environ.get("DOMAIN", ""))
+    hostname = os.environ.get('MAIL_HOSTNAME', '')
+    domain = os.environ.get('MAIL_DOMAIN', os.environ.get('DOMAIN', ''))
     return {
-        "hostname": hostname,
-        "domain": domain,
+        'hostname': hostname,
+        'domain': domain,
     }
 
 
@@ -22,8 +23,8 @@ def _get_mail_settings() -> dict[str, str]:
 def autoconfig_mozilla(request: HttpRequest) -> HttpResponse:
     """Thunderbird / Mozilla autoconfig XML."""
     settings = _get_mail_settings()
-    d = xml_escape(settings["domain"])
-    h = xml_escape(settings["hostname"])
+    d = xml_escape(settings['domain'])
+    h = xml_escape(settings['hostname'])
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <clientConfig version="1.1">
     <emailProvider id="{d}">
@@ -46,7 +47,7 @@ def autoconfig_mozilla(request: HttpRequest) -> HttpResponse:
         </outgoingServer>
     </emailProvider>
 </clientConfig>'''
-    return HttpResponse(xml, content_type="application/xml")
+    return HttpResponse(xml, content_type='application/xml')
 
 
 @require_GET
@@ -54,8 +55,8 @@ def autoconfig_mozilla(request: HttpRequest) -> HttpResponse:
 def autoconfig_outlook(request: HttpRequest) -> HttpResponse:
     """Outlook / Microsoft autodiscover XML."""
     settings = _get_mail_settings()
-    h = xml_escape(settings["hostname"])
-    xml = f'''<?xml version="1.0" encoding="utf-8"?>
+    h = xml_escape(settings['hostname'])
+    xml = f"""<?xml version="1.0" encoding="utf-8"?>
 <Autodiscover xmlns="http://schemas.microsoft.com/exchange/autodiscover/responseschema/2006">
   <Response xmlns="http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a">
     <Account>
@@ -79,5 +80,5 @@ def autoconfig_outlook(request: HttpRequest) -> HttpResponse:
       </Protocol>
     </Account>
   </Response>
-</Autodiscover>'''
-    return HttpResponse(xml, content_type="application/xml")
+</Autodiscover>"""
+    return HttpResponse(xml, content_type='application/xml')

@@ -21,12 +21,12 @@ class AuditEvent(models.Model):
     user = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
     detail = models.TextField(blank=True)
-    severity = models.CharField(max_length=32, default="info")
+    severity = models.CharField(max_length=32, default='info')
 
     class Meta:
         managed = True
-        db_table = "ifinmail_audit_event"
-        ordering = ["-time"]
+        db_table = 'ifinmail_audit_event'
+        ordering = ['-time']
 
     def __str__(self) -> str:
-        return f"{self.action} by {self.user} at {self.time}"
+        return f'{self.action} by {self.user} at {self.time}'

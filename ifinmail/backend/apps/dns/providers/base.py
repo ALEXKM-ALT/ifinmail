@@ -1,14 +1,15 @@
 """Abstract DNS provider interface."""
+
 from dataclasses import dataclass, field
 from typing import Protocol
 
 
 @dataclass
 class DNSRecord:
-    type: str           # A, MX, TXT, CNAME
-    name: str           # @ for root, subdomain name otherwise
-    value: str          # record value
-    priority: int = 0   # MX priority
+    type: str  # A, MX, TXT, CNAME
+    name: str  # @ for root, subdomain name otherwise
+    value: str  # record value
+    priority: int = 0  # MX priority
     ttl: int = 3600
 
 
