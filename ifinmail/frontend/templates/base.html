@@ -1,4 +1,4 @@
-{% load i18n %}{% load static %}
+{% load i18n %}{% load static %}{% load static_versioning %}
 {% get_current_language as LANGUAGE_CODE %}
 {% static 'icons/icon-192.svg' as default_icon_url %}
 <!DOCTYPE html>
@@ -20,12 +20,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap">
     {% endif %}
-    <link rel="stylesheet" href="{% static 'css/ifinmail-variables.css' %}">
-    <link rel="stylesheet" href="{% static 'css/ifinmail-reset.css' %}">
-    <link rel="stylesheet" href="{% static 'css/ifinmail-utilities.css' %}">
-    <link rel="stylesheet" href="{% static 'css/ifinmail-layout.css' %}">
-    <link rel="stylesheet" href="{% static 'css/ifinmail-components.css' %}">
-    <link rel="stylesheet" href="{% static 'css/ifinmail-admin.css' %}">
+    <link rel="stylesheet" href="{% versioned_css 'css/ifinmail-variables.css' %}">
+    <link rel="stylesheet" href="{% versioned_css 'css/ifinmail-reset.css' %}">
+    <link rel="stylesheet" href="{% versioned_css 'css/ifinmail-utilities.css' %}">
+    <link rel="stylesheet" href="{% versioned_css 'css/ifinmail-layout.css' %}">
+    <link rel="stylesheet" href="{% versioned_css 'css/ifinmail-components.css' %}">
+    <link rel="stylesheet" href="{% versioned_css 'css/ifinmail-admin.css' %}">
     {% block head %}{% endblock %}
 
 </head>
@@ -61,7 +61,7 @@
     {% block service_worker %}
     <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+        navigator.serviceWorker.register("{% static 'js/service-worker.js' %}?v={{ CSS_VERSION|urlencode }}");
     }
     </script>
     {% endblock %}

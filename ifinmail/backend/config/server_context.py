@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import os
 
+from django.conf import settings
+
 
 def server_context(request: object) -> dict[str, object]:
     """Context processor — injects server metadata into every template context."""
@@ -16,6 +18,7 @@ def server_context(request: object) -> dict[str, object]:
     server_status = os.environ.get('SERVER_STATUS', 'Online')
     return {
         'server_version': version,
+        'CSS_VERSION': settings.CSS_VERSION,
         'support_email': support_email,
         'docs_url': docs_url,
         'server_status': server_status,

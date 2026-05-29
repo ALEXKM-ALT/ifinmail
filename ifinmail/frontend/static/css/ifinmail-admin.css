@@ -967,6 +967,203 @@
     }
 }
 
+/* Auth compactness and consistency pass */
+.ifinmail-login,
+.ifinmail-reg {
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: auto !important;
+    flex-direction: column !important;
+    gap: var(--ifinmail-space-3) !important;
+    padding: var(--ifinmail-space-5) !important;
+    background-color: var(--ifinmail-color-surface-1) !important;
+    background-image:
+        linear-gradient(var(--ifinmail-color-border-light) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ifinmail-color-border-light) 1px, transparent 1px) !important;
+    background-size: 32px 32px !important;
+}
+
+.ifinmail-login-card,
+.ifinmail-reg-card {
+    width: calc(100vw - var(--ifinmail-space-10)) !important;
+    max-width: 372px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: var(--ifinmail-space-6) !important;
+    background: #ffffff !important;
+    border: 1px solid var(--ifinmail-color-border) !important;
+    border-radius: var(--ifinmail-radius-lg) !important;
+    box-shadow: none !important;
+    transition:
+        border-color var(--ifinmail-transition-fast),
+        background-color var(--ifinmail-transition-fast) !important;
+}
+
+.ifinmail-reg-card {
+    width: calc(100vw - var(--ifinmail-space-10)) !important;
+    max-width: 404px !important;
+}
+
+.ifinmail-login-card:hover,
+.ifinmail-reg-card:hover {
+    border-color: var(--ifinmail-border-strong) !important;
+}
+
+.ifinmail-login-card__brand,
+.ifinmail-reg-card__logo {
+    margin-bottom: var(--ifinmail-space-4) !important;
+}
+
+.ifinmail-login-card__title,
+.ifinmail-reg-card__title {
+    font-size: var(--ifinmail-font-size-h1) !important;
+    line-height: var(--ifinmail-line-height-tight) !important;
+    letter-spacing: 0 !important;
+    margin: 0 0 var(--ifinmail-space-1) !important;
+}
+
+.ifinmail-login-card__subtitle,
+.ifinmail-reg-card__subtitle {
+    font-size: var(--ifinmail-font-size-body-small) !important;
+    line-height: var(--ifinmail-line-height) !important;
+    margin: 0 0 var(--ifinmail-space-5) !important;
+}
+
+.ifinmail-login-form__group {
+    margin-bottom: var(--ifinmail-space-3) !important;
+}
+
+.ifinmail-login-form__label-row {
+    margin-bottom: var(--ifinmail-space-1) !important;
+}
+
+.ifinmail-login-form__label,
+.ifinmail-login-form__checkbox-label,
+.ifinmail-login-form__forgot,
+.ifinmail-reg-card__footer-link,
+.ifinmail-login-card__register {
+    font-size: var(--ifinmail-font-size-body-small) !important;
+}
+
+.ifinmail-login-form__input {
+    height: 40px !important;
+    padding: 0 var(--ifinmail-space-3) !important;
+    border-radius: var(--ifinmail-radius-md) !important;
+    transition:
+        background-color var(--ifinmail-transition-fast),
+        border-color var(--ifinmail-transition-fast),
+        box-shadow var(--ifinmail-transition-fast) !important;
+}
+
+.ifinmail-login-form__input:hover {
+    border-color: var(--ifinmail-border-strong) !important;
+}
+
+.ifinmail-login-form__input:focus,
+.ifinmail-login-form__input:focus-visible,
+.ifinmail-reg .ifinmail-form-group input:focus,
+.ifinmail-reg .ifinmail-login-form__input:focus {
+    outline: none !important;
+    border-color: var(--ifinmail-color-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--ifinmail-color-primary-rgb), 0.12) !important;
+}
+
+.ifinmail-login-form__checkbox-row {
+    margin-bottom: var(--ifinmail-space-4) !important;
+}
+
+.ifinmail-login-form__submit {
+    height: 40px !important;
+    margin-top: var(--ifinmail-space-2) !important;
+}
+
+.ifinmail-login-card__terms {
+    margin-top: var(--ifinmail-space-4) !important;
+    line-height: var(--ifinmail-line-height) !important;
+}
+
+.ifinmail-login-card__register,
+.ifinmail-reg-card__footer-link {
+    width: calc(100vw - var(--ifinmail-space-10)) !important;
+    max-width: 372px !important;
+    margin: 0 !important;
+}
+
+.ifinmail-reg-card__footer-link {
+    width: calc(100vw - var(--ifinmail-space-10)) !important;
+    max-width: 404px !important;
+}
+
+.ifinmail-reg-stepper {
+    margin-bottom: var(--ifinmail-space-5) !important;
+}
+
+.ifinmail-reg-stepper__step {
+    min-width: 42px !important;
+}
+
+.ifinmail-reg-stepper__dot {
+    width: 22px !important;
+    height: 22px !important;
+}
+
+.ifinmail-reg-stepper__connector {
+    width: 24px !important;
+    margin-bottom: 18px !important;
+}
+
+.ifinmail-pw-reset-icon,
+.ifinmail-reg-icon {
+    margin-bottom: var(--ifinmail-space-4) !important;
+}
+
+.ifinmail-pw-reset-icon svg,
+.ifinmail-reg-icon svg {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.ifinmail-error-banner,
+.ifinmail-login-error,
+.ifinmail-verify-tip,
+.ifinmail-verify-success,
+.ifinmail-verify-fallback {
+    border-radius: var(--ifinmail-radius-md) !important;
+    padding: var(--ifinmail-space-3) !important;
+    margin-bottom: var(--ifinmail-space-3) !important;
+}
+
+.ifinmail-reg-username-preview {
+    padding: var(--ifinmail-space-2) var(--ifinmail-space-3) !important;
+    margin-bottom: var(--ifinmail-space-3) !important;
+}
+
+@media (max-width: 850px) {
+    .ifinmail-login,
+    .ifinmail-reg {
+        padding: var(--ifinmail-space-4) !important;
+        background-color: var(--ifinmail-color-surface-1) !important;
+    }
+
+    .ifinmail-login-card,
+    .ifinmail-reg-card {
+        width: calc(100vw - var(--ifinmail-space-8)) !important;
+        max-width: 390px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        border: 1px solid var(--ifinmail-color-border) !important;
+        border-radius: var(--ifinmail-radius-lg) !important;
+        padding: var(--ifinmail-space-5) !important;
+    }
+
+    .ifinmail-reg-stepper {
+        margin-bottom: var(--ifinmail-space-4) !important;
+    }
+}
 
 
 

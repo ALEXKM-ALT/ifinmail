@@ -3,14 +3,19 @@
  * Caches: CSS, JS, and static shell assets only.
  * Does NOT cache: authenticated API responses, POST requests, auth tokens, sensitive data.
  */
-const CACHE_NAME = 'ifinmail-v0.3.0';
-const STATIC_ASSETS = [
+const CSS_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
+const CACHE_NAME = `ifinmail-css-${CSS_VERSION}`;
+const CSS_ASSETS = [
     '/static/css/ifinmail-variables.css',
     '/static/css/ifinmail-reset.css',
     '/static/css/ifinmail-utilities.css',
     '/static/css/ifinmail-layout.css',
     '/static/css/ifinmail-components.css',
+    '/static/css/ifinmail-admin.css',
 ];
+const STATIC_ASSETS = CSS_ASSETS.map(
+    (path) => `${path}?v=${encodeURIComponent(CSS_VERSION)}`
+);
 
 self.addEventListener('install', (event) => {
     event.waitUntil(

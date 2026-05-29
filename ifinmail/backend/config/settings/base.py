@@ -123,6 +123,7 @@ LOCALE_PATHS = [BASE_DIR / 'frontend' / 'locale']
 STATIC_URL = os.environ.get('STATIC_URL', '/static/')
 STATICFILES_DIRS = [BASE_DIR / 'frontend' / 'static']
 STATIC_ROOT = Path(os.environ.get('STATIC_ROOT', BASE_DIR / 'staticfiles'))
+CSS_VERSION = os.environ.get('CSS_VERSION') or os.environ.get('APP_VERSION', 'dev')
 
 MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
