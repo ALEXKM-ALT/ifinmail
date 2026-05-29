@@ -704,7 +704,7 @@
 }
 
 /* On mobile viewports, let the auth cards take full screen with no borders */
-@media (max-width: 600px) {
+@media (max-width: 850px) {
     .ifinmail-login {
         padding: 0 !important;
         background-color: #ffffff !important;
@@ -905,7 +905,7 @@
     border-color: var(--ifinmail-color-primary) !important;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 850px) {
     .ifinmail-reg {
         padding: 0 !important;
         background-color: #ffffff !important;
