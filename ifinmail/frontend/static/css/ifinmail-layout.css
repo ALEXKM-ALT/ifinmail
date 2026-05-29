@@ -66,15 +66,16 @@ html {
 /* Brand header area */
 .ifinmail-admin-brand {
     flex-shrink: 0;
-    border-bottom: 1px solid var(--ifinmail-color-border);
+    /* No bottom border — nav list starts immediately below */
 }
 
 .ifinmail-admin-brand-top {
     display: flex;
     align-items: center;
     gap: var(--ifinmail-space-3);
-    padding: var(--ifinmail-space-3_5) var(--ifinmail-space-4);
-    min-height: 64px; /* Proportional sidebar header height */
+    padding: 10px var(--ifinmail-space-4);
+    min-height: 52px; /* Matches main header height — tight and proportional */
+    border-bottom: 1px solid var(--ifinmail-color-border-light);
 }
 
 .ifinmail-admin-brand-mark {
@@ -133,7 +134,7 @@ html {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: var(--ifinmail-space-1) var(--ifinmail-space-2) var(--ifinmail-space-4);
+    padding: 4px var(--ifinmail-space-2) var(--ifinmail-space-4);
     display: flex;
     flex-direction: column;
     gap: 3px;
