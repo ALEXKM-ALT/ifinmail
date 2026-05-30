@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}System Logs — {{ name }}{% endblocktrans %}{% endblock %}
 {% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
@@ -16,14 +16,14 @@
                         <p class="ifinmail-page-subtitle">{% trans 'Real-time infrastructure and application telemetry' %}</p>
                     </div>
                     <div class="ifinmail-page-actions ifinmail-logs-actions">
-                        <select id="log-level-filter" class="ifinmail-input ifinmail-input--compact" onchange="filterByLevel(this.value)">
+                        <select id="log-level-filter" class="ifinmail-input ifinmail-input--compact" data-action="filter-level">
                             <option value="">{% trans 'Filter Level' %}</option>
                             <option value="ERROR"{% if current_level == 'ERROR' %} selected{% endif %}>ERROR</option>
                             <option value="WARNING"{% if current_level == 'WARNING' %} selected{% endif %}>WARNING</option>
                             <option value="INFO"{% if current_level == 'INFO' %} selected{% endif %}>INFO</option>
                         </select>
                         <a class="ifinmail-btn ifinmail-btn--sm ifinmail-btn--outline" href="{% url 'accounts:logs_export' %}{% if current_level %}?level={{ current_level }}{% endif %}">{% trans 'Export' %}</a>
-                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" id="live-toggle" onclick="toggleLiveView()">{% trans 'Live View' %}</button>
+                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" id="live-toggle" data-action="live-logs" data-url="{% url 'accounts:logs_live' %}">{% trans 'Live View' %}</button>
                     </div>
                 </div>
                 {% include "includes/admin_table.html" with span=None title=None headers=log_headers|default:'' rows=log_rows|default:'' row_template="admin/partials/log_row.html" empty_message=log_empty_message extra_class="ifinmail-logs-table" %}
@@ -52,41 +52,8 @@
     </div>
 </section>
 
-<script>
-var liveInterval = null;
+{% endblock %}
 
-function filterByLevel(level) {
-    var url = new URL(window.location.href);
-    if (level) {
-        url.searchParams.set('level', level);
-    } else {
-        url.searchParams.delete('level');
-    }
-    url.searchParams.delete('page');
-    window.location.href = url.toString();
-}
-
-function toggleLiveView() {
-    var btn = document.getElementById('live-toggle');
-    if (liveInterval) {
-        clearInterval(liveInterval);
-        liveInterval = null;
-        btn.textContent = '{% trans "Live View" %}';
-        btn.classList.remove('ifinmail-btn--primary');
-        return;
-    }
-    btn.textContent = '{% trans "Pause" %}';
-    btn.classList.add('ifinmail-btn--primary');
-    liveInterval = setInterval(function() {
-        var level = document.getElementById('log-level-filter').value;
-        var url = '{% url "accounts:logs_live" %}' + (level ? '?level=' + level : '');
-        fetch(url)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (!liveInterval) return; // cancelled
-                console.log('Live log update:', (data.rows || []).length, 'entries');
-            });
-    }, 5000);
-}
-</script>
+{% block scripts %}
+<script src="{% static 'js/ifinmail-logs.js' %}"></script>
 {% endblock %}

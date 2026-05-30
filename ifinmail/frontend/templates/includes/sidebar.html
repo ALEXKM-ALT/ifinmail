@@ -12,7 +12,7 @@
             </a>
             <div>
                 <span class="ifinmail-admin-brand-name">{{ brand.name }}</span>
-                <span class="ifinmail-admin-brand-tagline">{% trans 'Mail Admin' %}</span>
+                <span class="ifinmail-admin-brand-tagline">{{ brand.tagline|default:_('Mail Admin') }}</span>
             </div>
         </div>
     </div>
@@ -87,108 +87,48 @@
             </button>
         </div>
         <div class="ifinmail-modal-body">
-            <div style="display:flex;flex-direction:column;gap:12px;">
-                <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--ifinmail-color-border-light);padding-bottom:8px;">
+            <div class="ifinmail-modal-info-list">
+                <div class="ifinmail-modal-info-item">
                     <strong>{% trans 'Product Suite' %}</strong>
                     <span>{{ brand.name }} &mdash; {{ brand.tagline }}</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--ifinmail-color-border-light);padding-bottom:8px;">
+                <div class="ifinmail-modal-info-item">
                     <strong>{% trans 'Deployment Host' %}</strong>
-                    <span style="font-family:var(--ifinmail-font-mono);font-size:11px;">localhost:8009</span>
+                    <span class="ifinmail-code ifinmail-text--mono">localhost:8009</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--ifinmail-color-border-light);padding-bottom:8px;">
+                <div class="ifinmail-modal-info-item">
                     <strong>{% trans 'Framework Version' %}</strong>
                     <span>Django 5.1.15</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--ifinmail-color-border-light);padding-bottom:8px;">
+                <div class="ifinmail-modal-info-item">
                     <strong>{% trans 'Environment' %}</strong>
-                    <span class="ifinmail-badge" style="font-size:10px;padding:2px 6px;background:var(--ifinmail-color-primary-tint);color:var(--ifinmail-color-primary);">development</span>
+                    <span class="ifinmail-badge ifinmail-badge--info">development</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--ifinmail-color-border-light);padding-bottom:8px;">
+                <div class="ifinmail-modal-info-item">
                     <strong>{% trans 'Database Status' %}</strong>
-                    <span style="color:var(--ifinmail-success);display:flex;align-items:center;gap:4px;">
-                        <span style="width:6px;height:6px;background:var(--ifinmail-success);border-radius:50%;display:inline-block;"></span>
+                    <span class="ifinmail-db-status">
+                        <span class="ifinmail-status-dot ifinmail-status-dot--success"></span>
                         {% trans 'Connected' %}
                     </span>
                 </div>
             </div>
-            <div style="margin-top:20px;background:var(--ifinmail-color-surface-2);border-radius:var(--ifinmail-radius-md);padding:12px;font-size:12px;">
-                <strong style="display:block;margin-bottom:6px;color:var(--ifinmail-color-text-primary);">⌨ {% trans 'Quick Keyboard Shortcuts' %}</strong>
-                <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;color:var(--ifinmail-color-text-secondary);">
-                    <li><code style="font-family:var(--ifinmail-font-mono);background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:3px;font-weight:bold;">G + D</code> &mdash; {% trans 'Go to Dashboard' %}</li>
-                    <li><code style="font-family:var(--ifinmail-font-mono);background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:3px;font-weight:bold;">G + L</code> &mdash; {% trans 'Go to Logs list' %}</li>
-                    <li><code style="font-family:var(--ifinmail-font-mono);background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:3px;font-weight:bold;">G + B</code> &mdash; {% trans 'Go to Branding Settings' %}</li>
+            <div class="ifinmail-shortcut-box">
+                <strong class="ifinmail-shortcut-heading">⌨ {% trans 'Quick Keyboard Shortcuts' %}</strong>
+                <ul class="ifinmail-shortcut-list">
+                    <li><code class="ifinmail-kbd">G + D</code> &mdash; {% trans 'Go to Dashboard' %}</li>
+                    <li><code class="ifinmail-kbd">G + L</code> &mdash; {% trans 'Go to Logs list' %}</li>
+                    <li><code class="ifinmail-kbd">G + B</code> &mdash; {% trans 'Go to Branding Settings' %}</li>
                 </ul>
             </div>
         </div>
         <div class="ifinmail-modal-footer">
-            <button class="ifinmail-btn" id="system-info-modal-action-btn" type="button" style="background:var(--ifinmail-color-surface-2);border:1px solid var(--ifinmail-color-border);padding:8px 16px;border-radius:4px;cursor:pointer;">{% trans 'Close' %}</button>
+            <button class="ifinmail-btn ifinmail-btn--ghost" id="system-info-modal-action-btn" type="button">{% trans 'Close' %}</button>
         </div>
     </div>
 </div>
 
-<script>
-(function() {
-    var trigger = document.getElementById('sidebar-more-trigger');
-    var overlay = document.getElementById('system-info-modal');
-    var closeBtn = document.getElementById('system-info-modal-close');
-    var actionBtn = document.getElementById('system-info-modal-action-btn');
-    
-    if (!trigger || !overlay) return;
-    
-    function openModal() {
-        overlay.classList.add('ifinmail-modal-overlay--active');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeModal() {
-        overlay.classList.remove('ifinmail-modal-overlay--active');
-        document.body.style.overflow = '';
-    }
-    
-    trigger.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (actionBtn) actionBtn.addEventListener('click', closeModal);
-    
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) {
-            closeModal();
-        }
-    });
+{# Shortcut URL targets for ifinmail-shortcuts.js #}
+<span id="shortcut-url-dashboard" data-path="{% url 'accounts:dashboard' %}" hidden></span>
+<span id="shortcut-url-logs" data-path="{% url 'accounts:logs' %}" hidden></span>
+<span id="shortcut-url-branding" data-path="{% url 'accounts:branding_identity' %}" hidden></span>
 
-    // Add dynamic shortcut listeners for premium user experience
-    document.addEventListener('keydown', function(e) {
-        // Only trigger if not typing in inputs/textareas
-        var activeTag = document.activeElement.tagName.toLowerCase();
-        if (activeTag === 'input' || activeTag === 'textarea' || document.activeElement.isContentEditable) {
-            return;
-        }
-
-        // Handle Escape to close modal
-        if (e.key === 'Escape' && overlay.classList.contains('ifinmail-modal-overlay--active')) {
-            closeModal();
-            return;
-        }
-
-        // Quick multi-key shortcut tracking
-        if (!window._shortcutKeys) window._shortcutKeys = {};
-        window._shortcutKeys[e.key.toLowerCase()] = true;
-
-        if (window._shortcutKeys['g']) {
-            if (e.key.toLowerCase() === 'd') {
-                window.location.href = "{% url 'accounts:dashboard' %}";
-            } else if (e.key.toLowerCase() === 'l') {
-                window.location.href = "{% url 'accounts:logs' %}";
-            } else if (e.key.toLowerCase() === 'b') {
-                window.location.href = "{% url 'accounts:branding_identity' %}";
-            }
-        }
-    });
-
-    document.addEventListener('keyup', function(e) {
-        if (window._shortcutKeys) {
-            window._shortcutKeys[e.key.toLowerCase()] = false;
-        }
-    });
-})();
-</script>

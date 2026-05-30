@@ -1,10 +1,10 @@
-{% extends "base.html" %}
-{% load i18n %}
+{% extends "setup/base.html" %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}DNS Auto-Configuration — {{ name }}{% endblocktrans %}{% endblock %}
 
 {% block content %}
-<div class="ifinmail-setup-wizard">
+<div class="ifinmail-setup-wizard" data-setup-dns data-domain="{{ domain|escapejs }}" data-provider="{{ dns_provider|escapejs }}" data-configure-url="{% url 'dns:configure' %}">
   <div class="ifinmail-setup-progress">
     <div class="ifinmail-setup-step ifinmail-setup-step--done">{% trans '1. Domain' %}</div>
     <div class="ifinmail-setup-step ifinmail-setup-step--active">{% trans '2. DNS' %}</div>
@@ -55,51 +55,8 @@
   </div>
 </div>
 
-{% block dns_auto_scripts %}
-<script>
-(function() {
-  var domain = "{{ domain|escapejs }}";
-  var provider = "{{ dns_provider|escapejs }}";
-  if (!domain || !provider) return;
-
-  var checks = ["a", "mx", "spf", "dkim", "dmarc"];
-  var dnsLabels = {
-    a: "{% trans 'A record configured' %}",
-    mx: "{% trans 'MX record configured' %}",
-    spf: "{% trans 'SPF record configured' %}",
-    dkim: "{% trans 'DKIM record configured' %}",
-    dmarc: "{% trans 'DMARC record configured' %}",
-  };
-  var formData = new FormData();
-  formData.append("domain", domain);
-  formData.append("provider", provider);
-
-  fetch('{% url "dns:configure" %}', {
-    method: 'POST',
-    headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
-    body: formData
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var resultEl = document.getElementById('dns-result-message');
-    if (data.success) {
-      checks.forEach(function(c) {
-        var el = document.getElementById('check-' + c);
-        if (el) {
-          el.className = 'ifinmail-dns-check ifinmail-dns-check--pass';
-          el.querySelector('.ifinmail-dns-check-detail').textContent = dnsLabels[c];
-        }
-      });
-      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--ok"><p>{% trans 'All DNS records configured successfully. Propagation may take a few minutes.' %}</p></div>';
-    } else {
-      resultEl.innerHTML = '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>{% trans 'Configuration failed:' %} ' + (data.message || '{% trans 'Unknown error' %}') + '</p></div>';
-    }
-  })
-  .catch(function(err) {
-    document.getElementById('dns-result-message').innerHTML =
-      '<div class="ifinmail-dns-result ifinmail-dns-result--err"><p>{% trans 'Configuration failed. Please try again or configure manually.' %}</p></div>';
-  });
-})();
-</script>
 {% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/ifinmail-setup.js' %}"></script>
 {% endblock %}

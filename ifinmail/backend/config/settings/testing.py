@@ -1,6 +1,13 @@
 # ruff: noqa: F403,F405
 """Testing settings — in-memory SQLite, no Redis, no real external deps."""
 
+import os
+
+os.environ.setdefault('DJANGO_SECRET_KEY', 'test-key-not-used-in-production')
+os.environ.setdefault('DB_NAME', 'test_ifinmail')
+os.environ.setdefault('DB_USER', 'test_ifinmail')
+os.environ.setdefault('DB_PASSWORD', 'test_ifinmail')
+
 from .base import *
 
 DEBUG = False

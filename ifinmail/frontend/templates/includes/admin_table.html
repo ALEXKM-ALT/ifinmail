@@ -22,8 +22,8 @@
                     <div class="ifinmail-empty-state">
                         <svg class="ifinmail-empty-state-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>
                         <p>{{ empty_message }}</p>
-                        {% if empty_action_label and empty_action_onclick %}
-                        <button class="ifinmail-link-button" type="button" onclick="{{ empty_action_onclick }}">{{ empty_action_label }}</button>
+                        {% if empty_action_label and empty_action_data_action %}
+                        <button class="ifinmail-link-button" type="button" data-action="{{ empty_action_data_action }}">{{ empty_action_label }}</button>
                         {% elif empty_action_label and empty_action_url %}
                         <a class="ifinmail-link-strong" href="{{ empty_action_url }}">{{ empty_action_label }}</a>
                         {% endif %}

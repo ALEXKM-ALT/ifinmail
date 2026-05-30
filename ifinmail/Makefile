@@ -69,6 +69,7 @@ deploy:
 	fi
 	python manage.py check --deploy
 	python manage.py collectstatic --noinput --clear
+	python manage.py compilemessages
 	python manage.py migrate
 
 clean:

@@ -57,6 +57,9 @@
     {% block sidebar_script %}
     <script src="{% static 'js/ifinmail-sidebar.js' %}"></script>
     {% endblock %}
+    <script src="{% static 'js/ifinmail-csrf.js' %}"></script>
+    <script src="{% static 'js/ifinmail-header.js' %}"></script>
+    <script src="{% static 'js/ifinmail-shortcuts.js' %}"></script>
     {% block scripts %}{% endblock %}
     {% block service_worker %}
     <script>

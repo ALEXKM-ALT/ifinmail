@@ -92,38 +92,8 @@
 }
 </style>
 
-<script>
-(function() {
-  var email = document.getElementById('email');
-  var hint = document.getElementById('email-hint');
-  var submitBtn = document.getElementById('submit-btn');
-  var form = submitBtn.closest('form');
+{% endblock %}
 
-  email.addEventListener('input', function() {
-    var val = email.value.trim();
-    if (!val) {
-      hint.textContent = '';
-      hint.className = 'ifinmail-field-hint';
-      return;
-    }
-    if (val.length > 254) {
-      hint.textContent = '{% trans "Email address is too long" %}';
-      hint.className = 'ifinmail-field-hint ifinmail-field-hint--err';
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-      hint.textContent = '{% trans "Enter a valid email address" %}';
-      hint.className = 'ifinmail-field-hint ifinmail-field-hint--err';
-      return;
-    }
-    hint.textContent = '{% trans "Valid email format" %}';
-    hint.className = 'ifinmail-field-hint ifinmail-field-hint--ok';
-  });
-
-  form.addEventListener('submit', function() {
-    submitBtn.disabled = true;
-    submitBtn.classList.add('ifinmail-btn--loading');
-  });
-})();
-</script>
+{% block scripts %}
+<script src="{% static 'js/ifinmail-registration.js' %}"></script>
 {% endblock %}

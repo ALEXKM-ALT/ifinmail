@@ -54,6 +54,29 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
     'SECURE_CROSS_ORIGIN_OPENER_POLICY', 'same-origin-allow-popups'
 )
 
+# Content Security Policy
+# Tightened incrementally as inline scripts/styles are extracted.
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = (
+    "'self'",
+    "'unsafe-inline'",  # Required while inline scripts are being extracted
+)
+CSP_STYLE_SRC = (
+    "'self'",
+    "'unsafe-inline'",  # Required for brand overrides (BrandingConfig.css_overrides)
+    "https://fonts.googleapis.com",
+)
+CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com")
+CSP_IMG_SRC = ("'self'", "data:", "blob:")
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_FORM_ACTION = ("'self'",)
+CSP_BASE_URI = ("'self'",)
+CSP_MANIFEST_SRC = ("'self'",)
+CSP_REPORT_ONLY = os.environ.get('CSP_REPORT_ONLY', 'True').lower() == 'true'
+CSP_REPORT_URI = os.environ.get('CSP_REPORT_URI', '/csp-report/')
+CSP_REPORT_PERCENTAGE = float(os.environ.get('CSP_REPORT_PERCENTAGE', '0.1'))
+
 # Sentry
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
 if SENTRY_DSN:

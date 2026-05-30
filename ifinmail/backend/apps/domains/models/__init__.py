@@ -6,6 +6,10 @@ from django.db import models
 class Domain(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+    )
     verified = models.BooleanField(default=False)
     mx_verified = models.BooleanField(default=False)
     spf_verified = models.BooleanField(default=False)

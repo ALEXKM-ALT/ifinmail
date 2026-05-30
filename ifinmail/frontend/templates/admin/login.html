@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Sign In — {{ name }}{% endblocktrans %}{% endblock %}
 
@@ -141,16 +141,8 @@
 }
 </style>
 
-<script>
-(function() {
-  var btn = document.getElementById('submit-btn');
-  var form = btn && btn.closest('form');
-  if (form) {
-    form.addEventListener('submit', function() {
-      btn.disabled = true;
-      btn.classList.add('ifinmail-btn--loading');
-    });
-  }
-})();
-</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/ifinmail-login.js' %}"></script>
 {% endblock %}

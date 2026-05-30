@@ -24,6 +24,7 @@
     --ifinmail-color-border-light: #E5E7EB;
     --ifinmail-color-surface-2: #F3F4F6;
     --ifinmail-color-surface-1: #F9FAFB;
+    --ifinmail-bg-grid-color: rgba(15, 43, 91, 0.03);
 
     --ifinmail-color-danger: #DC2626;
     --ifinmail-color-danger-tint: #FEE2E2;
@@ -127,7 +128,7 @@
     --ifinmail-font-size-body-small: 0.75rem;  /* 12px */
     --ifinmail-font-size-label: 0.75rem;       /* 12px */
     --ifinmail-font-size-caption: 0.6875rem;   /* 11px */
-    --ifinmail-font-size-overline: 0.625rem;   /* 10px */
+    --ifinmail-font-size-overline: 0.6875rem;   /* 11px — Overline per §4 */
     --ifinmail-font-size-code: 0.8125rem;      /* 13px */
 
     /* Utility aliases */
@@ -169,7 +170,7 @@
     --ifinmail-margin-mobile: 16px;
     --ifinmail-stack-gap: 12px;
     --ifinmail-section-gap: 20px;
-    --ifinmail-header-height: 52px;
+    --ifinmail-header-height: 64px;
     --ifinmail-footer-height: 32px;
 
     /* Sidebar nav */

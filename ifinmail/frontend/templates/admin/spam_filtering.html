@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Spam Filtering — {{ name }}{% endblocktrans %}{% endblock %}
 {% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
@@ -25,27 +25,27 @@
             </article>
             <article class="ifinmail-panel ifinmail-span-6">
                 <span class="ifinmail-overline">{% trans 'Filtering Activity (24h)' %}</span>
-                <div class="ifinmail-chart-bars" style="height:160px">
+                <div class="ifinmail-chart-bars">
                     {% for h in filter_activity_bars %}<span style="height:{{ h }}%"></span>{% empty %}<span style="height:0%"></span>{% endfor %}
                 </div>
             </article>
 
             <article class="ifinmail-panel ifinmail-span-8">
                 <h2 class="ifinmail-panel-title">{% trans 'Global Sensitivity Control' %}</h2>
-                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:16px">
-                    <span>{% trans 'Heuristic Aggression Level' %}</span><strong id="sensitivity-label" style="font-size:1.25rem;color:var(--ifinmail-color-primary)">{{ heuristic_level|default:'5.0' }}</strong>
+                <div class="ifinmail-action-row ifinmail-sensitivity-header">
+                    <span>{% trans 'Heuristic Aggression Level' %}</span><strong id="sensitivity-label" class="ifinmail-sensitivity-value">{{ heuristic_level|default:'5.0' }}</strong>
                 </div>
-                <input type="range" id="sensitivity-slider" min="1" max="10" step="0.5" value="{{ heuristic_level|default:'5.0' }}" onchange="setSensitivity(this.value)" oninput="document.getElementById('sensitivity-label').textContent = parseFloat(this.value).toFixed(1)" style="width:100%;margin-top:24px">
-                <div class="ifinmail-action-row" style="justify-content:space-between;margin-top:12px">
+                <input type="range" id="sensitivity-slider" min="1" max="10" step="0.5" value="{{ heuristic_level|default:'5.0' }}" data-action="set-sensitivity" data-url="{% url 'accounts:spam_sensitivity' %}" class="ifinmail-sensitivity-slider">
+                <div class="ifinmail-action-row ifinmail-sensitivity-labels">
                     <span>{% trans 'Permissive' %}</span><span>{% trans 'Standard' %}</span><span>{% trans 'Strict' %}</span><span>{% trans 'Zero-Tolerance' %}</span>
                 </div>
                 <div class="ifinmail-quote">{% trans 'Higher values increase the likelihood of catching sophisticated spam but may elevate false positive risks for encrypted attachments.' %}</div>
             </article>
             <aside class="ifinmail-panel ifinmail-span-4">
                 <h2 class="ifinmail-panel-title">{% trans 'Engines' %}</h2>
-                <div style="margin-top:14px">
+                <div class="ifinmail-engine-list">
                     {% for engine in filter_engines %}
-                    <div class="ifinmail-engine-row"{% if not engine.enabled %} style="opacity:.55"{% endif %}><span><strong>{{ engine.name|default:'' }}</strong><br><small>{{ engine.detail|default:'' }}</small></span>{% if engine.enabled %}<span class="ifinmail-switch ifinmail-switch--on"></span>{% else %}<span>▣</span>{% endif %}</div>
+                    <div class="ifinmail-engine-row{% if not engine.enabled %} ifinmail-engine-row--disabled{% endif %}"><span><strong>{{ engine.name|default:'' }}</strong><br><small>{{ engine.detail|default:'' }}</small></span>{% if engine.enabled %}<span class="ifinmail-switch ifinmail-switch--on"></span>{% else %}<span>▣</span>{% endif %}</div>
                     {% empty %}
                     <p class="ifinmail-text--muted">{% trans 'No filter engines configured.' %}</p>
                     {% endfor %}
@@ -55,7 +55,7 @@
             <article class="ifinmail-table-panel ifinmail-span-12">
                 <div class="ifinmail-table-panel-header">
                     <div><h2 class="ifinmail-panel-title">{% trans 'DNSBL Blacklist Settings' %}</h2><p>{% trans 'Real-time domain reputation checking across global providers.' %}</p></div>
-                    <button class="ifinmail-btn ifinmail-btn--primary" type="button" onclick="toggleAddProvider()">{% trans 'Add Provider' %}</button>
+                    <button class="ifinmail-btn ifinmail-btn--primary" type="button" data-action="toggle-add-provider">{% trans 'Add Provider' %}</button>
                 </div>
                 {% include "includes/admin_table.html" with span=None title=None headers=provider_headers|default:'' rows=providers|default:'' row_template="admin/partials/provider_row.html" %}
             </article>
@@ -63,80 +63,42 @@
     </div>
 </section>
 
-<div id="add-provider-form" style="display:none" class="ifinmail-inline-form-panel">
-    <form onsubmit="event.preventDefault(); addProvider()" style="display:flex;gap:12px;align-items:flex-end">
-        {% csrf_token %}
-        <div style="flex:1">
-            <label class="ifinmail-label">{% trans 'Provider Host' %}</label>
-            <input id="provider-host" type="text" placeholder="dnsbl.example.com" style="width:100%;padding:8px 12px" required>
+<!-- Add Provider Modal -->
+<div class="ifinmail-modal-overlay" id="add-provider-modal">
+    <div class="ifinmail-modal ifinmail-modal-dialog">
+        <div class="ifinmail-modal-header">
+            <h3 class="ifinmail-modal-title">{% trans 'Add DNSBL Provider' %}</h3>
+            <button class="ifinmail-modal-close" id="add-provider-modal-close" aria-label="{% trans 'Close' %}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
-        <div style="width:180px">
-            <label class="ifinmail-label">{% trans 'Type' %}</label>
-            <select id="provider-type" style="width:100%;padding:8px 12px">
-                <option value="CUSTOM">CUSTOM</option>
-                <option value="REPUTATION">REPUTATION</option>
-                <option value="AGGREGATE">AGGREGATE</option>
-                <option value="PASSIVE">PASSIVE</option>
-            </select>
+        <div class="ifinmail-modal-body">
+            <form id="add-provider-form-inner">
+                {% csrf_token %}
+                <div class="ifinmail-form-group">
+                    <label class="ifinmail-label">{% trans 'Provider Host' %}</label>
+                    <input id="provider-host" type="text" placeholder="dnsbl.example.com" class="ifinmail-input ifinmail-input--full" autocomplete="off" required>
+                </div>
+                <div class="ifinmail-form-group">
+                    <label class="ifinmail-label">{% trans 'Type' %}</label>
+                    <select id="provider-type" class="ifinmail-input ifinmail-input--full">
+                        <option value="CUSTOM">CUSTOM</option>
+                        <option value="REPUTATION">REPUTATION</option>
+                        <option value="AGGREGATE">AGGREGATE</option>
+                        <option value="PASSIVE">PASSIVE</option>
+                    </select>
+                </div>
+            </form>
         </div>
-        <button type="submit" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Add' %}</button>
-        <button type="button" class="ifinmail-btn ifinmail-btn--outline" onclick="toggleAddProvider()">{% trans 'Cancel' %}</button>
-    </form>
+        <div class="ifinmail-modal-footer">
+            <button type="button" class="ifinmail-btn ifinmail-btn--ghost" data-action="close-add-provider">{% trans 'Cancel' %}</button>
+            <button type="button" class="ifinmail-btn ifinmail-btn--primary" data-action="add-provider" data-url="{% url 'accounts:spam_add_provider' %}">{% trans 'Add' %}</button>
+        </div>
+    </div>
 </div>
 
-<script>
-(function() {
-    function getCSRFToken() {
-        var el = document.querySelector('[name=csrfmiddlewaretoken]');
-        return el ? el.value : '';
-    }
+{% endblock %}
 
-    window.toggleAddProvider = function() {
-        var form = document.getElementById('add-provider-form');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        if (form.style.display === 'block') {
-            document.getElementById('provider-host').focus();
-        }
-    };
-
-    window.addProvider = function() {
-        var host = document.getElementById('provider-host').value.trim();
-        var ptype = document.getElementById('provider-type').value;
-        if (!host) return;
-        var formData = new FormData();
-        formData.append('host', host);
-        formData.append('type', ptype);
-        fetch('{% url "accounts:spam_add_provider" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()},
-            body: formData
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                location.reload();
-            } else {
-                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
-            }
-        })
-        .catch(function() { alert('{% trans "Request failed" %}'); });
-    };
-
-    window.setSensitivity = function(value) {
-        var formData = new FormData();
-        formData.append('value', value);
-        fetch('{% url "accounts:spam_sensitivity" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()},
-            body: formData
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                document.getElementById('sensitivity-label').textContent = parseFloat(data.value).toFixed(1);
-            }
-        });
-    };
-})();
-</script>
+{% block scripts %}
+<script src="{% static 'js/ifinmail-spam.js' %}"></script>
 {% endblock %}

@@ -90,16 +90,23 @@ class DomainService:
         return list(DKIMKey.objects.filter(domain=domain, active=True))
 
     @staticmethod
-    def create_domain(name: str) -> Domain:
+    def create_domain(name: str, ip_address: str | None = None) -> Domain:
         if not name or len(name) > _MAX_DOMAIN_NAME_LENGTH:
             raise ValueError(f'Domain name must be 1-{_MAX_DOMAIN_NAME_LENGTH} characters')
-        return Domain.objects.create(name=name)
+        return Domain.objects.create(name=name, ip_address=ip_address or None)
 
     @staticmethod
-    def get_or_create_domain(name: str) -> tuple[Domain, bool]:
+    def get_or_create_domain(
+        name: str,
+        ip_address: str | None = None,
+    ) -> tuple[Domain, bool]:
         try:
             with transaction.atomic():
-                return Domain.objects.get_or_create(name=name)
+                domain, created = Domain.objects.get_or_create(name=name)
+                if created and ip_address:
+                    domain.ip_address = ip_address
+                    domain.save(update_fields=['ip_address'])
+                return domain, created
         except OperationalError:
             logger.exception('Failed to get_or_create domain %s', name)
             raise

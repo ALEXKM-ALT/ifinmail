@@ -196,6 +196,7 @@
 
 .ifinmail-stat-big {
     display: block;
+    font-family: var(--ifinmail-font-mono); /* §4.1 — numeric data always in JetBrains Mono */
     font-size: var(--ifinmail-font-size-display);
     font-weight: var(--ifinmail-font-weight-bold);
     color: var(--ifinmail-color-text-primary);
@@ -597,12 +598,194 @@
     font-size: var(--ifinmail-font-size-body);
 }
 
+/* ─── Panel stacking (replaces style="margin-top:12px") ─── */
+.ifinmail-panel--stacked {
+    margin-top: var(--ifinmail-space-3); /* 12px — space-3 token */
+}
+
+/* ─── Panel icon row (replaces inline display:flex for icon groups) ─── */
+.ifinmail-panel-icon-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-1);
+}
+
+/* ─── Role list top spacing (replaces style="margin-top:14px") ─── */
+.ifinmail-role-list {
+    margin-top: var(--ifinmail-space-3_5); /* 14px — closest token */
+}
+
+/* ─── Session terminate link (replaces style="display:block;text-align:center;padding:6px;cursor:pointer") ─── */
+.ifinmail-session-terminate {
+    display: block;
+    text-align: center;
+    padding: var(--ifinmail-space-1_5) 0; /* 6px vertical */
+    cursor: pointer;
+    margin-top: var(--ifinmail-space-2);
+    font-size: var(--ifinmail-font-size-body);
+}
+
+/* ─── Audit value (replaces style="float:right") ─── */
+.ifinmail-audit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 0 var(--ifinmail-space-2);
+}
+
+.ifinmail-audit-row:last-of-type {
+    margin-bottom: 0;
+}
+
+/* ─── Chart bars inline override (height controlled by data — keep style attr for height only) ─── */
+.ifinmail-chart-bars--flush {
+    padding: 0;
+}
+
+/* ─── Anomalous bar highlight (replaces inline background:#c81e1e — mapped to danger token) ─── */
+.ifinmail-chart-bars span.ifinmail-bar--danger {
+    background: var(--ifinmail-color-danger) !important;
+}
+
+/* ─── Fix #7: Header icon-button tooltip (§7.1 — always pair icon with label) ─── */
+/* Tooltips are provided by native 'title' attributes (already added in template fix #9).
+   Additionally, the ifinmail-icon-button already has tooltip via [title] browser native.
+   For custom CSS tooltip enhancement, use the tooltip component from §17. */
+.ifinmail-icon-button[title] {
+    position: relative;
+}
+
+/* ─── Fix #8: System Info modal — info list replacing inline styles ─── */
+.ifinmail-modal-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ifinmail-space-3); /* 12px */
+}
+
+.ifinmail-modal-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--ifinmail-color-border-light);
+    padding-bottom: var(--ifinmail-space-2); /* 8px */
+}
+
+.ifinmail-modal-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* Database status indicator inside modal */
+.ifinmail-db-status {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-1);
+    color: var(--ifinmail-color-success);
+    font-size: var(--ifinmail-font-size-body);
+}
+
+/* Shortcut box (replaces inline margin-top/background/radius/padding/font-size) */
+.ifinmail-shortcut-box {
+    margin-top: var(--ifinmail-space-5); /* 20px */
+    background: var(--ifinmail-color-surface-2);
+    border-radius: var(--ifinmail-radius-md);
+    padding: var(--ifinmail-space-3); /* 12px */
+}
+
+.ifinmail-shortcut-heading {
+    display: block;
+    margin-bottom: var(--ifinmail-space-1_5); /* 6px */
+    font-size: var(--ifinmail-font-size-body);
+    font-weight: var(--ifinmail-font-weight-semibold);
+    color: var(--ifinmail-color-text-primary);
+}
+
+.ifinmail-shortcut-list {
+    margin: 0;
+    padding-left: var(--ifinmail-space-4_5, 18px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ifinmail-space-1);
+    color: var(--ifinmail-color-text-secondary);
+    font-size: var(--ifinmail-font-size-body-small);
+}
+
+/* Keyboard badge — replaces inline code styles */
+.ifinmail-kbd {
+    font-family: var(--ifinmail-font-mono);
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px var(--ifinmail-space-1); /* 1px 4px */
+    border-radius: var(--ifinmail-radius-sm);
+    font-weight: var(--ifinmail-font-weight-bold);
+    font-size: var(--ifinmail-font-size-body-small);
+}
+
+/* Mono text for deployment host etc */
+.ifinmail-text--mono {
+    font-family: var(--ifinmail-font-mono);
+    font-size: var(--ifinmail-font-size-body-small); /* 12px — min floor */
+}
+
+/* Alias for codebox-inline */
+.ifinmail-code {
+    font-family: var(--ifinmail-font-mono);
+    font-size: var(--ifinmail-font-size-body-small);
+    color: var(--ifinmail-color-text-secondary);
+}
+
+/* Server status inline indicator */
+.ifinmail-server-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--ifinmail-space-1);
+    color: var(--ifinmail-color-success);
+    font-size: var(--ifinmail-font-size-body);
+}
+
+
+
 /* ─── Audit panel ─── */
 .ifinmail-audit-panel {
     background: #ffffff;
     border: 1px solid var(--ifinmail-color-border);
     border-radius: var(--ifinmail-radius-lg);
     padding: var(--ifinmail-space-3) var(--ifinmail-space-4);
+}
+
+/* Failsafe Layout Alignment and Robustness for Audit Trail Timeline Cards */
+.ifinmail-timeline-item {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+.ifinmail-audit-panel .ifinmail-timeline-item {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+}
+
+.ifinmail-audit-panel .ifinmail-timeline-item::before {
+    left: -25px !important; /* Perfect pixel-center alignment on vertical timeline line */
+}
+
+.ifinmail-audit-panel .ifinmail-timeline-item p {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    margin: var(--ifinmail-space-1) 0 0 !important;
+}
+
+.ifinmail-audit-panel .ifinmail-timeline-item small {
+    display: flex !important;
+    flex-direction: column !important; /* Stack vertically to prevent collision/overflow in narrow sidebars */
+    align-items: flex-start !important;
+    gap: var(--ifinmail-space-0_5, 2px) !important;
+    margin-top: var(--ifinmail-space-2, 8px) !important;
+}
+
+.ifinmail-audit-panel .ifinmail-timeline-item small span {
+    width: 100% !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
 }
 
 .ifinmail-audit-more {
@@ -634,9 +817,10 @@
     padding: var(--ifinmail-space-6);
     background-color: var(--ifinmail-color-surface-1);
     background-image:
-        linear-gradient(var(--ifinmail-color-border-light) 1px, transparent 1px),
-        linear-gradient(90deg, var(--ifinmail-color-border-light) 1px, transparent 1px);
-    background-size: 32px 32px;
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 10%, var(--ifinmail-color-surface-1) 80%),
+        linear-gradient(var(--ifinmail-bg-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ifinmail-bg-grid-color) 1px, transparent 1px);
+    background-size: 100% 100%, 32px 32px, 32px 32px;
 }
 
 .ifinmail-login-card {
@@ -691,9 +875,8 @@
 
 .ifinmail-login-form__input:focus,
 .ifinmail-login-form__input:focus-visible {
-    outline: none !important; /* No focus outline */
-    outline-offset: 0 !important; /* No outline offset */
-    border-color: var(--ifinmail-color-primary) !important; /* Elegant color transition border */
+    outline: var(--ifinmail-focus-ring-width) solid var(--ifinmail-focus-ring-color); /* §20 WCAG 2.1 §2.4.7 — focus must be visible */
+    border-color: var(--ifinmail-color-primary) !important;
 }
 
 .ifinmail-login-form__submit {
@@ -888,9 +1071,10 @@
     padding: var(--ifinmail-space-4) !important;
     background-color: var(--ifinmail-color-surface-1) !important;
     background-image:
-        linear-gradient(var(--ifinmail-color-border-light) 1px, transparent 1px),
-        linear-gradient(90deg, var(--ifinmail-color-border-light) 1px, transparent 1px) !important;
-    background-size: 32px 32px !important;
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 10%, var(--ifinmail-color-surface-1) 80%),
+        linear-gradient(var(--ifinmail-bg-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ifinmail-bg-grid-color) 1px, transparent 1px) !important;
+    background-size: 100% 100%, 32px 32px, 32px 32px !important;
 }
 
 .ifinmail-reg-card {
@@ -930,7 +1114,6 @@
 .ifinmail-reg .ifinmail-form-group input:focus,
 .ifinmail-reg .ifinmail-login-form__input:focus {
     outline: none !important;
-    outline-offset: 0 !important;
     border-color: var(--ifinmail-color-primary) !important;
 }
 
@@ -980,9 +1163,10 @@
     padding: var(--ifinmail-space-5) !important;
     background-color: var(--ifinmail-color-surface-1) !important;
     background-image:
-        linear-gradient(var(--ifinmail-color-border-light) 1px, transparent 1px),
-        linear-gradient(90deg, var(--ifinmail-color-border-light) 1px, transparent 1px) !important;
-    background-size: 32px 32px !important;
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 10%, var(--ifinmail-color-surface-1) 80%),
+        linear-gradient(var(--ifinmail-bg-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ifinmail-bg-grid-color) 1px, transparent 1px) !important;
+    background-size: 100% 100%, 32px 32px, 32px 32px !important;
 }
 
 .ifinmail-login-card,
@@ -993,13 +1177,27 @@
     min-height: 0 !important;
     max-height: none !important;
     padding: var(--ifinmail-space-6) !important;
-    background: #ffffff !important;
-    border: 1px solid var(--ifinmail-color-border) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(15, 43, 91, 0.08) !important;
     border-radius: var(--ifinmail-radius-lg) !important;
-    box-shadow: none !important;
+    box-shadow: 0 24px 64px -16px rgba(15, 43, 91, 0.08), 0 8px 24px -8px rgba(15, 43, 91, 0.04) !important;
+    overflow: visible !important; /* Prevent internal scrollbars */
     transition:
         border-color var(--ifinmail-transition-fast),
-        background-color var(--ifinmail-transition-fast) !important;
+        background-color var(--ifinmail-transition-fast),
+        box-shadow var(--ifinmail-transition-fast) !important;
+}
+
+/* Dark mode adjustments for glassmorphism */
+@media (prefers-color-scheme: dark) {
+    .ifinmail-login-card,
+    .ifinmail-reg-card {
+        background: rgba(31, 41, 55, 0.85) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.2) !important;
+    }
 }
 
 .ifinmail-reg-card {
@@ -1048,6 +1246,13 @@
     font-size: var(--ifinmail-font-size-body-small) !important;
 }
 
+.ifinmail-login-form__label {
+    display: block !important;
+    font-weight: var(--ifinmail-font-weight-medium) !important;
+    color: var(--ifinmail-color-text-secondary) !important;
+    margin-bottom: var(--ifinmail-space-1_5) !important;
+}
+
 .ifinmail-login-form__input {
     height: 40px !important;
     padding: 0 var(--ifinmail-space-3) !important;
@@ -1087,14 +1292,9 @@
 
 .ifinmail-login-card__register,
 .ifinmail-reg-card__footer-link {
-    width: calc(100vw - var(--ifinmail-space-10)) !important;
-    max-width: 372px !important;
+    width: auto !important;
+    max-width: 100% !important;
     margin: 0 !important;
-}
-
-.ifinmail-reg-card__footer-link {
-    width: calc(100vw - var(--ifinmail-space-10)) !important;
-    max-width: 404px !important;
 }
 
 .ifinmail-reg-stepper {
@@ -1165,5 +1365,144 @@
     }
 }
 
+/* On small mobile screens under 640px, cards take 100% height and width with zero margins/borders/corners */
+@media (max-width: 640px) {
+    .ifinmail-login,
+    .ifinmail-reg {
+        padding: 0 !important;
+        background-color: var(--ifinmail-surface-container-lowest, #ffffff) !important;
+        background-image: none !important;
+    }
 
+    .ifinmail-login-card,
+    .ifinmail-reg-card {
+        width: 100% !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        max-width: 100% !important;
+        height: auto !important; /* Allow natural expansion without clipping */
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: var(--ifinmail-space-8) var(--ifinmail-space-5) !important;
+        background: var(--ifinmail-surface-container-lowest, #ffffff) !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box !important;
+        overflow: visible !important; /* Eliminate internal scrollbars */
+    }
+}
 
+/* ─── DNS Config — extracted inline styles ─── */
+.ifinmail-cluster-host-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.ifinmail-cluster-host-status {
+    margin-left: auto;
+    color: var(--ifinmail-color-text-secondary);
+}
+
+.ifinmail-toolbox-header {
+    justify-content: space-between;
+}
+
+.ifinmail-toolbox-title {
+    margin: 0;
+}
+
+.ifinmail-toolbox-content {
+    width: 100%;
+}
+
+.ifinmail-hop-overline {
+    margin-top: 14px;
+}
+
+.ifinmail-hop-slider {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.ifinmail-modal-dialog {
+    max-width: 520px;
+    width: 90%;
+}
+
+.ifinmail-form-group {
+    margin-bottom: 16px;
+}
+
+.ifinmail-form-group--hidden {
+    display: none;
+}
+
+.ifinmail-input--full {
+    width: 100%;
+}
+
+.ifinmail-help-text {
+    display: block;
+    margin-top: 4px;
+    color: var(--ifinmail-color-text-muted);
+    font-size: 12px;
+}
+
+.ifinmail-required {
+    color: var(--ifinmail-color-danger);
+}
+
+.ifinmail-body--no-scroll {
+    overflow: hidden;
+}
+
+.ifinmail-hidden {
+    display: none;
+}
+
+/* ─── Spam Filtering — extracted inline styles ─── */
+.ifinmail-chart-bars {
+    height: 160px;
+}
+
+.ifinmail-sensitivity-header {
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.ifinmail-sensitivity-value {
+    font-size: 1.25rem;
+    color: var(--ifinmail-color-primary);
+}
+
+.ifinmail-sensitivity-slider {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.ifinmail-sensitivity-labels {
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.ifinmail-engine-list {
+    margin-top: 14px;
+}
+
+.ifinmail-engine-row--disabled {
+    opacity: 0.55;
+}
+
+.ifinmail-provider-form-group {
+    flex: 1;
+}
+
+.ifinmail-provider-type-group {
+    width: 180px;
+}

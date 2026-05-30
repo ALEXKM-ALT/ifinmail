@@ -70,10 +70,10 @@ class DNSServiceConfigTests(TransactionTestCase):
             drop_unmanaged_table(DNSProviderConfig)
         super().tearDownClass()
 
-    def _fixture_teardown(self) -> None:
+    def _fixture_teardown(self=None) -> None:
         pass
 
-    def _fixture_setup(self) -> None:
+    def _fixture_setup(self=None) -> None:
         pass
 
     def tearDown(self) -> None:

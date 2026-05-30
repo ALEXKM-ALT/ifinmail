@@ -114,7 +114,12 @@ class DNSService:
         return cls(**decrypted)
 
     @staticmethod
-    def build_records(domain: str, server_ip: str) -> list[DNSRecord]:
+    def build_records(
+        domain: str,
+        server_ip: str,
+        ip_address: str | None = None,
+    ) -> list[DNSRecord]:
+        resolved_ip = ip_address or server_ip
         mail_hostname = os.environ.get('MAIL_HOSTNAME', f'mail.{domain}')
         dkim_selector = os.environ.get('DKIM_SELECTOR', 'default')
         ttl = _DEFAULT_DNS_TTL
@@ -139,9 +144,9 @@ class DNSService:
         )
 
         return [
-            DNSRecord(type='A', name='@', value=server_ip, ttl=ttl),
-            DNSRecord(type='A', name='mail', value=server_ip, ttl=ttl),
-            DNSRecord(type='A', name='mta-sts', value=server_ip, ttl=ttl),
+            DNSRecord(type='A', name='@', value=resolved_ip, ttl=ttl),
+            DNSRecord(type='A', name='mail', value=resolved_ip, ttl=ttl),
+            DNSRecord(type='A', name='mta-sts', value=resolved_ip, ttl=ttl),
             DNSRecord(type='MX', name='@', value=mail_hostname, priority=10, ttl=ttl),
             DNSRecord(type='TXT', name='@', value='v=spf1 mx -all', ttl=ttl),
             DNSRecord(

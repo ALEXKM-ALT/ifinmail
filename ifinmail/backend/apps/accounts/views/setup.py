@@ -125,6 +125,39 @@ def setup_step(request: HttpRequest, step: str) -> HttpResponse:
         template = 'setup/welcome.html'
     elif step == 'dns':
         template = 'setup/dns_provider.html'
+        from backend.apps.dns.services import PROVIDER_MAP
+        from django.utils.translation import gettext_lazy as _
+        provider_meta = {
+            'cloudflare': {
+                'help': str(_('Requires an API token with DNS:Edit permission.')),
+                'help_url': 'https://developers.cloudflare.com/fundamentals/api/get-started/create-token/',
+                'placeholder': 'Cloudflare API Token',
+                'second_field': None,
+            },
+            'porkbun': {
+                'help': str(_('Requires API Key and Secret Key from your Porkbun account.')),
+                'help_url': 'https://kb.porkbun.com/article/190-getting-started-with-the-porkbun-api',
+                'placeholder': 'API Key',
+                'second_field': {'name': 'secret_key', 'placeholder': 'Secret Key'},
+            },
+            'digitalocean': {
+                'help': str(_('Requires a personal access token with write access.')),
+                'help_url': 'https://docs.digitalocean.com/reference/api/create-personal-access-token/',
+                'placeholder': 'DigitalOcean API Token',
+                'second_field': None,
+            },
+        }
+        context['providers'] = [
+            {
+                'id': pid,
+                'name': cls.provider_name if hasattr(cls, 'provider_name') else pid.capitalize(),
+                'help': provider_meta.get(pid, {}).get('help', ''),
+                'help_url': provider_meta.get(pid, {}).get('help_url', ''),
+                'placeholder': provider_meta.get(pid, {}).get('placeholder', f'{pid.capitalize()} API Token'),
+                'second_field': provider_meta.get(pid, {}).get('second_field'),
+            }
+            for pid, (cls, fields, label) in PROVIDER_MAP.items()
+        ]
     elif step == 'dns-auto':
         template = 'setup/dns_auto.html'
         if not domain:

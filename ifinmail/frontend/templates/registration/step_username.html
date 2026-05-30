@@ -88,63 +88,8 @@
 }
 </style>
 
-<script>
-(function() {
-  var input = document.getElementById('username');
-  var preview = document.getElementById('preview-local');
-  var avail = document.getElementById('avail-indicator');
-  var domain = {{ domain|default:''|escapejs }};
-  var submitBtn = document.getElementById('submit-btn');
-  var form = submitBtn.closest('form');
-  var currentRequest = null;
+{% endblock %}
 
-  input.addEventListener('input', function() {
-    if (preview) preview.textContent = input.value || '{% trans "username" %}';
-    var val = input.value.trim().toLowerCase();
-
-    if (val.length >= 3) {
-      avail.innerHTML = '<span class="ifinmail-reg-availability__checking"><span class="ifinmail-spinner-xs"></span> {% trans "Checking..." %}</span>';
-
-      // Abort previous request to avoid race condition
-      if (currentRequest) {
-        currentRequest.abort();
-      }
-
-      clearTimeout(window._availTimer);
-      window._availTimer = setTimeout(function() {
-        var xhr = new XMLHttpRequest();
-        currentRequest = xhr;
-        xhr.open('GET', '/accounts/registration/check-username/?username=' + encodeURIComponent(val), true);
-        xhr.onreadystatechange = function() {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            if (xhr === currentRequest || !currentRequest) {
-              var data = JSON.parse(xhr.responseText);
-              if (data.available) {
-                avail.innerHTML = '<span class="ifinmail-reg-availability__ok">{% trans "Available" %}</span>';
-              } else {
-                avail.innerHTML = '<span class="ifinmail-reg-availability__taken">{% trans "Taken" %}</span>';
-              }
-            }
-          }
-        };
-        xhr.onerror = function() {
-          avail.innerHTML = '';
-        };
-        xhr.send();
-      }, 400);
-    } else {
-      avail.innerHTML = '';
-      if (currentRequest) {
-        currentRequest.abort();
-        currentRequest = null;
-      }
-    }
-  });
-
-  form.addEventListener('submit', function() {
-    submitBtn.disabled = true;
-    submitBtn.classList.add('ifinmail-btn--loading');
-  });
-})();
-</script>
+{% block scripts %}
+<script src="{% static 'js/ifinmail-registration.js' %}"></script>
 {% endblock %}

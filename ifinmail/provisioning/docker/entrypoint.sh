@@ -77,6 +77,10 @@ if [ "$(id -u)" = "0" ]; then
 fi
 run_as_app python manage.py collectstatic --noinput --clear
 
+# Compile translation files for i18n
+echo "Compiling translations..."
+run_as_app python manage.py compilemessages
+
 # EC-101: Restrict permissions on static files — world-readable, not executable
 chmod -R 644 /app/staticfiles
 find /app/staticfiles -type d -exec chmod 755 {} \;

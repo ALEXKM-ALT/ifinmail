@@ -28,7 +28,7 @@ def _admin_log_rows(level: str = '') -> list[dict[str, str]]:
             continue
         rows.append(
             {
-                'timestamp': e.get('time', '')[:19] if e.get('time') else '',
+                'timestamp': e.get('time', '').replace('T', ' ')[:19] if e.get('time') else '',
                 'level': severity.upper(),
                 'service': e.get('action', 'system'),
                 'message': e.get('detail', '') or e.get('action', ''),
@@ -51,7 +51,7 @@ def _admin_audit_items(page: int = 1, level: str = '') -> list[dict[str, str]]:
                 'title': e.get('action', 'Event'),
                 'body': e.get('detail', ''),
                 'actor': e.get('user', 'system'),
-                'age': e.get('time', '')[:19] if e.get('time') else '',
+                'age': e.get('time', '').replace('T', ' ')[:19] if e.get('time') else '',
             }
         )
     paginator = Paginator(items, _AUDIT_PAGE_SIZE)
@@ -112,7 +112,7 @@ def logs_export(request: HttpRequest) -> HttpResponse:
             continue
         writer.writerow(
             [
-                e.get('time', '')[:19],
+                e.get('time', '').replace('T', ' ')[:19],
                 severity.upper(),
                 e.get('action', ''),
                 e.get('detail', ''),

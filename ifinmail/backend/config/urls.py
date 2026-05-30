@@ -8,10 +8,36 @@ from django.contrib import admin
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import include, path
+from django.views.decorators.csrf import csrf_exempt
 
 from backend.apps.mail.web import autoconfig_mozilla, autoconfig_outlook
 
 logger = logging.getLogger('backend')
+
+
+@csrf_exempt
+def csp_report(request: HttpRequest) -> JsonResponse:
+    """CSP violation report endpoint — logs violations for analysis.
+
+    Endpoint accepts JSON CSP reports from browsers.  Violations are
+    logged so the policy can be tightened without breaking real users.
+    """
+    import json as _json
+    import logging
+
+    csp_logger = logging.getLogger('backend.csp')
+    try:
+        body = _json.loads(request.body)
+        csp_report = body.get('csp-report', {})
+        csp_logger.warning(
+            'CSP violation: %s — %s — %s',
+            csp_report.get('violated-directive', 'unknown'),
+            csp_report.get('blocked-uri', 'unknown'),
+            csp_report.get('document-uri', 'unknown'),
+        )
+    except (_json.JSONDecodeError, Exception):
+        csp_logger.warning('CSP report parse failure')
+    return JsonResponse({'status': 'ok'}, status=200, content_type='application/json; charset=utf-8')
 
 
 def health_check(request: HttpRequest) -> JsonResponse:
@@ -104,6 +130,7 @@ urlpatterns = [
     path('', landing_page, name='landing'),
     path('terms/', terms_page, name='terms'),
     path('privacy/', privacy_page, name='privacy'),
+    path('csp-report/', csp_report, name='csp-report'),
     path('health/', health_check, name='health-check'),
     path('health/full/', health_full, name='health-full'),
     path('health/dns/', health_dns, name='health-dns'),

@@ -23,7 +23,7 @@
         </a>
         {% endif %}
         {% if user.is_authenticated %}
-        <a class="ifinmail-icon-button" href="{% url 'accounts:logout' %}" aria-label="{% trans 'Sign out' %}">
+        <a class="ifinmail-icon-button" href="{% url 'accounts:logout' %}" aria-label="{% trans 'Sign out' %}" title="{% trans 'Sign out' %}">
             <svg class="ifinmail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
         </a>
         {% endif %}
@@ -36,7 +36,7 @@
                 <svg class="ifinmail-profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             {% else %}
-            <button class="ifinmail-avatar-button" type="button" aria-expanded="false" aria-label="{% trans 'Open account menu' %}" style="background:transparent;border:none;cursor:pointer;padding:0;">
+            <button class="ifinmail-avatar-button" type="button" aria-expanded="false" aria-label="{% trans 'Open account menu' %}" title="{% trans 'Account menu' %}" style="background:transparent;border:none;cursor:pointer;padding:0;">
                 <span class="ifinmail-avatar">{{ user_initials|default:'AD' }}</span>
                 <svg class="ifinmail-profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </button>
@@ -66,37 +66,3 @@
         </div>
     </div>
 </header>
-
-<script>
-(function() {
-    var wrapper = document.getElementById('header-profile-dropdown');
-    if (!wrapper) return;
-    
-    var button = wrapper.querySelector('button');
-    var menu = wrapper.querySelector('.ifinmail-dropdown-menu');
-    
-    if (!button || !menu) return;
-    
-    button.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var isActive = menu.classList.contains('ifinmail-dropdown-menu--active');
-        if (isActive) {
-            menu.classList.remove('ifinmail-dropdown-menu--active');
-            wrapper.classList.remove('ifinmail-dropdown-wrapper--open');
-            button.setAttribute('aria-expanded', 'false');
-        } else {
-            menu.classList.add('ifinmail-dropdown-menu--active');
-            wrapper.classList.add('ifinmail-dropdown-wrapper--open');
-            button.setAttribute('aria-expanded', 'true');
-        }
-    });
-    
-    document.addEventListener('click', function(e) {
-        if (!wrapper.contains(e.target)) {
-            menu.classList.remove('ifinmail-dropdown-menu--active');
-            wrapper.classList.remove('ifinmail-dropdown-wrapper--open');
-            button.setAttribute('aria-expanded', 'false');
-        }
-    });
-})();
-</script>

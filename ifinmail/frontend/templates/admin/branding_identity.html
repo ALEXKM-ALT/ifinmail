@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Branding & Identity — {{ name }}{% endblocktrans %}{% endblock %}
 {% block sidebar_wrapper %}{% include "includes/sidebar.html" %}{% endblock %}
@@ -37,13 +37,13 @@
             <aside class="ifinmail-panel ifinmail-span-5">
                 <h2 class="ifinmail-panel-title">{% trans 'Typography' %}</h2>
                 <label class="ifinmail-label" style="margin-top:20px">{% trans 'Headings Font' %}</label>
-                <select id="heading-font" onchange="previewFonts()" style="width:100%;padding:8px 12px;margin-top:6px">
+                <select id="heading-font" style="width:100%;padding:8px 12px;margin-top:6px">
                     {% for value, label in web_fonts %}
                     <option value="{{ value }}"{% if heading_font == value %} selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
                 <label class="ifinmail-label" style="margin-top:16px">{% trans 'Body Text Font' %}</label>
-                <select id="body-font" onchange="previewFonts()" style="width:100%;padding:8px 12px;margin-top:6px">
+                <select id="body-font" style="width:100%;padding:8px 12px;margin-top:6px">
                     {% for value, label in web_fonts %}
                     <option value="{{ value }}"{% if body_font == value %} selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -99,8 +99,8 @@
             </aside>
 
             <div class="ifinmail-span-12 ifinmail-page-actions">
-                <button class="ifinmail-btn ifinmail-btn--primary" type="button" onclick="saveBranding()">{% trans 'Save Branding' %}</button>
-                <button class="ifinmail-btn ifinmail-btn--outline" type="button" onclick="resetBranding()">{% trans 'Reset' %}</button>
+                <button class="ifinmail-btn ifinmail-btn--primary" type="button" data-action="save-branding" data-url="{% url 'accounts:branding_save' %}">{% trans 'Save Branding' %}</button>
+                <button class="ifinmail-btn ifinmail-btn--outline" type="button" data-action="reset-branding" data-url="{% url 'accounts:branding_reset' %}">{% trans 'Reset' %}</button>
             </div>
 
             <article class="ifinmail-panel ifinmail-span-6">
@@ -118,122 +118,8 @@
     </div>
 </section>
 
-<script>
-(function() {
-    function getCSRFToken() {
-        var el = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (el) return el.value;
-        var name = 'csrftoken';
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var c = cookies[i].trim();
-            if (c.indexOf(name + '=') === 0) {
-                return decodeURIComponent(c.substring(name.length + 1));
-            }
-        }
-        return '';
-    }
+{% endblock %}
 
-    // Sync color pickers with hex text inputs and update live preview styles
-    function setupColorSync(pickerId, inputId, variableName, callback) {
-        var picker = document.getElementById(pickerId);
-        var input = document.getElementById(inputId);
-        if (!picker || !input) return;
-
-        picker.addEventListener('input', function() {
-            input.value = picker.value.toUpperCase();
-            if (variableName) {
-                document.documentElement.style.setProperty(variableName, picker.value);
-            }
-            if (callback) callback(picker.value);
-        });
-
-        input.addEventListener('input', function() {
-            var val = input.value.trim();
-            if (val.charAt(0) !== '#') val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val)) {
-                picker.value = val;
-                if (variableName) {
-                    document.documentElement.style.setProperty(variableName, val);
-                }
-                if (callback) callback(val);
-            }
-        });
-    }
-
-    setupColorSync('primary-color-picker', 'primary-color-input', '--ifinmail-color-primary', function(color) {
-        // Dynamic focus rings and helper classes
-        document.documentElement.style.setProperty('--ifinmail-primary', color);
-        document.documentElement.style.setProperty('--ifinmail-secondary', color);
-        var btn = document.getElementById('preview-primary-btn');
-        if (btn) btn.style.backgroundColor = color;
-    });
-
-    setupColorSync('secondary-color-picker', 'secondary-color-input', '--ifinmail-color-surface-2');
-
-    setupColorSync('accent-color-picker', 'accent-color-input', '--ifinmail-success', function(color) {
-        var badge = document.getElementById('preview-accent-badge');
-        if (badge) {
-            badge.style.backgroundColor = color + '1A'; // 10% opacity
-            badge.style.color = color;
-            badge.style.borderColor = color + '33'; // 20% opacity
-        }
-    });
-
-    window.previewFonts = function() {
-        var heading = document.getElementById('heading-font').value;
-        var body = document.getElementById('body-font').value;
-        var preview = document.querySelector('.ifinmail-codebox h3');
-        if (preview && heading) preview.style.fontFamily = heading + ', sans-serif';
-        var bodyEl = document.querySelector('.ifinmail-codebox p');
-        if (bodyEl && body) bodyEl.style.fontFamily = body + ', sans-serif';
-    };
-
-    window.saveBranding = function() {
-        var formData = new FormData();
-        formData.append('primary_color', document.getElementById('primary-color-input').value);
-        formData.append('secondary_color', document.getElementById('secondary-color-input').value);
-        formData.append('accent_color', document.getElementById('accent-color-input').value);
-        formData.append('heading_font', document.getElementById('heading-font').value);
-        formData.append('body_font', document.getElementById('body-font').value);
-        var favInput = document.querySelector('#favicon-form input[type=file]');
-        if (favInput && favInput.files.length > 0) {
-            formData.append('favicon', favInput.files[0]);
-        }
-        fetch('{% url "accounts:branding_save" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()},
-            body: formData
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                alert('{% trans "Branding saved successfully. Some changes may require a page refresh." %}');
-                location.reload();
-            } else {
-                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
-            }
-        })
-        .catch(function() { alert('{% trans "Request failed" %}'); });
-    };
-
-    window.resetBranding = function() {
-        if (!confirm('{% trans "Reset all branding to system defaults?" %}')) return;
-        fetch('{% url "accounts:branding_reset" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()}
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                alert('{% trans "Branding reset to defaults." %}');
-                location.reload();
-            } else {
-                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
-            }
-        })
-        .catch(function() { alert('{% trans "Request failed" %}'); });
-    };
-})();
-</script>
+{% block scripts %}
+<script src="{% static 'js/ifinmail-branding.js' %}"></script>
 {% endblock %}

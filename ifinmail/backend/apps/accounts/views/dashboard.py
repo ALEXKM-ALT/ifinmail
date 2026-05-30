@@ -332,7 +332,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             'storage_warning': str(_('Cleanup recommended')) if disk.get('status') == 'err' else '',
             'tls_days': tls_days,
             'tls_info': tls_info,
-            'tls_info_json': json.dumps(tls_info),
+            # tls_info is rendered via |json_script template filter (XSS-safe)
             'mail_hostname': os.environ.get('MAIL_HOSTNAME', ''),
             'active_section': 'dashboard',
             'header_search_placeholder': 'Search mail server logs...',

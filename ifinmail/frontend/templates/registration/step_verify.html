@@ -166,16 +166,8 @@
 }
 </style>
 
-<script>
-(function() {
-  var form = document.querySelector('.ifinmail-reg-verify-actions form');
-  var btn = document.getElementById('resend-btn');
-  if (form) {
-    form.addEventListener('submit', function() {
-      btn.disabled = true;
-      btn.classList.add('ifinmail-btn--loading');
-    });
-  }
-})();
-</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/ifinmail-registration.js' %}"></script>
 {% endblock %}

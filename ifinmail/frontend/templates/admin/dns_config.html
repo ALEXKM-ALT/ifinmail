@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Domain Configuration — {{ name }}{% endblocktrans %}{% endblock %}
 
@@ -15,22 +15,9 @@
                 <p class="ifinmail-page-subtitle">{% trans 'Manage DNS zones, record validation, and cluster infrastructure health.' %}</p>
             </div>
             <div class="ifinmail-page-actions">
-                <button class="ifinmail-btn ifinmail-btn--outline" type="button" onclick="refreshDNSStatus()">{% trans 'Full Zone Refresh' %}</button>
-                <button class="ifinmail-btn ifinmail-btn--primary" type="button" onclick="toggleRegisterForm()">{% trans 'Register New Domain' %}</button>
+                <button class="ifinmail-btn ifinmail-btn--outline" type="button" data-action="refresh-dns" data-url="{% url 'dns:status' %}?domain={{ domain|urlencode }}">{% trans 'Full Zone Refresh' %}</button>
+                <button class="ifinmail-btn ifinmail-btn--primary" type="button" data-action="toggle-register">{% trans 'Register New Domain' %}</button>
             </div>
-        </div>
-
-        <div id="register-domain-form" style="display:none" class="ifinmail-inline-form-panel">
-            <form onsubmit="event.preventDefault(); registerDomain()" style="display:flex;gap:12px;align-items:flex-end">
-                {% csrf_token %}
-                <div style="flex:1">
-                    <label class="ifinmail-label">{% trans 'Domain Name' %}</label>
-                    <input id="new-domain-input" type="text" placeholder="example.com" class="ifinmail-input" style="width:100%" required>
-                </div>
-                <button type="submit" class="ifinmail-btn ifinmail-btn--primary">{% trans 'Register' %}</button>
-                <button type="button" class="ifinmail-btn ifinmail-btn--outline" onclick="toggleRegisterForm()">{% trans 'Cancel' %}</button>
-            </form>
-            <pre id="register-result" style="display:none" class="ifinmail-codebox"></pre>
         </div>
 
         <div class="ifinmail-admin-grid">
@@ -59,10 +46,10 @@
             <article class="ifinmail-panel ifinmail-domain-stat ifinmail-span-3">
                 <span class="ifinmail-stat-label">{% trans 'Mail routing cluster' %}</span>
                 {% for host in cluster_hosts %}
-                <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">
+                <div class="ifinmail-cluster-host-row">
                     <span class="ifinmail-status-dot{% if host.idle %} ifinmail-status-dot--idle{% else %} ifinmail-status-dot--success{% endif %}"></span>
                     <span>{{ host.host|default:'?' }}</span>
-                    <strong style="margin-left:auto;color:var(--ifinmail-color-text-secondary)">{{ host.status|default:'' }}</strong>
+                    <strong class="ifinmail-cluster-host-status">{{ host.status|default:'' }}</strong>
                 </div>
                 {% empty %}
                 <div class="ifinmail-empty-state ifinmail-empty-state--compact">
@@ -78,24 +65,24 @@
                         <h2 class="ifinmail-panel-title">{% trans 'Active Domain Registry' %}</h2>
                     <div class="ifinmail-action-row">≡ ⋮</div>
                 </div>
-                {% include "includes/admin_table.html" with span=None title=None headers=dns_registry_headers|default:'' rows=dns_registry_rows|default:'' row_template="admin/partials/dns_row.html" empty_message=_("No domains registered yet") empty_action_label=_("Register your first domain →") empty_action_onclick="toggleRegisterForm()" %}
+                {% include "includes/admin_table.html" with span=None title=None headers=dns_registry_headers|default:'' rows=dns_registry_rows|default:'' row_template="admin/partials/dns_row.html" empty_message=_("No domains registered yet") empty_action_label=_("Register your first domain →") empty_action_data_action="toggle-register" %}
             </article>
 
             <article class="ifinmail-panel ifinmail-span-6" id="mail-routing-controls">
-                <div class="ifinmail-action-row" style="justify-content:space-between">
-                    <h2 class="ifinmail-panel-title" style="margin:0">{% trans 'DNS Toolbox' %}</h2>
+                <div class="ifinmail-action-row ifinmail-toolbox-header">
+                    <h2 class="ifinmail-panel-title ifinmail-toolbox-title">{% trans 'DNS Toolbox' %}</h2>
                     <a class="ifinmail-link-strong" href="{% url 'dns:export' %}">{% trans 'Export Records' %}</a>
                 </div>
                 <div class="ifinmail-toolbox-record">
-                    <div style="width:100%">
+                    <div class="ifinmail-toolbox-content">
                         <strong class="ifinmail-link-strong">{% trans 'SPF Record' %}</strong>
                         <div class="ifinmail-codebox">{{ toolbox_spf_record|default:'—' }}</div>
-                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" onclick="copyToClipboard('{{ toolbox_spf_record|escapejs }}')">{% trans 'Copy' %}</button>
-                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" onclick="editRecord('TXT')">{% trans 'Edit' %}</button>
+                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" data-action="copy-spf" data-value="{{ toolbox_spf_record|escapejs }}">{% trans 'Copy' %}</button>
+                        <button class="ifinmail-btn ifinmail-btn--sm" type="button" data-action="edit-record">{% trans 'Edit' %}</button>
                     </div>
                 </div>
                 <div class="ifinmail-toolbox-record">
-                    <div style="width:100%">
+                    <div class="ifinmail-toolbox-content">
                         <strong class="ifinmail-link-strong">{% trans 'DKIM Selector' %}</strong>
                         <div class="ifinmail-codebox">{% blocktrans %}selector: {{ dkim_selector|default:'—' }}{% endblocktrans %}</div>
                     </div>
@@ -106,154 +93,63 @@
                 <h2 class="ifinmail-panel-title">{% trans 'Mail Routing Controls' %}</h2>
                 <div class="ifinmail-engine-row">
                     <span><strong>{% trans 'Global SMTP Proxy' %}</strong><small>{% trans 'Force all outbound through US-EAST-1 cluster.' %}</small></span>
-                    <span class="ifinmail-switch{% if smtp_proxy_enabled %} ifinmail-switch--on{% endif %}" onclick="toggleSMTPProxy()" style="cursor:pointer" title="{% trans 'Click to toggle' %}"></span>
+                    <span class="ifinmail-switch{% if smtp_proxy_enabled %} ifinmail-switch--on{% endif %}" data-action="toggle-proxy" data-url="{% url 'dns:toggle_proxy' %}" title="{% trans 'Click to toggle' %}"></span>
                 </div>
                 <div class="ifinmail-engine-row">
                     <span><strong>{% trans 'Smart Host Relay' %}</strong><small>{% trans 'Use SendGrid/AWS SES fallback on high latency.' %}</small></span>
-                    <span class="ifinmail-switch{% if smart_host_enabled %} ifinmail-switch--on{% endif %}" onclick="toggleSmartHost()" style="cursor:pointer" title="{% trans 'Click to toggle' %}"></span>
+                    <span class="ifinmail-switch{% if smart_host_enabled %} ifinmail-switch--on{% endif %}" data-action="toggle-relay" data-url="{% url 'dns:toggle_relay' %}" title="{% trans 'Click to toggle' %}"></span>
                 </div>
-                <span class="ifinmail-overline" style="margin-top:14px">{% trans 'Max Hop Count Limit' %} — <strong id="hop-count-label">{{ max_hop_count|default:'10' }}</strong></span>
-                <input type="range" min="5" max="30" value="{{ max_hop_count|default:'10' }}" onchange="setHopCount(this.value)" oninput="document.getElementById('hop-count-label').textContent = this.value" style="width:100%;margin-top:8px">
+                <span class="ifinmail-overline ifinmail-hop-overline">{% trans 'Max Hop Count Limit' %} — <strong id="hop-count-label">{{ max_hop_count|default:'10' }}</strong></span>
+                <input type="range" id="hop-count-slider" min="5" max="30" value="{{ max_hop_count|default:'10' }}" data-action="set-hop-count" data-url="{% url 'dns:set_hop_count' %}" class="ifinmail-hop-slider">
             </article>
         </div>
     </div>
 </section>
 
-{% block dns_config_scripts %}
-<script>
-(function() {
-    function getCSRFToken() {
-        var el = document.querySelector('[name=csrfmiddlewaretoken]');
-        return el ? el.value : '';
-     }
+<!-- Register Domain Modal -->
+<div class="ifinmail-modal-overlay" id="register-domain-modal">
+    <div class="ifinmail-modal ifinmail-modal-dialog">
+        <div class="ifinmail-modal-header">
+            <h3 class="ifinmail-modal-title">{% trans 'Register New Domain' %}</h3>
+            <button class="ifinmail-modal-close" id="register-modal-close" aria-label="{% trans 'Close' %}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ifinmail-modal-body">
+            <form id="register-domain-form-inner">
+                {% csrf_token %}
+                <div class="ifinmail-form-group">
+                    <label class="ifinmail-label">{% trans 'Domain Name' %}</label>
+                    <input id="new-domain-input" type="text" placeholder="{% trans 'example.com or mail' %}" class="ifinmail-input ifinmail-input--full" autocomplete="off" required>
+                    <small class="ifinmail-help-text">{% trans 'Type a full domain (example.com) or a subdomain prefix (mail). For subdomains, select the parent below.' %}</small>
+                </div>
+                <div class="ifinmail-form-group ifinmail-form-group--hidden" id="parent-domain-group">
+                    <label class="ifinmail-label">{% trans 'Parent Domain' %}</label>
+                    <select id="parent-domain-select" class="ifinmail-input ifinmail-input--full">
+                        <option value="">{% trans 'Select parent domain...' %}</option>
+                        {% for row in dns_registry_rows %}
+                        <option value="{{ row.name }}">{{ row.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="ifinmail-form-group ifinmail-form-group--hidden" id="ip-address-group">
+                    <label class="ifinmail-label">{% trans 'IP Address' %} <span class="ifinmail-required">*</span></label>
+                    <input id="new-domain-ip" type="text" placeholder="192.168.1.1" class="ifinmail-input ifinmail-input--full" autocomplete="off">
+                    <small class="ifinmail-help-text">{% trans 'Required for subdomains. The IP this subdomain will resolve to.' %}</small>
+                </div>
+            </form>
+            <pre id="register-result" class="ifinmail-codebox ifinmail-hidden"></pre>
+        </div>
+        <div class="ifinmail-modal-footer">
+            <button type="button" class="ifinmail-btn ifinmail-btn--ghost" data-action="close-register-modal">{% trans 'Cancel' %}</button>
+            <button type="button" class="ifinmail-btn ifinmail-btn--primary" data-action="register-domain" data-url="{% url 'dns:register' %}">{% trans 'Register' %}</button>
+        </div>
+    </div>
+</div>
 
-    window.toggleRegisterForm = function() {
-        var form = document.getElementById('register-domain-form');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        if (form.style.display === 'block') {
-            document.getElementById('new-domain-input').focus();
-        }
-    };
 
-    window.registerDomain = function() {
-        var domain = document.getElementById('new-domain-input').value.trim();
-        var result = document.getElementById('register-result');
-        if (!domain) return;
-        result.style.display = 'block';
-        result.textContent = 'Registering…';
-        var formData = new FormData();
-        formData.append('domain', domain);
-        fetch('{% url "dns:register" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()},
-            body: formData
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                var lines = ['Domain: ' + data.domain, 'Created: ' + (data.created ? 'Yes (new)' : 'No (existing)'), 'Records:'];
-                data.records.forEach(function(r) {
-                    lines.push('  ' + r.type + ' ' + r.name + ' → ' + r.value);
-                });
-                result.textContent = lines.join('\n');
-                setTimeout(function() { location.reload(); }, 2000);
-            } else {
-                result.textContent = 'Error: ' + (data.error || 'Unknown');
-            }
-        })
-        .catch(function() {
-            result.textContent = 'Request failed. Please try again.';
-        });
-    };
-
-    window.copyToClipboard = function(text) {
-        navigator.clipboard.writeText(text).then(function() {
-            var btn = event && event.target;
-            if (btn) {
-                var orig = btn.textContent;
-                btn.textContent = '{% trans "Copied!" %}';
-                setTimeout(function() { btn.textContent = orig; }, 1500);
-            }
-        }).catch(function() {
-            // Fallback for older browsers
-            var ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-        });
-    };
-
-    window.editRecord = function(type) {
-        alert('{% trans "DNS record editing is managed through your provider. Use the DNS Toolbox to copy the current record value and paste it into your provider dashboard." %}');
-    };
-
-    window.toggleSMTPProxy = function() {
-        var el = event && event.target;
-        fetch('{% url "dns:toggle_proxy" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()}
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                if (el) { el.classList.toggle('ifinmail-switch--on', data.enabled); }
-                alert('{% trans "SMTP Proxy" %}: ' + (data.enabled ? '{% trans "enabled" %}' : '{% trans "disabled" %}') + '. ' + (data.note || ''));
-            }
-        });
-    };
-
-    window.toggleSmartHost = function() {
-        var el = event && event.target;
-        fetch('{% url "dns:toggle_relay" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()}
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                if (el) { el.classList.toggle('ifinmail-switch--on', data.enabled); }
-                alert('{% trans "Smart Host Relay" %}: ' + (data.enabled ? '{% trans "enabled" %}' : '{% trans "disabled" %}') + '. ' + (data.note || ''));
-            }
-        });
-    };
-
-    window.setHopCount = function(value) {
-        var formData = new FormData();
-        formData.append('value', value);
-        fetch('{% url "dns:set_hop_count" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()},
-            body: formData
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                document.getElementById('hop-count-label').textContent = data.value;
-            }
-        });
-    };
-
-    window.refreshDNSStatus = function() {
-        var btn = event && event.target ? event.target : document.querySelector('[onclick="refreshDNSStatus()"]');
-        if (btn) { btn.disabled = true; btn.textContent = '{% trans 'Refreshing...' %}'; }
-        var url = '{% url "dns:status" %}?domain={{ domain|urlencode }}';
-        fetch(url)
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (btn) { btn.disabled = false; btn.textContent = '{% trans 'Full Zone Refresh' %}'; }
-            if (data && data.status) {
-              console.log('DNS refresh complete:', data.status);
-            }
-          })
-          .catch(function () {
-            if (btn) { btn.disabled = false; btn.textContent = '{% trans 'Full Zone Refresh' %}'; }
-          });
-    };
-})();
-</script>
 {% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/ifinmail-dns-config.js' %}"></script>
 {% endblock %}

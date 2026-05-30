@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% load static %}
 
 {% block title %}{% blocktrans trimmed with name=brand.name|default:'ifinmail' %}Server Dashboard — {{ name }}{% endblocktrans %}{% endblock %}
 
@@ -16,7 +16,7 @@
                 <p class="ifinmail-page-subtitle">{% trans 'Real-time infrastructure health and operational telemetry' %}</p>
             </div>
             <div class="ifinmail-page-actions">
-                <button class="ifinmail-btn" onclick="forceRescan()">{% trans 'Force Rescan' %}</button>
+                <button class="ifinmail-btn" data-action="rescan" data-url="{% url 'accounts:rescan' %}">{% trans 'Force Rescan' %}</button>
             </div>
         </div>
 
@@ -101,14 +101,14 @@
                             <small class="ifinmail-text--muted">{% trans 'Create new mailbox' %}</small>
                         </span>
                     </a>
-                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionSSL()">
+                    <a href="#" class="ifinmail-quick-action" data-action="tls-info">
                         <span class="ifinmail-icon-tile">↓</span>
                         <span>
                             <strong>{% trans 'TLS Certificate' %}</strong>
                             <small class="ifinmail-text--muted">{% trans 'View details & status' %}</small>
                         </span>
                     </a>
-                    <a href="#" class="ifinmail-quick-action" onclick="event.preventDefault(); quickActionPurge()">
+                    <a href="#" class="ifinmail-quick-action" data-action="purge-logs" data-url="{% url 'accounts:log_purge' %}" data-confirm="{% trans 'Delete all archived audit logs, keeping the 500 most recent?' %}">
                         <span class="ifinmail-icon-tile">⌁</span>
                         <span>
                             <strong>{% trans 'Purge Logs' %}</strong>
@@ -182,72 +182,9 @@
     </div>
 </section>
 
-<script>
-(function() {
-    function getCSRFToken() {
-        var el = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (el) return el.value;
-        var name = 'csrftoken';
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var c = cookies[i].trim();
-            if (c.indexOf(name + '=') === 0) {
-                return decodeURIComponent(c.substring(name.length + 1));
-            }
-        }
-        return '';
-    }
+{{ tls_info|json_script:"tls-info-data" }}
+{% endblock %}
 
-    window.forceRescan = function() {
-        var btn = event.target;
-        btn.disabled = true;
-        btn.textContent = 'Scanning…';
-        fetch('{% url "accounts:rescan" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()}
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            btn.textContent = data.status === 'ok' ? 'Rescan Complete' : 'Rescan Failed';
-            btn.disabled = false;
-            setTimeout(function() { btn.textContent = '{% trans "Force Rescan" %}'; }, 3000);
-            if (data.status === 'ok') location.reload();
-        })
-        .catch(function() {
-            btn.textContent = 'Request Failed';
-            btn.disabled = false;
-            setTimeout(function() { btn.textContent = '{% trans "Force Rescan" %}'; }, 3000);
-        });
-    };
-
-    window.quickActionSSL = function() {
-        var tls = {{ tls_info_json|safe|default:'{}' }};
-        var msg = '{% trans "TLS Certificate Info" %}' + '\n\n';
-        if (tls.issuer) msg += '{% trans "Issuer" %}: ' + tls.issuer + '\n';
-        if (tls.sans && tls.sans.length) msg += '{% trans "Domains" %}: ' + tls.sans.join(', ') + '\n';
-        if (tls.expiry_days !== undefined && tls.expiry_days !== null) msg += '{% trans "Expires in" %}: ' + tls.expiry_days + ' days\n';
-        else msg += '{% trans "No certificate found" %}\n';
-        alert(msg);
-    };
-
-    window.quickActionPurge = function() {
-        if (!confirm('{% trans "Delete all archived audit logs, keeping the 500 most recent?" %}')) return;
-        fetch('{% url "accounts:log_purge" %}', {
-            method: 'POST',
-            headers: {'X-CSRFToken': getCSRFToken()}
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.status === 'ok') {
-                alert('{% trans "Purged" %}: ' + (data.deleted || 0) + ' {% trans "entries" %}');
-                location.reload();
-            } else {
-                alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown" %}'));
-            }
-        })
-        .catch(function() { alert('{% trans "Request failed" %}'); });
-    };
-
-})();
-</script>
+{% block scripts %}
+<script src="{% static 'js/ifinmail-dashboard.js' %}"></script>
 {% endblock %}

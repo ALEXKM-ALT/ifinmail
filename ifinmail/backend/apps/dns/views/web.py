@@ -141,30 +141,69 @@ def dns_config_page(request: HttpRequest) -> HttpResponse:
 
 
 _VALID_DOMAIN_RE = re.compile(r'^(?!-)[a-zA-Z0-9-]{1,63}(?:\.[a-zA-Z0-9-]{1,63})*\.[a-zA-Z]{2,}$')
+_VALID_LABEL_RE = re.compile(r'^(?!-)[a-zA-Z0-9-]{1,63}$')
+_VALID_IP_RE = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
+
+
+def _is_subdomain(domain_name: str, parent_domain: str | None) -> bool:
+    """Return True if the resolved domain is a subdomain (not a bare parent)."""
+    return bool(parent_domain and domain_name != parent_domain)
 
 
 @login_required
 @user_passes_test(_is_staff, login_url='accounts:login')
 @require_POST
 def dns_register_domain(request: HttpRequest) -> JsonResponse:
-    """Register a new domain and build its DNS records."""
-    domain_name = request.POST.get('domain', '').strip().lower()
-    if not domain_name or len(domain_name) > 255:
+    """Register a new domain or subdomain and build its DNS records."""
+    raw_domain = request.POST.get('domain', '').strip().lower()
+    parent_domain = request.POST.get('parent_domain', '').strip().lower() or None
+    ip_address = request.POST.get('ip_address', '').strip() or None
+
+    if not raw_domain or len(raw_domain) > 255:
         return JsonResponse(
             {'status': 'err', 'error': 'Invalid domain name'},
             status=400,
             content_type='application/json; charset=utf-8',
         )
+
+    # Resolve the full domain name.
+    if '.' in raw_domain:
+        domain_name = raw_domain
+    elif parent_domain:
+        domain_name = f'{raw_domain}.{parent_domain}'
+    else:
+        return JsonResponse(
+            {'status': 'err', 'error': 'Select a parent domain or enter a full domain name'},
+            status=400,
+            content_type='application/json; charset=utf-8',
+        )
+
     if not _VALID_DOMAIN_RE.match(domain_name):
         return JsonResponse(
             {'status': 'err', 'error': 'Domain name format is invalid'},
             status=400,
             content_type='application/json; charset=utf-8',
         )
+
+    # IP address is required for subdomains.
+    is_sub = _is_subdomain(domain_name, parent_domain)
+    if is_sub:
+        if not ip_address or not _VALID_IP_RE.match(ip_address):
+            return JsonResponse(
+                {'status': 'err', 'error': 'A valid IP address is required for subdomains'},
+                status=400,
+                content_type='application/json; charset=utf-8',
+            )
+    else:
+        ip_address = None  # root domains use auto-detected server IP
+
     try:
-        domain, created = DomainService.get_or_create_domain(name=domain_name)
+        domain, created = DomainService.get_or_create_domain(
+            name=domain_name,
+            ip_address=ip_address,
+        )
         server_ip = _get_server_ip()
-        records = _build_records(domain_name, server_ip)
+        records = _build_records(domain_name, server_ip, ip_address=ip_address)
         AuditService.record(
             action='domain_registered',
             user=request.user.email if request.user.is_authenticated else None,
