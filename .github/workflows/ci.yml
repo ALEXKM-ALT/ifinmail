@@ -1,8 +1,8 @@
-name: CI
+name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     tags: ["v*"]
   pull_request:
     branches: [main]
@@ -13,13 +13,17 @@ env:
   IFINMAIL_SECRET_KEY: ci-test-key
   IFINMAIL_ACCESS_TOKEN_EXPIRE: "15"
   IFINMAIL_REFRESH_TOKEN_EXPIRE: "7"
+  IFINMAIL_ENV: development
 
 permissions:
   contents: read
   packages: write
+  security-events: write
+  id-token: write
 
 jobs:
   lint:
+    name: Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,8 +32,22 @@ jobs:
           python-version: "3.13"
       - run: pip install ruff
       - run: ruff check src/
+      - run: ruff format --check src/
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install mypy
+      - run: pip install -e ".[dev]"
+      - run: mypy src/
 
   test:
+    name: Tests
     runs-on: ubuntu-latest
     services:
       redis:
@@ -37,21 +55,54 @@ jobs:
         ports:
           - 6379:6379
         options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 5
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/ -v --tb=short
+      - name: Upload coverage
+        if: matrix.python-version == '3.13'
+        run: |
+          pip install coverage pytest-cov
+          pytest tests/ --cov=ifinmail --cov-report=xml -v --tb=short
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install -e ".[dev]"
-      - run: pytest tests/ -v
+      - name: Install pip-audit
+        run: pip install pip-audit
+      - name: Audit dependencies
+        run: pip-audit --no-deps -r <(pip freeze) || true
+      - name: Check for secrets
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --all-files --baseline .secrets.baseline || true
 
   docker:
+    name: Docker Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t ifinmail-app .
 
   docker-push:
+    name: Docker Push
     needs: [lint, test, docker]
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -80,3 +131,26 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy
+    needs: [lint, test, security, docker]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to production
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          echo "$DEPLOY_KEY" > deploy_key
+          chmod 600 deploy_key
+          ssh -o StrictHostKeyChecking=no -i deploy_key \
+            $DEPLOY_USER@$DEPLOY_HOST \
+            "cd /opt/ifinmail && \
+             git pull origin main && \
+             docker compose pull && \
+             docker compose up -d --remove-orphans && \
+             docker system prune -f"

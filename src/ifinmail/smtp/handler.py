@@ -1,7 +1,9 @@
 import email.utils
 import logging
 import os
+import smtplib
 import uuid
+from email.message import EmailMessage
 from email.parser import BytesParser
 from email.policy import default
 from pathlib import Path
@@ -11,7 +13,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from ifinmail.api.config import settings
-from ifinmail.db.models import Alias, Attachment, Domain, Mailbox, Message
+from ifinmail.api.filter_engine import apply_filters_for_mailbox
+from ifinmail.db.models import (
+    Alias,
+    Attachment,
+    Domain,
+    ForwardingRule,
+    Mailbox,
+    Message,
+    Organization,
+    OrganizationMember,
+    VacationResponder,
+)
 
 logger = logging.getLogger("ifinmail.smtp")
 
@@ -80,41 +93,45 @@ class SMTPHandler:
         try:
             stored = 0
             for rcpt in rcpttos:
-                mailbox = _resolve_recipient(db, rcpt)
-                if not mailbox:
-                    continue
-                msg = Message(
-                    mailbox_id=mailbox.id,
-                    message_id=message_id,
-                    from_addr=mailfrom,
-                    to_addrs=to_addr,
-                    cc_addrs=cc_addr or None,
-                    subject=subject,
-                    body_text=body_text,
-                    body_html=body_html or None,
-                    size=len(data),
-                    folder="INBOX",
-                    has_attachments=1 if attachments else 0,
-                )
-                db.add(msg)
-                db.flush()
-
-                for filename, ctype, payload in attachments:
-                    storage_path = os.environ.get("IFINMAIL_ATTACHMENT_STORAGE") or settings.attachment_storage
-                    storage_dir = Path(storage_path)
-                    storage_dir.mkdir(parents=True, exist_ok=True)
-                    unique = f"{uuid.uuid4().hex}_{filename}"
-                    (storage_dir / unique).write_bytes(payload)
-                    att = Attachment(
-                        message_id=msg.id,
-                        filename=filename,
-                        content_type=ctype,
-                        size=len(payload),
-                        storage_path=str(unique),
+                mailboxes = _resolve_recipients(db, rcpt)
+                for mailbox in mailboxes:
+                    msg = Message(
+                        mailbox_id=mailbox.id,
+                        message_id=message_id,
+                        from_addr=mailfrom,
+                        to_addrs=to_addr,
+                        cc_addrs=cc_addr or None,
+                        subject=subject,
+                        body_text=body_text,
+                        body_html=body_html or None,
+                        size=len(data),
+                        folder="INBOX",
+                        has_attachments=1 if attachments else 0,
                     )
-                    db.add(att)
+                    apply_filters_for_mailbox(
+                        db, mailbox, rcpt,
+                        {"from_addr": mailfrom, "subject": subject, "body_text": body_text, "body_html": body_html or ""},
+                        msg,
+                    )
+                    db.add(msg)
+                    db.flush()
 
-                stored += 1
+                    for filename, ctype, payload in attachments:
+                        storage_path = os.environ.get("IFINMAIL_ATTACHMENT_STORAGE") or settings.attachment_storage
+                        storage_dir = Path(storage_path)
+                        storage_dir.mkdir(parents=True, exist_ok=True)
+                        unique = f"{uuid.uuid4().hex}_{filename}"
+                        (storage_dir / unique).write_bytes(payload)
+                        att = Attachment(
+                            message_id=msg.id,
+                            filename=filename,
+                            content_type=ctype,
+                            size=len(payload),
+                            storage_path=str(unique),
+                        )
+                        db.add(att)
+
+                    stored += 1
             db.commit()
             logger.info(
                 "Stored %d/%d messages from %s (%d attachments)",
@@ -123,6 +140,14 @@ class SMTPHandler:
                 mailfrom,
                 len(attachments),
             )
+
+            # Post-storage: forwarding and auto-reply
+            for rcpt in rcpttos:
+                mailboxes = _resolve_recipients(db, rcpt)
+                for mailbox in mailboxes:
+                    _handle_forwarding(db, mailbox, mailfrom, to_addr, cc_addr, subject, body_text, body_html, data, attachments)
+                    _handle_autoreply(db, mailbox, mailfrom, mailboxes[0].id if mailboxes else 0)
+
             if stored == 0:
                 return "550 No valid recipients"
             return MISSING
@@ -145,17 +170,36 @@ def _recipient_exists(db: Session, email_addr: str) -> bool:
     alias = db.query(Alias).filter(Alias.source == email_addr, Alias.enabled == 1).first()
     if alias:
         return True
+    org = db.query(Organization).filter(Organization.email == email_addr).first()
+    if org:
+        return True
     return False
 
 
-def _resolve_recipient(db: Session, email_addr: str) -> Mailbox | None:
+def _resolve_recipients(db: Session, email_addr: str) -> list[Mailbox]:
     mailbox = db.query(Mailbox).filter(Mailbox.email == email_addr).first()
     if mailbox:
-        return mailbox
-    alias = db.query(Alias).filter(Alias.source == email_addr, Alias.enabled == 1).first()
-    if alias:
-        return db.query(Mailbox).filter(Mailbox.email == alias.target).first()
-    return None
+        return [mailbox]
+
+    org = db.query(Organization).filter(Organization.email == email_addr).first()
+    if org:
+        members = db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()
+        mailboxes = []
+        for m in members:
+            mb = db.query(Mailbox).filter(Mailbox.user_id == m.user_id).first()
+            if mb:
+                mailboxes.append(mb)
+        return mailboxes
+
+    aliases = db.query(Alias).filter(Alias.source == email_addr, Alias.enabled == 1).all()
+    mailboxes = []
+    seen = set()
+    for alias in aliases:
+        mb = db.query(Mailbox).filter(Mailbox.email == alias.target).first()
+        if mb and mb.id not in seen:
+            seen.add(mb.id)
+            mailboxes.append(mb)
+    return mailboxes
 
 
 def _decode_part(part) -> str:
@@ -167,3 +211,133 @@ def _decode_part(part) -> str:
         return payload.decode(charset, errors="replace")
     except (LookupError, UnicodeDecodeError):
         return payload.decode("utf-8", errors="replace")
+
+
+_autoreply_sent: dict[tuple[int, str], str] = {}
+"""In-memory cache: (mailbox_id, sender_lower) -> date_string (YYYY-MM-DD).
+Prevents sending more than one auto-reply per sender per day per mailbox."""
+
+
+def _now_date() -> str:
+    from datetime import date
+    return date.today().isoformat()
+
+
+def _relay_send(from_addr: str, to_addr: str, subject: str, body_text: str, body_html: str | None = None):
+    """Send an email via the configured SMTP relay."""
+    if not settings.smtp_host:
+        logger.warning("SMTP relay not configured, cannot send")
+        return
+    msg = EmailMessage()
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+    msg["Subject"] = subject
+    msg["Message-ID"] = email.utils.make_msgid(domain=from_addr.split("@")[-1])
+    msg["Date"] = email.utils.formatdate(localtime=True)
+    if body_html:
+        msg.set_content(body_text)
+        msg.add_alternative(body_html, subtype="html")
+    else:
+        msg.set_content(body_text)
+    raw = msg.as_string()
+    domain_part = from_addr.split("@")[-1] if "@" in from_addr else ""
+    if domain_part:
+        from ifinmail.api.deps import get_db
+        from ifinmail.api.dkim_utils import dkim_sign_message
+        from ifinmail.db.models import Domain
+
+        try:
+            sess = next(get_db())
+            dom = sess.query(Domain).filter(Domain.domain == domain_part).first()
+            if dom and dom.dkim_private_key:
+                signed = dkim_sign_message(
+                    raw.encode(),
+                    domain=domain_part,
+                    selector=dom.dkim_selector or "default",
+                    private_key_pem=dom.dkim_private_key,
+                )
+                raw = signed.decode() if isinstance(signed, bytes) else signed
+            sess.close()
+        except Exception:
+            pass
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=settings.smtp_timeout) as server:
+            if settings.smtp_tls:
+                server.starttls()
+            if settings.smtp_user:
+                server.login(settings.smtp_user, settings.smtp_password)
+            server.sendmail(from_addr, [to_addr], raw)
+        logger.info("Relayed email to %s via SMTP", to_addr)
+    except Exception:
+        logger.exception("Failed to relay email to %s", to_addr)
+
+
+def _handle_forwarding(
+    db: Session,
+    mailbox: Mailbox,
+    mailfrom: str,
+    to_addr: str,
+    cc_addr: str | None,
+    subject: str,
+    body_text: str,
+    body_html: str | None,
+    raw_data: bytes,
+    attachments: list[tuple[str, str, bytes]],
+):
+    """Forward a copy of the message to each enabled forwarding target."""
+    rules = db.query(ForwardingRule).filter(
+        ForwardingRule.mailbox_id == mailbox.id,
+        ForwardingRule.enabled == 1,
+    ).all()
+    if not rules:
+        return
+
+    original_to = to_addr or mailbox.email
+    for rule in rules:
+        if rule.target_email == mailfrom:
+            continue
+        target = rule.target_email
+        # Build a forward message — keep original subject with prefix
+        fwd_subject = f"Fwd: {subject}" if subject else "(no subject)"
+        fwd_body = (
+            f"---------- Forwarded message ----------\n"
+            f"From: {mailfrom}\n"
+            f"To: {original_to}\n"
+            f"Subject: {subject}\n"
+            f"Date: {email.utils.formatdate(localtime=True)}\n\n"
+            f"{body_text}"
+        )
+        fwd_html = None
+        if body_html:
+            fwd_html = (
+                f"<hr><p><strong>Forwarded message</strong><br>"
+                f"From: {mailfrom}<br>To: {original_to}<br>"
+                f"Subject: {subject}<br>Date: {email.utils.formatdate(localtime=True)}</p>"
+                f"<hr>{body_html}"
+            )
+        _relay_send(mailbox.email, target, fwd_subject, fwd_body, fwd_html)
+
+
+def _handle_autoreply(
+    db: Session,
+    mailbox: Mailbox,
+    mailfrom: str,
+    rcpt_mailbox_id: int,
+):
+    """Send a vacation auto-reply if enabled, max once per sender per day."""
+    vr = db.query(VacationResponder).filter(
+        VacationResponder.mailbox_id == mailbox.id,
+        VacationResponder.enabled == 1,
+    ).first()
+    if not vr:
+        return
+    today = _now_date()
+    key = (mailbox.id, mailfrom.lower())
+    if _autoreply_sent.get(key) == today:
+        return
+
+    reply_subject = vr.subject or "Auto-reply"
+    reply_body = vr.body or ""
+    _relay_send(mailbox.email, mailfrom, reply_subject, reply_body)
+    _autoreply_sent[key] = today
+    logger.info("Sent auto-reply from %s to %s", mailbox.email, mailfrom)

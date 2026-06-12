@@ -1,10 +1,11 @@
 import email.utils
+import hashlib
 import logging
 import smtplib
 from datetime import UTC, datetime, timedelta
 from email.message import EmailMessage
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -14,13 +15,13 @@ from sqlalchemy.orm import Session
 from ifinmail.api.config import settings
 from ifinmail.api.deps import get_db, get_redis
 from ifinmail.api.limiter import strict
-from ifinmail.db.models import Domain, Mailbox, User
+from ifinmail.db.models import ApiKey, Domain, Mailbox, User
 
 logger = logging.getLogger("ifinmail.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 class RegisterRequest(BaseModel):
@@ -60,6 +61,13 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RegisterResponse(BaseModel):
+    message: str
+    email: str
+    id: int
+    is_admin: bool
 
 
 def _create_access_token(user_id: int) -> str:
@@ -134,9 +142,26 @@ def _ensure_domain(email: str, db: Session) -> Domain:
 
 
 def get_current_user(
-    creds: HTTPAuthorizationCredentials = Depends(security),
+    creds: HTTPAuthorizationCredentials | None = Depends(security, use_cache=False),
     db: Session = Depends(get_db),
+    x_api_key: str | None = Header(None, alias="X-Api-Key"),
 ) -> User:
+    if x_api_key:
+        key_hash = hashlib.sha256(x_api_key.encode()).hexdigest()
+        api_key = db.query(ApiKey).filter(
+            ApiKey.key_hash == key_hash,
+            ApiKey.active == 1,
+        ).first()
+        if not api_key:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+        user = db.query(User).filter(User.id == api_key.user_id).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        api_key.last_used_at = datetime.now(UTC)
+        db.flush()
+        return user
+    if creds is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     token = creds.credentials
     if _is_token_blacklisted(token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
@@ -147,7 +172,7 @@ def get_current_user(
     return user
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=RegisterResponse)
 def register(req: RegisterRequest, db: Session = Depends(get_db), _: None = strict):
     if not req.email or "@" not in req.email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
@@ -175,7 +200,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db), _: None = stri
     db.add(mailbox)
     db.commit()
 
-    return {"message": "User registered", "email": req.email}
+    return RegisterResponse(message="User registered", email=req.email, id=user.id, is_admin=bool(user.is_admin))
 
 
 @router.post("/login")

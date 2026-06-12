@@ -1,6 +1,9 @@
+import os
 from unittest.mock import patch
 
 import pytest
+
+os.environ["IFINMAIL_ENV"] = "testing"
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -101,6 +104,10 @@ def db_session(engine):
     conn = engine.connect()
     tx = conn.begin()
     session = sessionmaker(bind=conn)()
+
+    actual_commit = session.commit
+    session.commit = lambda: session.flush()
+
     yield session
     session.close()
     tx.rollback()

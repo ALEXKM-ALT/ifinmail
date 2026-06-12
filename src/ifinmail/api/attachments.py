@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from ifinmail.api.auth import get_current_user
 from ifinmail.api.config import settings
 from ifinmail.api.deps import get_db
+from ifinmail.api.limiter import user_moderate
 from ifinmail.db.models import Attachment, Message, User
 from ifinmail.db.models import Mailbox as MailboxModel
 
@@ -45,6 +46,7 @@ def upload_attachment(
     file: UploadFile,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: None = user_moderate,
 ):
     storage_dir = _storage_dir()
     unique = f"{uuid.uuid4().hex}_{file.filename}"

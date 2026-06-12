@@ -1,0 +1,5 @@
+hosts = db
+dbname = ifinmail
+user = ifinmail
+password = ${IFINMAIL_DB_PASSWORD}
+query = SELECT domain FROM domains WHERE domain='%s' AND verified=TRUE

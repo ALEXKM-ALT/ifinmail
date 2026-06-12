@@ -1,0 +1,5 @@
+hosts = db
+dbname = ifinmail
+user = ifinmail
+password = ${IFINMAIL_DB_PASSWORD}
+query = SELECT CONCAT(m.email, '/') FROM mailboxes m JOIN users u ON m.user_id = u.id WHERE m.email='%s' AND m.enabled=TRUE

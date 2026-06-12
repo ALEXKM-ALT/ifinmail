@@ -1,3 +1,8 @@
+x-common-env: &common-env
+  IFINMAIL_DATABASE_URL: postgresql://ifinmail:${IFINMAIL_DB_PASSWORD:-ifinmail_dev}@db:5432/ifinmail
+  IFINMAIL_REDIS_URL: redis://redis:6379/0
+  IFINMAIL_SECRET_KEY: ${IFINMAIL_SECRET_KEY:?Set IFINMAIL_SECRET_KEY}
+
 services:
   db:
     image: postgres:17-alpine
@@ -12,6 +17,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -20,6 +28,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
 
   api:
     build:
@@ -27,23 +38,24 @@ services:
     ports:
       - "8000:8000"
     environment:
-      IFINMAIL_DATABASE_URL: postgresql://ifinmail:${IFINMAIL_DB_PASSWORD:-ifinmail_dev}@db:5432/ifinmail
-      IFINMAIL_REDIS_URL: redis://redis:6379/0
-      IFINMAIL_SECRET_KEY: ${IFINMAIL_SECRET_KEY:-change-me-in-production}
+      <<: *common-env
+      IFINMAIL_ENV: ${IFINMAIL_ENV:-development}
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
     volumes:
       - ./src:/app/src
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
+      - maildata:/var/mail
     command: >
       sh -c "
         alembic upgrade head &&
         uvicorn ifinmail.api.app:app --host 0.0.0.0 --port 8000 --reload
       "
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
 
   smtp:
     build:
@@ -51,14 +63,74 @@ services:
     ports:
       - "5025:25"
     environment:
-      IFINMAIL_DATABASE_URL: postgresql://ifinmail:${IFINMAIL_DB_PASSWORD:-ifinmail_dev}@db:5432/ifinmail
-      IFINMAIL_SECRET_KEY: ${IFINMAIL_SECRET_KEY:-change-me-in-production}
+      <<: *common-env
     depends_on:
-      db:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
     volumes:
       - ./src:/app/src
+      - maildata:/var/mail
     command: ["ifinmail", "smtp"]
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
+
+  postfix:
+    build:
+      context: ./docker/postfix
+    ports:
+      - "25:25"
+      - "587:587"
+    environment:
+      <<: *common-env
+      IFINMAIL_DB_PASSWORD: ${IFINMAIL_DB_PASSWORD:-ifinmail_dev}
+    depends_on:
+      db: { condition: service_healthy }
+      dovecot: { condition: service_started }
+      rspamd: { condition: service_started }
+    volumes:
+      - maildata:/var/mail
+      - postfix-queue:/var/spool/postfix
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
+
+  dovecot:
+    build:
+      context: ./docker/dovecot
+    ports:
+      - "143:143"
+      - "993:993"
+      - "24:24"
+    environment:
+      IFINMAIL_DB_PASSWORD: ${IFINMAIL_DB_PASSWORD:-ifinmail_dev}
+    depends_on:
+      db: { condition: service_healthy }
+    volumes:
+      - maildata:/var/mail
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
+
+  rspamd:
+    build:
+      context: ./docker/rspamd
+    ports:
+      - "11334:11334"
+    depends_on:
+      redis: { condition: service_healthy }
+    volumes:
+      - dkim-keys:/var/lib/rspamd/dkim
+    networks:
+      - ifinmail-net
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  maildata:
+  postfix-queue:
+  dkim-keys:
+
+networks:
+  ifinmail-net:
+    driver: bridge

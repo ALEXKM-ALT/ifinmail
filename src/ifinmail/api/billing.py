@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
 from ifinmail.api.deps import get_db
+from ifinmail.api.limiter import user_strict
 from ifinmail.db.models import Mailbox as MailboxModel
 from ifinmail.db.models import User
 
@@ -47,6 +48,7 @@ def subscribe(
     req: SubscribeRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: None = user_strict,
 ):
     plan = PLANS.get(req.plan)
     if not plan:

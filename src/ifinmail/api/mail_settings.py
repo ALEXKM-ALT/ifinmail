@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
 from ifinmail.api.deps import get_db
+from ifinmail.api.limiter import user_moderate
 from ifinmail.db.models import ForwardingRule, User, VacationResponder
 from ifinmail.db.models import Mailbox as MailboxModel
 
@@ -46,7 +47,12 @@ def get_vacation(db: Session = Depends(get_db), user: User = Depends(get_current
 
 
 @router.put("/vacation", response_model=VacationResponse)
-def set_vacation(req: VacationRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def set_vacation(
+    req: VacationRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    _: None = user_moderate,
+):
     mailbox = _get_mailbox(user, db)
     vr = db.query(VacationResponder).filter(VacationResponder.mailbox_id == mailbox.id).first()
     if not vr:
@@ -68,6 +74,11 @@ class ForwardingRequest(BaseModel):
     enabled: bool = True
 
 
+class ForwardingUpdateRequest(BaseModel):
+    target_email: str | None = None
+    enabled: bool | None = None
+
+
 class ForwardingResponse(BaseModel):
     id: int
     target_email: str
@@ -82,10 +93,38 @@ def get_forwarding(db: Session = Depends(get_db), user: User = Depends(get_curre
 
 
 @router.post("/forwarding", response_model=ForwardingResponse, status_code=status.HTTP_201_CREATED)
-def add_forwarding(req: ForwardingRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def add_forwarding(
+    req: ForwardingRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    _: None = user_moderate,
+):
     mailbox = _get_mailbox(user, db)
     rule = ForwardingRule(mailbox_id=mailbox.id, target_email=req.target_email, enabled=int(req.enabled))
     db.add(rule)
+    db.commit()
+    db.refresh(rule)
+    return ForwardingResponse(id=rule.id, target_email=rule.target_email, enabled=bool(rule.enabled))
+
+
+@router.put("/forwarding/{rule_id}", response_model=ForwardingResponse)
+def update_forwarding(
+    rule_id: int,
+    req: ForwardingUpdateRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    _: None = user_moderate,
+):
+    mailbox = _get_mailbox(user, db)
+    rule = (
+        db.query(ForwardingRule).filter(ForwardingRule.id == rule_id, ForwardingRule.mailbox_id == mailbox.id).first()
+    )
+    if not rule:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+    if req.target_email is not None:
+        rule.target_email = req.target_email
+    if req.enabled is not None:
+        rule.enabled = int(req.enabled)
     db.commit()
     db.refresh(rule)
     return ForwardingResponse(id=rule.id, target_email=rule.target_email, enabled=bool(rule.enabled))
