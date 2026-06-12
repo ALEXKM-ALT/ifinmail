@@ -3,9 +3,16 @@ import pytest
 
 @pytest.fixture
 def token(client):
-    client.post("/auth/register", json={"email": "user@mail.com", "password": "pass123"})
-    r = client.post("/auth/login", json={"email": "user@mail.com", "password": "pass123"})
-    return r.json()["access_token"]
+    r = client.post("/auth/register", json={"email": "user@mail.com", "password": "pass123"})
+    if r.status_code == 409:
+        r = client.post("/auth/login", json={"email": "user@mail.com", "password": "pass123"})
+    assert r.status_code in (201, 200), f"Setup failed: {r.json()}"
+    if r.status_code == 201:
+        r = client.post("/auth/login", json={"email": "user@mail.com", "password": "pass123"})
+    assert r.status_code == 200, f"Login failed: {r.json()}"
+    data = r.json()
+    assert "access_token" in data, f"No access_token: {data}"
+    return data["access_token"]
 
 
 class TestVacation:

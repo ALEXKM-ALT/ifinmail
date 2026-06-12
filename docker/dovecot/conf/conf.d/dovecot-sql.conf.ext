@@ -1,0 +1,30 @@
+# Dovecot SQL configuration
+# Connects to the ifinmail PostgreSQL database
+
+driver = pgsql
+connect = host=db dbname=ifinmail user=ifinmail password=${IFINMAIL_DB_PASSWORD}
+
+# Password verification using bcrypt
+# Users table stores bcrypt hashed passwords
+default_pass_scheme = BLF-CRYPT
+
+password_query = \
+  SELECT u.email AS user, u.password AS password, \
+    m.quota_mb * 1024 * 1024 AS quota_bytes \
+  FROM users u \
+  JOIN mailboxes m ON m.user_id = u.id \
+  WHERE u.email = '%u' AND m.enabled = TRUE
+
+user_query = \
+  SELECT CONCAT('/var/mail/', REPLACE(u.email, '@', '/')) AS home, \
+    'vmail' AS uid, 'vmail' AS gid, \
+    m.quota_mb * 1024 * 1024 AS quota_bytes \
+  FROM users u \
+  JOIN mailboxes m ON m.user_id = u.id \
+  WHERE u.email = '%u' AND m.enabled = TRUE
+
+iterate_query = \
+  SELECT u.email AS user \
+  FROM users u \
+  JOIN mailboxes m ON m.user_id = u.id \
+  WHERE m.enabled = TRUE

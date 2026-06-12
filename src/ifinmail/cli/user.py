@@ -55,6 +55,7 @@ def _ensure_domain(email: str, domain_arg: str | None, conn) -> str:
     if not domain_part:
         print("Could not determine domain.", file=__import__("sys").stderr)
         __import__("sys").exit(1)
+    assert domain_part is not None
     row = conn.execute("SELECT id FROM domains WHERE domain = ?", (domain_part,)).fetchone()
     if not row:
         print(f"Domain '{domain_part}' not found. Register it first.", file=__import__("sys").stderr)

@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, datetime
 from email.message import EmailMessage
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict, field_serializer
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
@@ -13,8 +13,21 @@ from sqlalchemy.orm import Session
 from ifinmail.api.auth import get_current_user
 from ifinmail.api.config import settings
 from ifinmail.api.deps import get_db
-from ifinmail.api.ws_manager import notify_user
-from ifinmail.db.models import Attachment, CustomFolder, Domain, Message, User
+from ifinmail.api.filter_engine import apply_filters_for_mailbox
+from ifinmail.api.limiter import user_moderate
+from ifinmail.api.tracking import inject_tracking
+from ifinmail.api.ws_manager import fire_notification
+from ifinmail.db.models import (
+    Attachment,
+    CustomFolder,
+    Domain,
+    EmailDelivery,
+    Message,
+    Organization,
+    OrganizationMember,
+    OrgSharedInboxMessage,
+    User,
+)
 from ifinmail.db.models import Mailbox as MailboxModel
 
 logger = logging.getLogger("ifinmail.mail")
@@ -26,10 +39,14 @@ STANDARD_FOLDERS = {"INBOX", "SENT", "DRAFTS", "TRASH", "SPAM", "ARCHIVE"}
 
 def _validate_folder(folder: str, mailbox: MailboxModel, db: Session) -> None:
     if folder not in STANDARD_FOLDERS:
-        custom = db.query(CustomFolder).filter(
-            CustomFolder.mailbox_id == mailbox.id,
-            CustomFolder.name == folder,
-        ).first()
+        custom = (
+            db.query(CustomFolder)
+            .filter(
+                CustomFolder.mailbox_id == mailbox.id,
+                CustomFolder.name == folder,
+            )
+            .first()
+        )
         if not custom:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -374,10 +391,12 @@ def get_message(
 
 
 @router.post("", response_model=SendResponse, status_code=status.HTTP_201_CREATED)
-async def send_email(
+def send_email(
     req: SendRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: None = user_moderate,
 ):
     mailbox = _get_mailbox(user, db)
 
@@ -415,17 +434,85 @@ async def send_email(
     if req.draft:
         return SendResponse(message="Draft saved", id=msg.id)
 
+    all_recipients = [r for r in [req.to] + ([req.cc] if req.cc else []) + ([req.bcc] if req.bcc else []) if r and "@" in r]
+    for addr in all_recipients:
+        delivery = EmailDelivery(message_id=msg.id, recipient=addr, status="sent")
+        db.add(delivery)
+    db.commit()
+
+    first_delivery = db.query(EmailDelivery).filter(EmailDelivery.message_id == msg.id).first()
+    if body_html and first_delivery:
+        body_html = inject_tracking(body_html, first_delivery.id)
+        msg.body_html = body_html
+        db.commit()
+
     # Local delivery — store copy in recipient INBOX
     def _deliver_local(addr: str):
         if not addr or "@" not in addr:
-            return None
+            return []
+
+        org = db.query(Organization).filter(Organization.email == addr).first()
+        if org:
+            member_uids = []
+            members = db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()
+            first_msg_id = None
+            for m in members:
+                mb = db.query(MailboxModel).filter(MailboxModel.user_id == m.user_id).first()
+                if not mb:
+                    continue
+                local_msg = Message(
+                    mailbox_id=mb.id,
+                    message_id=msg.message_id,
+                    from_addr=user.email,
+                    to_addrs=req.to,
+                    cc_addrs=req.cc,
+                    bcc_addrs=req.bcc,
+                    subject=req.subject,
+                    body_text=body_text,
+                    body_html=body_html,
+                    size=msg.size,
+                    folder="INBOX",
+                )
+                apply_filters_for_mailbox(
+                    db, mb, addr,
+                    {"from_addr": user.email, "subject": req.subject or "", "body_text": body_text, "body_html": body_html or ""},
+                    local_msg,
+                )
+                db.add(local_msg)
+                db.flush()
+                if first_msg_id is None:
+                    first_msg_id = local_msg.id
+                if req.attachment_ids and msg.has_attachments:
+                    _copy_attachments(req.attachment_ids, local_msg.id)
+                member_uids.append(mb.user_id)
+
+            if first_msg_id:
+                existing_shared = db.query(OrgSharedInboxMessage).filter(
+                    OrgSharedInboxMessage.organization_id == org.id,
+                    OrgSharedInboxMessage.from_email == user.email,
+                    OrgSharedInboxMessage.subject == req.subject,
+                ).first()
+                if not existing_shared:
+                    shared = OrgSharedInboxMessage(
+                        organization_id=org.id,
+                        from_email=user.email,
+                        to_email=addr,
+                        subject=req.subject,
+                        body_text=body_text,
+                        body_html=body_html,
+                    )
+                    db.add(shared)
+                    db.flush()
+                    shared_inbox_msgs.append({"id": shared.id, "org_id": org.id, "subject": req.subject or ""})
+            return member_uids
+
         domain_part = addr.split("@", 1)[-1]
         domain = db.query(Domain).filter(Domain.domain == domain_part).first()
         if not domain:
-            return None
+            return []
         recipient_mailbox = db.query(MailboxModel).filter(MailboxModel.email == addr).first()
         if not recipient_mailbox:
-            return None
+            return []
         local_msg = Message(
             mailbox_id=recipient_mailbox.id,
             message_id=msg.message_id,
@@ -439,43 +526,59 @@ async def send_email(
             size=msg.size,
             folder="INBOX",
         )
+        apply_filters_for_mailbox(
+            db, recipient_mailbox, addr,
+            {"from_addr": user.email, "subject": req.subject or "", "body_text": body_text, "body_html": body_html or ""},
+            local_msg,
+        )
         db.add(local_msg)
         db.flush()
         if req.attachment_ids and msg.has_attachments:
-            from ifinmail.api.attachments import _storage_dir
+            _copy_attachments(req.attachment_ids, local_msg.id)
+        return [recipient_mailbox.user_id]
 
-            storage_dir = _storage_dir()
-            for att_id in req.attachment_ids:
-                att = db.query(Attachment).filter(Attachment.id == att_id).first()
-                if att:
-                    src = storage_dir / att.storage_path
-                    if src.exists():
-                        unique = f"{uuid.uuid4().hex}_{att.filename}"
-                        dest = storage_dir / unique
-                        dest.write_bytes(src.read_bytes())
-                        storage_path = str(unique)
-                    else:
-                        storage_path = att.storage_path
-                    copy = Attachment(
-                        message_id=local_msg.id,
-                        filename=att.filename,
-                        content_type=att.content_type,
-                        size=att.size,
-                        storage_path=storage_path,
-                    )
-                    db.add(copy)
-            local_msg.has_attachments = 1
-        return recipient_mailbox.user_id
+    def _copy_attachments(att_ids: list[int], target_msg_id: int):
+        from ifinmail.api.attachments import _storage_dir
+        storage_dir = _storage_dir()
+        for att_id in att_ids:
+            att = db.query(Attachment).filter(Attachment.id == att_id).first()
+            if att:
+                src = storage_dir / att.storage_path
+                if src.exists():
+                    unique = f"{uuid.uuid4().hex}_{att.filename}"
+                    dest = storage_dir / unique
+                    dest.write_bytes(src.read_bytes())
+                    storage_path = str(unique)
+                else:
+                    storage_path = att.storage_path
+                copy = Attachment(
+                    message_id=target_msg_id,
+                    filename=att.filename,
+                    content_type=att.content_type,
+                    size=att.size,
+                    storage_path=storage_path,
+                )
+                db.add(copy)
 
+    shared_inbox_msgs: list[dict] = []
     notify_uids = []
     for addr in [req.to] + ([req.cc] if req.cc else []) + ([req.bcc] if req.bcc else []):
-        uid = _deliver_local(addr)
-        if uid:
-            notify_uids.append(uid)
+        uids = _deliver_local(addr)
+        notify_uids.extend(uids)
     db.commit()
 
     for uid in notify_uids:
-        await notify_user(uid, "new_mail", {"from": user.email, "subject": req.subject or "(no subject)"})
+        fire_notification(uid, "new_mail", {"from": user.email, "subject": req.subject or "(no subject)"})
+
+    for si in shared_inbox_msgs:
+        member_ids = [m.user_id for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == si["org_id"]).all()]
+        for mid in member_ids:
+            fire_notification(mid, "org.shared_inbox.new", {
+                "organization_id": si["org_id"],
+                "message_id": si["id"],
+                "subject": si["subject"],
+                "from_email": user.email,
+            })
 
     if settings.smtp_host:
         try:
@@ -517,12 +620,34 @@ def _relay_send(
     else:
         msg.set_content(body_text)
 
+    raw = msg.as_string()
+    domain_part = from_addr.split("@")[-1] if "@" in from_addr else ""
+    if domain_part:
+        from ifinmail.api.deps import get_db
+        from ifinmail.api.dkim_utils import dkim_sign_message
+        from ifinmail.db.models import Domain
+
+        try:
+            sess = next(get_db())
+            dom = sess.query(Domain).filter(Domain.domain == domain_part).first()
+            if dom and dom.dkim_private_key:
+                raw = dkim_sign_message(
+                    raw.encode(),
+                    domain=domain_part,
+                    selector=dom.dkim_selector or "default",
+                    private_key_pem=dom.dkim_private_key,
+                )
+                raw = raw.decode() if isinstance(raw, bytes) else raw
+            sess.close()
+        except Exception:
+            pass
+
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=settings.smtp_timeout) as server:
         if settings.smtp_tls:
             server.starttls()
         if settings.smtp_user:
             server.login(settings.smtp_user, settings.smtp_password)
-        server.sendmail(from_addr, recipients, msg.as_string())
+        server.sendmail(from_addr, recipients, raw)
 
 
 # ── Update flags ──
@@ -614,3 +739,70 @@ def delete_message(
         msg.previous_folder = msg.folder
         msg.folder = "TRASH"
     db.commit()
+
+
+# ── Delivery status ──
+
+
+class DeliveryUpdateRequest(BaseModel):
+    status: str
+    error: str | None = None
+    bounce_type: str | None = None
+
+
+class DeliveryResponse(BaseModel):
+    id: int
+    message_id: int
+    recipient: str
+    status: str
+    opened_at: str | None = None
+    clicked_at: str | None = None
+    bounce_type: str | None = None
+    error: str | None = None
+    created_at: str
+    updated_at: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+@router.patch("/deliveries/{delivery_id}/status", status_code=status.HTTP_204_NO_CONTENT)
+def update_delivery_status(
+    delivery_id: int,
+    req: DeliveryUpdateRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    delivery = (
+        db.query(EmailDelivery)
+        .join(Message)
+        .filter(
+            EmailDelivery.id == delivery_id,
+            Message.mailbox_id == user.mailbox.id,
+        )
+        .first()
+    )
+    if not delivery:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Delivery not found")
+    delivery.status = req.status
+    if req.error is not None:
+        delivery.error = req.error
+    if req.bounce_type is not None:
+        delivery.bounce_type = req.bounce_type
+    db.commit()
+
+
+@router.get("/{message_id}/deliveries", response_model=list[DeliveryResponse])
+def list_message_deliveries(
+    message_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    mailbox = _get_mailbox(user, db)
+    msg = db.query(Message).filter(Message.id == message_id, Message.mailbox_id == mailbox.id).first()
+    if not msg:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    return (
+        db.query(EmailDelivery)
+        .filter(EmailDelivery.message_id == message_id)
+        .all()
+    )

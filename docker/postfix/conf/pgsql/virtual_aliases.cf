@@ -1,0 +1,5 @@
+hosts = db
+dbname = ifinmail
+user = ifinmail
+password = ${IFINMAIL_DB_PASSWORD}
+query = SELECT target FROM aliases WHERE source='%s' AND enabled=TRUE

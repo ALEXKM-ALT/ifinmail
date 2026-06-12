@@ -11,3 +11,24 @@ build/
 data/attachments/*
 !data/attachments/.gitkeep
 src/data/attachments/*
+
+# Environment & secrets
+.env
+.env.local
+*.key
+*.pem
+/secrets/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker/**/__pycache__/
+.secrets.baseline

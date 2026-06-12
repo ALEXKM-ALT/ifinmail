@@ -7,6 +7,7 @@
 <title>ifinmail App</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234361ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpolyline points='2,12 8,12 10,15 14,15 16,12 22,12'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>if(localStorage.getItem("ifinmail_dark")==="1"){document.documentElement.setAttribute("data-theme","dark")}</script>
 </head>
 <body>
@@ -23,6 +24,11 @@
           <button type="button" class="ifinmail-pw-toggle" data-target="loginPassword" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
         <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Sign in</button>
+        <div class="ifinmail-sso-divider"><span>or continue with</span></div>
+        <div class="ifinmail-sso-buttons">
+          <button type="button" class="ifinmail-btn ifinmail-sso-btn" id="ssoGoogle"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Google</button>
+          <button type="button" class="ifinmail-btn ifinmail-sso-btn" id="ssoMicrosoft"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" fill="#F25022"/><rect x="13" y="2" width="9" height="9" fill="#7FBA00"/><rect x="2" y="13" width="9" height="9" fill="#00A4EF"/><rect x="13" y="13" width="9" height="9" fill="#FFB900"/></svg> Microsoft</button>
+        </div>
         <p class="ifinmail-error" id="loginError"></p>
         <p style="text-align:center;font-size:13px;color:var(--text-light);margin-top:8px">
           <a href="#" id="showForgotPassword" style="color:var(--text-light)">Forgot password?</a>
@@ -66,6 +72,9 @@
     <div class="ifinmail-compose" id="composeView" style="display:none"></div>
     <div class="ifinmail-settings" id="settingsView" style="display:none"></div>
     <div class="ifinmail-admin" id="adminView" style="display:none"></div>
+    <div class="ifinmail-sandbox" id="sandboxView" style="display:none"></div>
+    <div class="ifinmail-dashboard" id="dashboardView" style="display:none"></div>
+    <div class="ifinmail-teams" id="teamsView" style="display:none"></div>
   </main>
 </div>
 <template id="sidebarTmpl">
@@ -86,7 +95,10 @@
     <a class="ifinmail-nav-item" data-folder="TRASH"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span> Trash <span class="ifinmail-badge" id="count-TRASH"></span></a>
     <a class="ifinmail-nav-item" id="settingsNav"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Settings</a>
     <a class="ifinmail-nav-item" id="darkModeToggle"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span> <span id="darkModeLabel">Dark</span></a>
+    <a class="ifinmail-nav-item" id="dashboardNav"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> Dashboard</a>
     <a class="ifinmail-nav-item" id="adminNav" style="display:none"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Admin</a>
+    <a class="ifinmail-nav-item" id="sandboxNav"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span> Sandbox</a>
+    <a class="ifinmail-nav-item" id="orgsNav"><span class="ifinmail-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Teams</a>
     <div id="customFoldersSidebar"></div>
   </nav>
   <div class="ifinmail-sidebar-footer">
@@ -98,10 +110,38 @@
   <div class="ifinmail-toolbar">
     <div class="ifinmail-search">
       <input type="search" id="searchInput" placeholder="Search mail...">
-      <button class="ifinmail-btn ifinmail-btn-search" id="searchBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      <button class="ifinmail-btn ifinmail-btn-search" id="searchBtn" title="Search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      <button class="ifinmail-btn ifinmail-btn-icon" id="filterToggleBtn" title="Toggle filters"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
       <button class="ifinmail-btn ifinmail-btn-icon" id="refreshBtn" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
       <button class="ifinmail-btn ifinmail-btn-icon" id="markAllReadBtn" title="Mark all as read"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 12 5 16 9 12"/><polyline points="13 12 17 16 21 12"/><line x1="12" y1="2" x2="12" y2="8"/></svg></button>
       <span class="ifinmail-search-count" id="searchCount"></span>
+    </div>
+    <div id="filterPanel" class="ifinmail-filter-panel" style="display:none">
+      <div class="ifinmail-filter-row">
+        <div class="ifinmail-filter-field"><label>From</label><input type="text" id="filterFrom" placeholder="sender@example.com" class="ifinmail-input"></div>
+        <div class="ifinmail-filter-field"><label>To</label><input type="text" id="filterTo" placeholder="recipient@example.com" class="ifinmail-input"></div>
+        <div class="ifinmail-filter-field"><label>Subject</label><input type="text" id="filterSubject" placeholder="word in subject" class="ifinmail-input"></div>
+      </div>
+      <div class="ifinmail-filter-row">
+        <div class="ifinmail-filter-field"><label>After</label><input type="date" id="filterAfter" class="ifinmail-input"></div>
+        <div class="ifinmail-filter-field"><label>Before</label><input type="date" id="filterBefore" class="ifinmail-input"></div>
+        <div class="ifinmail-filter-field" style="flex-direction:row;gap:12px;align-items:center">
+          <label style="margin:0;white-space:nowrap">Status</label>
+          <select id="filterRead" class="ifinmail-input" style="flex:1">
+            <option value="">Any</option>
+            <option value="read">Read</option>
+            <option value="unread">Unread</option>
+          </select>
+        </div>
+      </div>
+      <div class="ifinmail-filter-row">
+        <label class="ifinmail-filter-check"><input type="checkbox" id="filterAttach"> Has attachments</label>
+        <label class="ifinmail-filter-check"><input type="checkbox" id="filterStarred"> Starred</label>
+        <div style="display:flex;gap:6px;margin-left:auto">
+          <button class="ifinmail-btn ifinmail-btn-sm" id="applyFiltersBtn">Apply</button>
+          <button class="ifinmail-btn ifinmail-btn-sm" id="clearFiltersBtn">Clear</button>
+        </div>
+      </div>
     </div>
     <div class="ifinmail-trash-actions" id="trashActions" style="display:none">
       <button class="ifinmail-btn ifinmail-btn-sm" id="emptyTrashBtn">Empty trash</button>
@@ -160,6 +200,10 @@
   <div class="ifinmail-attachments" id="msgAttachments"></div>
   <div class="ifinmail-message-labels" id="msgLabels"></div>
   <div class="ifinmail-message-body" id="msgBody"></div>
+  <div class="ifinmail-delivery-status" id="deliveryStatus" style="margin-top:16px;padding:12px;border:1px solid var(--border);border-radius:8px;display:none">
+    <h4 style="margin:0 0 8px;font-size:13px">Delivery Status</h4>
+    <div id="deliveryStatusList"></div>
+  </div>
 </template>
 <template id="attachmentRowTmpl">
   <div class="ifinmail-attachment-row">
@@ -186,7 +230,9 @@
       <div id="composeAttachList"></div>
     </div>
     <div class="ifinmail-compose-actions">
-      <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Send</button>
+      <button type="submit" class="ifinmail-btn ifinmail-btn-primary" id="composeSendBtn">Send</button>
+      <button type="button" class="ifinmail-btn" id="composeScheduleBtn">Schedule</button>
+      <input type="datetime-local" id="composeScheduleAt" style="flex:1;max-width:220px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:13px;display:none">
     </div>
     <p class="ifinmail-error" id="composeError"></p>
   </form>
@@ -212,6 +258,76 @@
       <p class="ifinmail-error" id="forwardingError"></p>
     </section>
     <section class="ifinmail-settings-section">
+      <h3>Scheduled Emails</h3>
+      <div id="scheduledList"></div>
+      <p class="ifinmail-error" id="scheduledError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Filter Rules</h3>
+      <p style="font-size:12px;color:var(--muted);margin:4px 0 8px">Rules are evaluated in order. All conditions must match (AND logic) unless set to "any".</p>
+      <div id="filterRulesList"></div>
+      <details style="margin-top:8px;font-size:13px">
+        <summary style="cursor:pointer;color:var(--primary)">Add rule</summary>
+        <div id="filterRuleForm" style="margin-top:8px;padding:8px;border:1px solid var(--border);border-radius:6px">
+          <input type="text" id="filterRuleName" class="ifinmail-input" placeholder="Rule name (optional)" style="margin-bottom:6px">
+          <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+            <select id="filterConditionField" class="ifinmail-input" style="flex:1;min-width:100px">
+              <option value="from_addr">From</option>
+              <option value="subject">Subject</option>
+              <option value="body_text">Body</option>
+            </select>
+            <select id="filterConditionOp" class="ifinmail-input" style="flex:1;min-width:100px">
+              <option value="contains">contains</option>
+              <option value="not_contains">does not contain</option>
+              <option value="equals">equals</option>
+              <option value="not_equals">not equals</option>
+              <option value="starts_with">starts with</option>
+              <option value="ends_with">ends with</option>
+              <option value="regex">regex</option>
+            </select>
+            <input type="text" id="filterConditionValue" class="ifinmail-input" placeholder="Value" style="flex:2;min-width:120px">
+            <button type="button" class="ifinmail-btn ifinmail-btn-sm" id="addFilterCondition">+</button>
+          </div>
+          <div id="filterConditionsList" style="font-size:12px;margin-bottom:6px"></div>
+          <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+            <select id="filterActionType" class="ifinmail-input" style="flex:1;min-width:100px">
+              <option value="move_to_folder">Move to folder</option>
+              <option value="mark_read">Mark as read</option>
+              <option value="mark_starred">Mark as starred</option>
+              <option value="add_label">Add label</option>
+              <option value="discard">Discard (move to trash)</option>
+            </select>
+            <input type="text" id="filterActionValue" class="ifinmail-input" placeholder="Folder/label name" style="flex:2;min-width:120px">
+            <button type="button" class="ifinmail-btn ifinmail-btn-sm" id="addFilterAction">+</button>
+          </div>
+          <div id="filterActionsList" style="font-size:12px;margin-bottom:6px"></div>
+          <button class="ifinmail-btn ifinmail-btn-primary" id="saveFilterRule">Save Rule</button>
+          <p class="ifinmail-error" id="filterRuleError"></p>
+        </div>
+      </details>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Campaigns / Sequences</h3>
+      <div id="campaignsList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="campaignNameInput" class="ifinmail-input" placeholder="Campaign name" style="flex:1">
+        <button class="ifinmail-btn ifinmail-btn-primary" id="addCampaignBtn">Create</button>
+      </div>
+      <p class="ifinmail-error" id="campaignError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Email Aliases</h3>
+      <p style="font-size:12px;color:var(--muted);margin:4px 0 8px">Aliases forward incoming mail to another address on the same domain.</p>
+      <div id="aliasesList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <input type="email" id="aliasSourceInput" class="ifinmail-input" placeholder="alias@yourdomain.com" style="flex:2;min-width:140px">
+        <span style="align-self:center">→</span>
+        <input type="email" id="aliasTargetInput" class="ifinmail-input" placeholder="target@yourdomain.com" style="flex:2;min-width:140px">
+        <button class="ifinmail-btn ifinmail-btn-primary" id="addAliasBtn">Add Alias</button>
+      </div>
+      <p class="ifinmail-error" id="aliasError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
       <h3>Custom Folders</h3>
       <div id="settingsFoldersList"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -228,6 +344,35 @@
         <button class="ifinmail-btn ifinmail-btn-primary" id="addDomainBtn">Add</button>
       </div>
       <p class="ifinmail-error" id="domainError"></p>
+      <div id="domainWizard" style="display:none;margin-top:12px;border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--card-bg);"></div>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>IMAP Import</h3>
+      <p style="font-size:12px;color:var(--muted);margin:4px 0 8px">Import emails from another account via IMAP (e.g. Gmail). Requires <strong>App Password</strong> if 2FA is enabled.</p>
+      <div id="imapImportForm">
+        <div class="ifinmail-teams-grid2" style="margin-bottom:8px">
+          <input type="text" id="imapHost" class="ifinmail-input" placeholder="imap.gmail.com" value="imap.gmail.com">
+          <input type="number" id="imapPort" class="ifinmail-input" placeholder="993" value="993">
+        </div>
+        <input type="email" id="imapUsername" class="ifinmail-input" placeholder="your.email@gmail.com" style="width:100%;margin-bottom:8px">
+        <input type="password" id="imapPassword" class="ifinmail-input" placeholder="App Password" style="width:100%;margin-bottom:8px">
+        <label class="ifinmail-check-label" style="margin-bottom:8px"><input type="checkbox" id="imapUseSSL" checked> Use SSL</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="ifinmail-btn" id="testImapBtn">Test Connection</button>
+          <button class="ifinmail-btn ifinmail-btn-primary" id="saveImapBtn">Save & Import</button>
+        </div>
+        <div id="imapImportStatus" style="margin-top:8px;font-size:13px"></div>
+      </div>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>API Tokens</h3>
+      <p style="font-size:12px;color:var(--muted);margin:4px 0 8px">API tokens allow programmatic access. Send as <code style="font-size:11px;background:var(--bg);padding:1px 4px;border-radius:3px">X-Api-Key</code> header.</p>
+      <div id="apiTokensList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="apiTokenNameInput" class="ifinmail-input" placeholder="Token name (e.g. my-app)" style="flex:1">
+        <button class="ifinmail-btn ifinmail-btn-primary" id="addApiTokenBtn">Generate</button>
+      </div>
+      <p class="ifinmail-error" id="apiTokenError"></p>
     </section>
     <section class="ifinmail-settings-section">
       <h3>Billing / Plan</h3>
@@ -282,16 +427,405 @@
   </div>
 </template>
 <template id="adminTmpl">
-  <div class="ifinmail-settings-header"><h2>Admin Dashboard</h2></div>
-  <div class="ifinmail-settings-body">
-    <div class="ifinmail-admin-cards" id="adminCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px"></div>
-    <section class="ifinmail-settings-section">
-      <h3>Users</h3>
-      <div style="overflow-x:auto"><table class="ifinmail-admin-table" id="adminUsersTable" style="width:100%;border-collapse:collapse;font-size:13px"></table></div>
-    </section>
+  <div class="ifinmail-admin-container">
+    <div class="ifinmail-admin-header">
+      <h1>Admin Dashboard</h1>
+      <div class="ifinmail-admin-date-badge" id="adminDateBadge"></div>
+    </div>
+
+    <div class="ifinmail-admin-tabs">
+      <button class="ifinmail-admin-tab active" data-atab="overview">Overview</button>
+      <button class="ifinmail-admin-tab" data-atab="users">Users</button>
+      <button class="ifinmail-admin-tab" data-atab="domains">Domains</button>
+      <button class="ifinmail-admin-tab" data-atab="billing">Billing</button>
+      <button class="ifinmail-admin-tab" data-atab="security">Security</button>
+      <button class="ifinmail-admin-tab" data-atab="system">System</button>
+    </div>
+
+    <div id="adminOverview" class="ifinmail-admin-tab-content active">
+      <div class="ifinmail-admin-stats-grid" id="adminCards"></div>
+
+      <div class="ifinmail-admin-charts-row">
+        <div class="ifinmail-admin-chart-card">
+          <div class="ifinmail-admin-chart-title">User Growth (30 days)</div>
+          <canvas id="adminGrowthChart"></canvas>
+        </div>
+        <div class="ifinmail-admin-chart-card">
+          <div class="ifinmail-admin-chart-title">Message Volume (7 days)</div>
+          <canvas id="adminVolumeChart"></canvas>
+        </div>
+      </div>
+
+      <div class="ifinmail-admin-activity-card">
+        <h3>Recent Admin Activity</h3>
+        <div class="ifinmail-admin-activity-table-wrap">
+          <table class="ifinmail-admin-activity-table">
+            <thead><tr><th>User</th><th>Action</th><th>Resource</th><th>Time</th></tr></thead>
+            <tbody id="adminActivityBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="adminUsers" class="ifinmail-admin-tab-content" style="display:none">
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Quick Create User</h3></div>
+        <div class="ifinmail-admin-card-body">
+          <div class="ifinmail-admin-inline-form">
+            <input type="text" id="adminQuickName" placeholder="Full name (e.g. John Doe)">
+            <select id="adminQuickDomain"></select>
+            <button class="ifinmail-btn ifinmail-btn-primary" id="adminQuickCreateBtn">Create</button>
+          </div>
+          <p class="ifinmail-success" id="adminQuickResult"></p>
+        </div>
+      </div>
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header">
+          <h3>All Users</h3>
+          <div class="ifinmail-admin-inline-form" style="margin:0">
+            <input type="text" id="adminUserSearch" placeholder="Search users...">
+            <button class="ifinmail-btn ifinmail-btn-primary" id="adminUserSearchBtn">Search</button>
+            <button class="ifinmail-btn ifinmail-btn-sm" id="adminUserRefreshBtn">Refresh</button>
+          </div>
+        </div>
+        <div class="ifinmail-admin-card-body">
+          <div style="overflow-x:auto"><table class="ifinmail-admin-table" id="adminUsersTable"></table></div>
+          <div id="adminUsersPagination" class="ifinmail-admin-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="adminDomains" class="ifinmail-admin-tab-content" style="display:none">
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Domains</h3></div>
+        <div class="ifinmail-admin-card-body">
+          <div style="overflow-x:auto"><table class="ifinmail-admin-table" id="adminDomainsTable"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="adminBilling" class="ifinmail-admin-tab-content" style="display:none">
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Plans</h3></div>
+        <div class="ifinmail-admin-card-body" id="adminPlansList"></div>
+      </div>
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Subscriptions</h3></div>
+        <div class="ifinmail-admin-card-body" id="adminSubscriptionsList"></div>
+      </div>
+    </div>
+
+    <div id="adminSecurity" class="ifinmail-admin-tab-content" style="display:none">
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Security Events</h3></div>
+        <div class="ifinmail-admin-card-body">
+          <div id="adminSecurityEvents"></div>
+          <button class="ifinmail-btn ifinmail-btn-sm" id="adminClearEvents" style="margin-top:8px">Clear Events</button>
+        </div>
+      </div>
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Blocked IPs</h3></div>
+        <div class="ifinmail-admin-card-body" id="adminBlockedIPs"></div>
+      </div>
+    </div>
+
+    <div id="adminSystem" class="ifinmail-admin-tab-content" style="display:none">
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>System Health</h3></div>
+        <div class="ifinmail-admin-card-body" id="adminHealthInfo"></div>
+      </div>
+      <div class="ifinmail-admin-card">
+        <div class="ifinmail-admin-card-header"><h3>Backups</h3></div>
+        <div class="ifinmail-admin-card-body">
+          <div id="adminBackupsList"></div>
+          <button class="ifinmail-btn ifinmail-btn-primary" id="adminCreateBackup" style="margin-top:8px">Create Backup</button>
+        </div>
+      </div>
+    </div>
     <p class="ifinmail-error" id="adminError"></p>
   </div>
 </template>
-<script src="/static/app.js?v=17"></script>
+<template id="sandboxTmpl">
+  <div class="ifinmail-settings-header">
+    <h2>Developer Sandbox</h2>
+    <p style="font-size:13px;color:var(--text-light);margin-top:4px">Capture emails for testing without actually sending them</p>
+  </div>
+  <div class="ifinmail-settings-body">
+    <section class="ifinmail-settings-section">
+      <h3>Send Test Email</h3>
+      <form id="sandboxForm" class="ifinmail-form">
+        <input type="email" id="sandboxTo" placeholder="To" required>
+        <input type="text" id="sandboxSubject" placeholder="Subject">
+        <textarea id="sandboxBody" placeholder="Message" rows="6"></textarea>
+        <input type="text" id="sandboxHtml" placeholder="HTML body (optional)">
+        <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Capture to Sandbox</button>
+      </form>
+      <p class="ifinmail-error" id="sandboxError"></p>
+    </section>
+    <section class="ifinmail-settings-section">
+      <h3>Captured Emails</h3>
+      <div id="sandboxCapturesList"><p style="color:var(--text-light)">No captures yet</p></div>
+    </section>
+  </div>
+</template>
+<template id="aiAssistantTmpl">
+  <div class="ifinmail-ai-panel">
+    <div class="ifinmail-ai-tabs">
+      <button class="ifinmail-tab active" data-ai-tab="generate">Generate</button>
+      <button class="ifinmail-tab" data-ai-tab="summarize">Summarize</button>
+      <button class="ifinmail-tab" data-ai-tab="translate">Translate</button>
+    </div>
+    <div class="ifinmail-ai-body">
+      <div id="aiGenerateView">
+        <textarea id="aiPrompt" placeholder="Describe the email you want to write..." rows="4" class="ifinmail-input"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="aiTone" placeholder="Tone: professional, friendly, casual" class="ifinmail-input" style="flex:1;margin-bottom:0">
+          <button class="ifinmail-btn ifinmail-btn-primary" id="aiGenerateBtn">Generate</button>
+        </div>
+      </div>
+      <div id="aiSummarizeView" style="display:none">
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:8px">Summarizes the current email</p>
+        <button class="ifinmail-btn ifinmail-btn-primary" id="aiSummarizeBtn">Summarize Email</button>
+      </div>
+      <div id="aiTranslateView" style="display:none">
+        <select id="aiTargetLang" class="ifinmail-input"><option value="french">French</option><option value="swahili">Swahili</option><option value="arabic">Arabic</option></select>
+        <button class="ifinmail-btn ifinmail-btn-primary" id="aiTranslateBtn">Translate</button>
+      </div>
+      <div id="aiResult" class="ifinmail-ai-result" style="display:none"></div>
+    </div>
+  </div>
+</template>
+<template id="teamsTmpl">
+  <div class="ifinmail-teams-container">
+    <div class="ifinmail-teams-topbar">
+      <div>
+        <h1>Teams</h1>
+        <p class="ifinmail-teams-subtitle">Manage your organization, members, and team communication</p>
+      </div>
+      <div class="ifinmail-teams-org-selector" id="teamsOrgSelector">
+        <select id="teamsOrgSelect" onchange="switchTeamsOrg(this.value)"></select>
+        <button class="ifinmail-btn ifinmail-btn-sm" onclick="showCreateOrg()">+ New</button>
+      </div>
+    </div>
+
+    <div id="teamsNoOrg" style="display:none">
+      <div class="ifinmail-teams-card">
+        <div class="ifinmail-teams-card-header"><h3>Create Organization</h3></div>
+        <div class="ifinmail-teams-card-body">
+          <form id="teamsCreateForm" class="ifinmail-form">
+            <input type="text" id="teamsCreateName" placeholder="Organization name" required>
+            <input type="email" id="teamsCreateEmail" placeholder="Mailing list email (optional)">
+            <p class="ifinmail-error" id="teamsCreateError"></p>
+            <button type="submit" class="ifinmail-btn ifinmail-btn-primary">Create Organization</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="teamsOrgView" style="display:none">
+      <div class="ifinmail-teams-tabs">
+        <button class="ifinmail-teams-tab active" data-teams-tab="organization">Organization</button>
+        <button class="ifinmail-teams-tab" data-teams-tab="members">Members</button>
+        <button class="ifinmail-teams-tab" data-teams-tab="inbox">Shared Inbox</button>
+        <button class="ifinmail-teams-tab" data-teams-tab="contacts">Contacts</button>
+      </div>
+
+      <div id="teamsOrgTab" class="ifinmail-teams-tab-content active">
+        <div class="ifinmail-teams-card">
+          <div class="ifinmail-teams-card-header">
+            <h3>Your Organization</h3>
+            <button class="ifinmail-btn btn-danger" id="teamsDeleteBtn">Delete Organization</button>
+          </div>
+          <div class="ifinmail-teams-card-body">
+            <div class="ifinmail-teams-grid2">
+              <div>
+                <div class="ifinmail-teams-field">
+                  <label>Organization Name</label>
+                  <input type="text" id="teamsOrgName">
+                </div>
+                <div class="ifinmail-teams-field">
+                  <label>Mailing List Email</label>
+                  <input type="email" id="teamsMailingList" placeholder="team@yourdomain.com">
+                  <small>Any email sent here goes to ALL team members</small>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <button class="ifinmail-btn ifinmail-btn-primary" id="teamsSaveBtn">Save Changes</button>
+                  <button class="ifinmail-btn ifinmail-btn-sm" id="teamsTestEmailBtn" style="background:var(--primary);color:#fff;border:none">Send Test Email</button>
+                </div>
+              </div>
+              <div>
+                <div class="ifinmail-teams-field">
+                  <label>Organization ID</label>
+                  <input type="text" id="teamsOrgIdDisplay" readonly disabled>
+                </div>
+                <div class="ifinmail-teams-field">
+                  <label>Created</label>
+                  <input type="text" id="teamsOrgCreated" readonly disabled>
+                </div>
+                <div class="ifinmail-teams-field">
+                  <label>Your Role</label>
+                  <input type="text" id="teamsOrgRole" readonly disabled>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ifinmail-teams-card">
+          <div class="ifinmail-teams-card-header"><h3>Mailing List Info</h3></div>
+          <div class="ifinmail-teams-card-body">
+            <div class="ifinmail-teams-info-box">
+              <p><strong>How it works:</strong></p>
+              <p>Send ONE email to your mailing list address, and EVERYONE in your organization receives it.</p>
+              <p style="color:var(--primary)">Example: Send to team@yourorg.com &rarr; all members get it</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="teamsMembersTab" class="ifinmail-teams-tab-content">
+        <div class="ifinmail-teams-card">
+          <div class="ifinmail-teams-card-header">
+            <h3>Team Members <span id="teamsMemberCount"></span></h3>
+            <button class="ifinmail-btn ifinmail-btn-primary" onclick="showTeamsInvite()">+ Invite Member</button>
+          </div>
+          <div class="ifinmail-teams-card-body">
+            <ul class="ifinmail-teams-member-list" id="teamsMembersList"></ul>
+          </div>
+        </div>
+        <div class="ifinmail-teams-card" id="teamsInviteCard" style="display:none">
+          <div class="ifinmail-teams-card-header"><h3>Invite New Member</h3></div>
+          <div class="ifinmail-teams-card-body">
+            <div class="ifinmail-teams-grid2">
+              <input type="email" id="teamsInviteEmail" placeholder="Email address">
+              <select id="teamsInviteRole">
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button class="ifinmail-btn ifinmail-btn-primary" style="margin-top:12px" onclick="teamsSendInvite()">Send Invitation</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="teamsInboxTab" class="ifinmail-teams-tab-content">
+        <div class="ifinmail-teams-card">
+          <div class="ifinmail-teams-card-header">
+            <h3>Shared Inbox</h3>
+            <div class="ifinmail-teams-filter-group">
+              <button class="ifinmail-btn ifinmail-btn-sm active" data-filter="" onclick="teamsFilterInbox(this)">All</button>
+              <button class="ifinmail-btn ifinmail-btn-sm" data-filter="pending" onclick="teamsFilterInbox(this)">Pending</button>
+              <button class="ifinmail-btn ifinmail-btn-sm" data-filter="assigned" onclick="teamsFilterInbox(this)">Assigned</button>
+              <button class="ifinmail-btn ifinmail-btn-sm" data-filter="resolved" onclick="teamsFilterInbox(this)">Resolved</button>
+            </div>
+          </div>
+          <div class="ifinmail-teams-card-body" id="teamsInboxMessages"></div>
+        </div>
+      </div>
+
+      <div id="teamsContactsTab" class="ifinmail-teams-tab-content">
+        <div class="ifinmail-teams-card">
+          <div class="ifinmail-teams-card-header">
+            <h3>Organization Contacts</h3>
+            <button class="ifinmail-btn ifinmail-btn-primary" onclick="showTeamsAddContact()">+ Add Contact</button>
+          </div>
+          <div class="ifinmail-teams-card-body">
+            <ul class="ifinmail-teams-contact-list" id="teamsContactsList"></ul>
+          </div>
+        </div>
+        <div class="ifinmail-teams-card" id="teamsAddContactCard" style="display:none">
+          <div class="ifinmail-teams-card-header"><h3>Add New Contact</h3></div>
+          <div class="ifinmail-teams-card-body">
+            <div class="ifinmail-teams-grid2">
+              <input type="email" id="teamsContactEmail" placeholder="Contact email">
+              <input type="text" id="teamsContactName" placeholder="Name (optional)">
+            </div>
+            <button class="ifinmail-btn ifinmail-btn-primary" style="margin-top:12px" onclick="teamsAddContact()">Add Contact</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="dashboardTmpl">
+  <div class="ifinmail-dashboard-container">
+    <div class="ifinmail-dashboard-header">
+      <h2>Communication Dashboard</h2>
+      <div class="ifinmail-dashboard-period" id="dashboardPeriod">
+        <button value="7">7 days</button>
+        <button value="30" class="active">30 days</button>
+        <button value="90">90 days</button>
+      </div>
+    </div>
+    <div class="ifinmail-dashboard-cards" id="dashboardCards"></div>
+    <div class="ifinmail-dashboard-grid2">
+      <div class="ifinmail-dashboard-section">
+        <h3>Folder Distribution</h3>
+        <div id="dashboardFolderChart"></div>
+      </div>
+      <div class="ifinmail-dashboard-section">
+        <h3>Daily Volume</h3>
+        <div id="dashboardDailyChart"></div>
+      </div>
+    </div>
+    <div class="ifinmail-dashboard-grid2">
+      <div class="ifinmail-dashboard-section">
+        <h3>Top Senders</h3>
+        <div id="dashboardTopSenders"></div>
+      </div>
+      <div class="ifinmail-dashboard-section">
+        <h3>Top Recipients</h3>
+        <div id="dashboardTopRecipients"></div>
+      </div>
+    </div>
+    <div class="ifinmail-dashboard-section">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Deliverability</h3>
+        <div class="ifinmail-export-btns">
+          <button onclick="exportReport('csv')" class="ifinmail-btn ifinmail-btn-sm">CSV</button>
+          <button onclick="exportReport('pdf')" class="ifinmail-btn ifinmail-btn-sm">PDF</button>
+        </div>
+      </div>
+      <div id="dashboardDeliverability"></div>
+    </div>
+    <div class="ifinmail-dashboard-section">
+      <h3>Email Tracking</h3>
+      <div id="dashboardTrackingSummary" class="ifinmail-tracking-cards"></div>
+    </div>
+    <div class="ifinmail-dashboard-grid2">
+      <div class="ifinmail-dashboard-section">
+        <h3>Hourly Engagement</h3>
+        <div id="dashboardHourlyChart"><canvas id="hourlyChartCanvas"></canvas></div>
+      </div>
+      <div class="ifinmail-dashboard-section">
+        <h3>Devices</h3>
+        <div id="dashboardDevicesChart"><canvas id="devicesChartCanvas"></canvas></div>
+      </div>
+    </div>
+    <div class="ifinmail-dashboard-grid2">
+      <div class="ifinmail-dashboard-section">
+        <h3>Operating Systems</h3>
+        <div id="dashboardOSChart"><canvas id="osChartCanvas"></canvas></div>
+      </div>
+      <div class="ifinmail-dashboard-section">
+        <h3>Browsers</h3>
+        <div id="dashboardBrowsersChart"><canvas id="browsersChartCanvas"></canvas></div>
+      </div>
+    </div>
+    <div class="ifinmail-dashboard-section">
+      <h3>Top Locations</h3>
+      <div id="dashboardLocations"></div>
+    </div>
+    <div class="ifinmail-dashboard-section">
+      <h3>Contact Engagement</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px">Engagement score: 0-100 based on opens (60%) and clicks (40%).</p>
+      <div id="dashboardContactEngagement"></div>
+    </div>
+    <div class="ifinmail-dashboard-section">
+      <h3>Campaign Analytics</h3>
+      <div id="dashboardCampaignStats"></div>
+    </div>
+  </div>
+</template>
+<script src="/static/app.js?v=46"></script>
 </body>
 </html>
