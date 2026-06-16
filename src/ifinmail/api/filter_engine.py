@@ -43,8 +43,9 @@ def _condition_matches(rule: FilterRule, ctx: dict[str, str]) -> bool:
     return all(_eval_condition(c, ctx) for c in conditions)
 
 
-def _apply_actions(rule: FilterRule, msg: Message, mailbox: Mailbox, db: Session):
+def _apply_actions(rule: FilterRule, msg: Message, mailbox: Mailbox, db: Session, ctx: dict | None = None):
     actions = json.loads(rule.actions) if isinstance(rule.actions, str) else rule.actions
+    stop_after = False
     for act in actions:
         atype = act.get("type", "")
         avalue = str(act.get("value", ""))
@@ -75,7 +76,82 @@ def _apply_actions(rule: FilterRule, msg: Message, mailbox: Mailbox, db: Session
             msg.folder = "TRASH"
         elif atype == "delete":
             msg.folder = "TRASH"
-        # forward_to is handled by the caller if needed
+        elif atype == "stop":
+            stop_after = True
+        elif atype == "forward":
+            _action_forward(avalue, ctx, mailbox, db)
+        elif atype == "auto_reply":
+            _action_auto_reply(avalue, ctx, mailbox, db)
+        elif atype == "notify":
+            _action_notify(avalue, ctx, mailbox)
+    if stop_after:
+        msg.folder = "TRASH"
+
+
+def _action_forward(target: str, ctx: dict | None, mailbox: Mailbox, db: Session):
+    if not ctx or not target or "@" not in target:
+        return
+    try:
+        from ifinmail.api.mail import _relay_send
+        _relay_send(
+            from_addr=mailbox.email,
+            to_addr=target,
+            subject=ctx.get("subject", "(forwarded)"),
+            body_text=ctx.get("body_text", ""),
+            body_html=ctx.get("body_html") or None,
+        )
+    except Exception as exc:
+        logger.warning("Filter forward failed: %s", exc)
+
+
+def _action_auto_reply(template_body: str, ctx: dict | None, mailbox: Mailbox, db: Session):
+    if not ctx or not template_body:
+        return
+    try:
+        original_from = ctx.get("from_addr", "")
+        original_subject = ctx.get("subject", "")
+        if not original_from or "@" not in original_from:
+            return
+        from ifinmail.db.models import Message
+        reply = Message(
+            mailbox_id=mailbox.id,
+            from_addr=mailbox.email,
+            to_addrs=original_from,
+            subject=f"Re: {original_subject}" if original_subject else "Re:",
+            body_text=template_body,
+            folder="SENT",
+        )
+        db.add(reply)
+        db.flush()
+        from ifinmail.api.mail import _relay_send
+        _relay_send(
+            from_addr=mailbox.email,
+            to_addr=original_from,
+            subject=reply.subject,
+            body_text=template_body,
+        )
+        logger.info("Filter auto-reply sent to %s from %s", original_from, mailbox.email)
+    except Exception as exc:
+        logger.warning("Filter auto-reply failed: %s", exc)
+
+
+def _action_notify(webhook_url: str, ctx: dict | None, mailbox: Mailbox):
+    if not ctx or not webhook_url or not webhook_url.startswith("http"):
+        return
+    try:
+        import urllib.request
+        import json as _json
+        payload = _json.dumps({
+            "event": "filter_matched",
+            "mailbox": mailbox.email,
+            "from": ctx.get("from_addr", ""),
+            "to": ctx.get("to_addr", ""),
+            "subject": ctx.get("subject", ""),
+        }).encode()
+        req = urllib.request.Request(webhook_url, data=payload, headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=10)
+    except Exception as exc:
+        logger.warning("Filter notify failed: %s", exc)
 
 
 def apply_filters_for_mailbox(
@@ -99,7 +175,6 @@ def apply_filters_for_mailbox(
     for rule in rules:
         if _condition_matches(rule, env):
             logger.info("Filter '%s' matched message from %s to %s", rule.name, ctx.get("from_addr"), recipient)
-            _apply_actions(rule, msg, mailbox, db)
-            # If discarded, no need to check further rules
+            _apply_actions(rule, msg, mailbox, db, env)
             if msg.folder == "TRASH":
                 break

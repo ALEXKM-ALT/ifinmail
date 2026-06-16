@@ -24,6 +24,21 @@ logger = logging.getLogger("ifinmail.analytics")
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
+def _notify_delivery_event(db: Session, delivery: EmailDelivery, event_type: str) -> None:
+    from ifinmail.api.ws_manager import fire_notification
+
+    message = db.query(Message).filter(Message.id == delivery.message_id).first()
+    if message:
+        mailbox = message.mailbox
+        if mailbox and mailbox.user_id:
+            fire_notification(mailbox.user_id, "delivery.updated", {
+                "delivery_id": delivery.id,
+                "event": event_type,
+                "recipient": delivery.recipient,
+                "timestamp": datetime.now(UTC).isoformat(),
+            })
+
+
 @router.get("/track/{delivery_id}/open.gif")
 def track_open(
     delivery_id: int,
@@ -52,6 +67,20 @@ def track_open(
         )
         db.add(event)
         db.commit()
+        _notify_delivery_event(db, delivery, "opened")
+        # Read receipt — notify sender if requested
+        msg = db.query(Message).filter(Message.id == delivery.message_id).first()
+        if msg and msg.read_receipt_requested:
+            sender_mailbox = msg.mailbox
+            if sender_mailbox and sender_mailbox.user_id:
+                from ifinmail.api.ws_manager import fire_notification
+                fire_notification(sender_mailbox.user_id, "read_receipt", {
+                    "delivery_id": delivery.id,
+                    "recipient": delivery.recipient,
+                    "message_id": msg.id,
+                    "subject": msg.subject or "(no subject)",
+                    "opened_at": delivery.opened_at.isoformat() if delivery.opened_at else None,
+                })
     return Response(content=b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x00\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b", media_type="image/gif")
 
 
@@ -85,6 +114,7 @@ def track_click(
         )
         db.add(event)
         db.commit()
+        _notify_delivery_event(db, delivery, "clicked")
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url=url)
 
@@ -259,7 +289,7 @@ def tracking_hourly(
 
     rows = (
         db.query(
-            sa_func.strftime("%H", TrackingEvent.timestamp).label("hour"),
+            sa_func.extract("hour", TrackingEvent.timestamp).label("hour"),
             TrackingEvent.event_type,
             sa_func.count(TrackingEvent.id),
         )

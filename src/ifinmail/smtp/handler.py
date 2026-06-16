@@ -14,9 +14,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from ifinmail.api.config import settings
 from ifinmail.api.filter_engine import apply_filters_for_mailbox
+from ifinmail.api.personalize import MemberInfo, personalise
 from ifinmail.db.models import (
     Alias,
     Attachment,
+    Contact,
     Domain,
     ForwardingRule,
     Mailbox,
@@ -94,20 +96,43 @@ class SMTPHandler:
             stored = 0
             for rcpt in rcpttos:
                 mailboxes = _resolve_recipients(db, rcpt)
+                org_member_map: dict[int, OrganizationMember] = {}
+                org = db.query(Organization).filter(Organization.email == rcpt).first()
+                if org:
+                    org_members = db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()
+                    org_member_map = {om.user_id: om for om in org_members}
                 for mailbox in mailboxes:
+                    if message_id and db.query(Message).filter(
+                        Message.mailbox_id == mailbox.id,
+                        Message.message_id == message_id,
+                    ).first():
+                        continue
+                    _subj = subject
+                    _text = body_text
+                    _html = body_html or None
+                    om = org_member_map.get(mailbox.user_id)
+                    if om:
+                        _fn = om.first_name or (om.user.first_name if om.user else "")
+                        _ln = om.last_name or (om.user.last_name if om.user else "")
+                        info = MemberInfo(first_name=_fn or mailbox.email.split("@")[0], last_name=_ln, email=mailbox.email)
+                        _subj = personalise(_subj, info)
+                        _text = personalise(_text, info)
+                        _html = personalise(_html, info) if _html else None
                     msg = Message(
                         mailbox_id=mailbox.id,
                         message_id=message_id,
                         from_addr=mailfrom,
                         to_addrs=to_addr,
                         cc_addrs=cc_addr or None,
-                        subject=subject,
-                        body_text=body_text,
-                        body_html=body_html or None,
+                        subject=_subj,
+                        body_text=_text,
+                        body_html=_html,
                         size=len(data),
                         folder="INBOX",
                         has_attachments=1 if attachments else 0,
                     )
+                    from ifinmail.api.priority import score_message
+                    msg.priority_score = score_message(msg, db)
                     apply_filters_for_mailbox(
                         db, mailbox, rcpt,
                         {"from_addr": mailfrom, "subject": subject, "body_text": body_text, "body_html": body_html or ""},
@@ -325,12 +350,29 @@ def _handle_autoreply(
     rcpt_mailbox_id: int,
 ):
     """Send a vacation auto-reply if enabled, max once per sender per day."""
+    from datetime import datetime, timezone
+
     vr = db.query(VacationResponder).filter(
         VacationResponder.mailbox_id == mailbox.id,
         VacationResponder.enabled == 1,
     ).first()
     if not vr:
         return
+
+    now = datetime.now(timezone.utc)
+    if vr.start_date and vr.start_date.replace(tzinfo=timezone.utc) > now:
+        return
+    if vr.end_date and vr.end_date.replace(tzinfo=timezone.utc) < now:
+        return
+
+    if vr.only_contacts:
+        contact = db.query(Contact).filter(
+            Contact.email == mailfrom,
+            Contact.user_id == mailbox.user_id,
+        ).first()
+        if not contact:
+            return
+
     today = _now_date()
     key = (mailbox.id, mailfrom.lower())
     if _autoreply_sent.get(key) == today:

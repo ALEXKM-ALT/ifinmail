@@ -3,6 +3,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -68,6 +69,8 @@ class Mailbox(Base):
     used_mb = Column(Integer, nullable=False, server_default=text("0"))
     enabled = Column(Integer, nullable=False, server_default=text("1"))
     plan = Column(String(32), nullable=True)
+    signature = Column(Text, nullable=True)
+    signature_enabled = Column(Integer, nullable=False, server_default=text("0"))
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User", back_populates="mailbox")
@@ -112,6 +115,10 @@ class Message(Base):
     references = Column(Text, nullable=True)
     labels = Column(Text, nullable=True)
     previous_folder = Column(String(32), nullable=True)
+    undo_deadline = Column(DateTime, nullable=True)
+    snoozed_until = Column(DateTime, nullable=True)
+    read_receipt_requested = Column(Integer, nullable=False, server_default=text("0"))
+    priority_score = Column(Float, nullable=False, server_default=text("0.0"))
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     mailbox = relationship("Mailbox")
@@ -140,6 +147,9 @@ class VacationResponder(Base):
     subject = Column(String(255), nullable=False, server_default=text("'Auto-reply'"))
     body = Column(Text, nullable=False, server_default=text("''"))
     enabled = Column(Integer, nullable=False, server_default=text("0"))
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    only_contacts = Column(Integer, nullable=False, server_default=text("0"))
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
@@ -200,6 +210,7 @@ class TwoFactor(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
     secret = Column(String(64), nullable=False)
     enabled = Column(Integer, nullable=False, server_default=text("0"))
+    recovery_codes = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User")
@@ -285,6 +296,33 @@ class Contact(Base):
     user = relationship("User")
 
 
+class ContactGroup(Base):
+    __tablename__ = "contact_groups"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(128), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User")
+    members = relationship("ContactGroupMember", back_populates="group", cascade="all, delete-orphan")
+
+
+class ContactGroupMember(Base):
+    __tablename__ = "contact_group_members"
+    __table_args__ = (
+        UniqueConstraint("group_id", "contact_id", name="uq_group_contact"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    group_id = Column(Integer, ForeignKey("contact_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    group = relationship("ContactGroup", back_populates="members")
+    contact = relationship("Contact")
+
+
 class Organization(Base):
     __tablename__ = "organizations"
 
@@ -306,6 +344,8 @@ class OrganizationMember(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     role = Column(String(32), nullable=False, server_default=text("'member'"))
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     organization = relationship("Organization")
@@ -320,9 +360,11 @@ class OrganizationInvite(Base):
     email = Column(String(255), nullable=False)
     token = Column(String(64), unique=True, nullable=False, index=True)
     role = Column(String(32), nullable=False, server_default=text("'member'"))
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     expires_at = Column(DateTime, nullable=False)
-    accepted = Column(Boolean, nullable=False, server_default=text("0"))
+    accepted = Column(Boolean, nullable=False, default=False)
 
     organization = relationship("Organization")
 
@@ -360,6 +402,22 @@ class Webhook(Base):
     events = Column(Text, nullable=False)
     secret = Column(String(128), nullable=False)
     active = Column(Integer, nullable=False, server_default=text("1"))
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User")
+
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String(128), nullable=False, unique=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(512), nullable=True)
+    device_name = Column(String(128), nullable=True)
+    last_used_at = Column(DateTime, nullable=False, server_default=func.now())
+    expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User")
@@ -524,6 +582,8 @@ class ScheduledMessage(Base):
     body_html = Column(Text, nullable=True)
     attachment_ids = Column(Text, nullable=True)
     scheduled_at = Column(DateTime, nullable=False)
+    repeat_interval = Column(String(16), nullable=True)
+    repeat_until = Column(DateTime, nullable=True)
     status = Column(String(20), nullable=False, server_default=text("'pending'"))
     error = Column(Text, nullable=True)
     sent_at = Column(DateTime, nullable=True)
@@ -535,6 +595,18 @@ class ScheduledMessage(Base):
     campaign = relationship("Campaign")
     step = relationship("CampaignStep")
     sent_message = relationship("Message")
+
+
+class SpamReport(Base):
+    __tablename__ = "spam_reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    report_type = Column(String(8), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    message = relationship("Message")
 
 
 class ImapImport(Base):
@@ -553,5 +625,18 @@ class ImapImport(Base):
     last_run_count = Column(Integer, nullable=True, server_default=text("0"))
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+    user = relationship("User")
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    endpoint = Column(Text, nullable=False)
+    p256dh_key = Column(String(255), nullable=False)
+    auth_key = Column(String(255), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User")

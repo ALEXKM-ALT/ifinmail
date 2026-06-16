@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
@@ -27,6 +27,15 @@ class ScheduleRequest(BaseModel):
     bcc_addr: str | None = None
     attachment_ids: list[int] | None = None
     scheduled_at: datetime
+    repeat_interval: str | None = None
+    repeat_until: datetime | None = None
+
+    @field_validator("repeat_interval")
+    @classmethod
+    def validate_repeat(cls, v: str | None) -> str | None:
+        if v is not None and v not in ("daily", "weekly", "monthly"):
+            raise ValueError("repeat_interval must be daily, weekly, or monthly")
+        return v
 
 
 class ScheduleResponse(BaseModel):
@@ -34,6 +43,8 @@ class ScheduleResponse(BaseModel):
     to_addr: str
     subject: str
     scheduled_at: datetime
+    repeat_interval: str | None = None
+    repeat_until: datetime | None = None
     status: str
     created_at: datetime
 
@@ -49,6 +60,8 @@ class ScheduleUpdateRequest(BaseModel):
     bcc_addr: str | None = None
     attachment_ids: list[int] | None = None
     scheduled_at: datetime | None = None
+    repeat_interval: str | None = None
+    repeat_until: datetime | None = None
 
 
 # ── Campaign schemas ──
@@ -115,6 +128,8 @@ def schedule_email(
         body_html=req.body_html,
         attachment_ids=json.dumps(req.attachment_ids) if req.attachment_ids else None,
         scheduled_at=req.scheduled_at,
+        repeat_interval=req.repeat_interval,
+        repeat_until=req.repeat_until,
     )
     db.add(sm)
     db.commit()
@@ -124,6 +139,8 @@ def schedule_email(
         to_addr=sm.to_addr,
         subject=sm.subject,
         scheduled_at=sm.scheduled_at,
+        repeat_interval=sm.repeat_interval,
+        repeat_until=sm.repeat_until,
         status=sm.status,
         created_at=sm.created_at,
     )
@@ -145,6 +162,8 @@ def list_scheduled(
             to_addr=sm.to_addr,
             subject=sm.subject,
             scheduled_at=sm.scheduled_at,
+            repeat_interval=sm.repeat_interval,
+            repeat_until=sm.repeat_until,
             status=sm.status,
             created_at=sm.created_at,
         )
@@ -162,6 +181,8 @@ def get_scheduled(message_id: int, db: Session = Depends(get_db), user: User = D
         to_addr=sm.to_addr,
         subject=sm.subject,
         scheduled_at=sm.scheduled_at,
+        repeat_interval=sm.repeat_interval,
+        repeat_until=sm.repeat_until,
         status=sm.status,
         created_at=sm.created_at,
     )
@@ -198,6 +219,12 @@ def update_scheduled(
         if req.scheduled_at <= datetime.utcnow():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="scheduled_at must be in the future")
         sm.scheduled_at = req.scheduled_at
+    if req.repeat_interval is not None:
+        if req.repeat_interval not in ("daily", "weekly", "monthly"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="repeat_interval must be daily, weekly, or monthly")
+        sm.repeat_interval = req.repeat_interval
+    if req.repeat_until is not None:
+        sm.repeat_until = req.repeat_until
     db.commit()
     db.refresh(sm)
     return ScheduleResponse(
@@ -205,6 +232,8 @@ def update_scheduled(
         to_addr=sm.to_addr,
         subject=sm.subject,
         scheduled_at=sm.scheduled_at,
+        repeat_interval=sm.repeat_interval,
+        repeat_until=sm.repeat_until,
         status=sm.status,
         created_at=sm.created_at,
     )

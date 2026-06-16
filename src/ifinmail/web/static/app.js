@@ -1,5 +1,6 @@
 const API = window.location.origin;
 const SSO_REDIRECT = window.location.origin;
+const isElectron = typeof window.ifinmail !== "undefined";
 
 let _rawToken = localStorage.getItem("ifinmail_token");
 let _rawRefresh = localStorage.getItem("ifinmail_refresh");
@@ -18,7 +19,51 @@ let state = {
   loading: false,
   hasMore: true,
   searchQuery: "",
+  convView: false,
+  conversations: [],
+  signature: null,
+  signatureEnabled: false,
+  unifiedView: false,
+  unifiedFolder: "INBOX",
+  unifiedMessages: [],
+  unifiedPerPage: 50,
 };
+
+if (isElectron) {
+  const api = window.ifinmail;
+  api.getApiUrl().then(url => { /* API base from main process if needed */ });
+  api.onNavigate(route => {
+    const nav = document.querySelector(`[data-folder="${route.replace("/", "")}"]`);
+    if (nav) { nav.click(); }
+  });
+  api.onRefresh(() => fetchMessages());
+  api.onThemeChanged(isDark => {
+    localStorage.setItem("ifinmail_dark", isDark ? "1" : "0");
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "");
+  });
+  api.isDarkMode().then(isDark => {
+    if (isDark) {
+      localStorage.setItem("ifinmail_dark", "1");
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  });
+  api.onMessageContextAction(action => {
+    const msg = state.currentMsg;
+    if (!msg) return;
+    switch (action) {
+      case "reply": showCompose("reply", msg); break;
+      case "reply-all": showCompose("reply-all", msg); break;
+      case "forward": showCompose("forward", msg); break;
+      case "toggle-read": toggleRead(msg); break;
+      case "archive": document.getElementById("archiveBtn")?.click(); break;
+      case "delete": document.getElementById("trashBtn")?.click(); break;
+      case "star": toggleStar(msg); break;
+    }
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) fetchFolderCounts();
+  });
+}
 
 let _refreshing = null;
 
@@ -26,6 +71,10 @@ async function apiFetch(url, opts = {}) {
   opts.headers = opts.headers || {};
   if (state.token) opts.headers["Authorization"] = `Bearer ${state.token}`;
   let res = await fetch(url, opts);
+  if (res.headers.get("X-Offline")) {
+    const banner = document.getElementById("offlineBanner");
+    if (banner) banner.style.display = "block";
+  }
   if (res.status === 401) {
     if (state.refreshToken && !_refreshing) {
       _refreshing = (async () => {
@@ -142,11 +191,16 @@ function render() {
   renderSidebar();
   document.getElementById("inboxView").innerHTML = document.getElementById("inboxTmpl").innerHTML;
   showView("inbox");
-  fetchMessages();
+  if (state.unifiedView) {
+    fetchUnifiedMessages();
+  } else {
+    fetchMessages();
+  }
   setupBatchBar();
   setupTrashToolbar();
   renderCustomFolders();
   document.getElementById("markAllReadBtn")?.addEventListener("click", markAllRead);
+  document.getElementById("convToggleBtn")?.addEventListener("click", toggleConvView);
 }
 
 // ── Sidebar ──
@@ -163,10 +217,21 @@ function renderSidebar() {
       const wrapper = document.createElement("div");
       wrapper.className = "ifinmail-account-avatar-wrapper" + (a.email === state.email ? " active" : "");
       const initial = a.email.charAt(0).toUpperCase();
-      // In future: check a.profilePic for <img>, fall back to initial
-      wrapper.innerHTML = `<div class="ifinmail-account-avatar" style="background:${colors[i % colors.length]}" title="${a.email}">${initial}</div>`;
+      const color = colors[i % colors.length];
+      wrapper.innerHTML = `<div class="ifinmail-account-avatar" style="background:${color}" title="${a.email}">${initial}<span class="ifinmail-account-badge-count" id="badge-${a.email.replace(/[^a-zA-Z0-9]/g, "_")}" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--primary);color:#fff;font-size:9px;font-weight:700;border-radius:8px;min-width:14px;height:14px;line-height:14px;text-align:center;padding:0 3px;border:1px solid var(--card-bg)"></span></div>`;
       wrapper.onclick = () => switchAccount(a.email, a.token, a.refreshToken);
       accList.appendChild(wrapper);
+      // Fetch unread count for this account (only if token is present)
+      if (a.token) {
+        fetch(`${API}/mail?folder=INBOX&per_page=1`, {
+          headers: { Authorization: `Bearer ${a.token}` },
+        }).then(r => {
+          if (!r.ok) return;
+          const count = parseInt(r.headers.get("X-Total-Count") || "0");
+          const badge = document.getElementById(`badge-${a.email.replace(/[^a-zA-Z0-9]/g, "_")}`);
+          if (badge && count > 0) { badge.textContent = count > 99 ? "99+" : count; badge.style.display = ""; }
+        }).catch(() => {});
+      }
     });
   }
   document.getElementById("accountsAddBtn").onclick = showAddAccount;
@@ -174,13 +239,25 @@ function renderSidebar() {
   document.querySelectorAll(".ifinmail-nav-item").forEach(el => {
     el.addEventListener("click", () => {
       if (!el.dataset.folder) return;
-      state.folder = el.dataset.folder;
-      state.currentMsg = null;
-      showView("inbox");
-      fetchMessages();
-      document.querySelectorAll(".ifinmail-nav-item").forEach(n => n.classList.remove("active"));
-      el.classList.add("active");
-      updateHash();
+      if (state.unifiedView) {
+        state.unifiedFolder = el.dataset.folder;
+        state.unifiedPerPage = 50;
+        state.folder = "UNIFIED";
+        state.currentMsg = null;
+        showView("inbox");
+        fetchUnifiedMessages();
+        document.querySelectorAll(".ifinmail-nav-item").forEach(n => n.classList.remove("active"));
+        el.classList.add("active");
+        updateHash();
+      } else {
+        state.folder = el.dataset.folder;
+        state.currentMsg = null;
+        showView("inbox");
+        fetchMessages();
+        document.querySelectorAll(".ifinmail-nav-item").forEach(n => n.classList.remove("active"));
+        el.classList.add("active");
+        updateHash();
+      }
     });
     if (el.dataset.folder === state.folder) el.classList.add("active");
   });
@@ -227,7 +304,49 @@ function renderSidebar() {
     });
   }
 
+  const scheduledNav = document.getElementById("scheduledNav");
+  if (scheduledNav) {
+    scheduledNav.addEventListener("click", async () => {
+      state.currentMsg = null;
+      if (!state.token) return showView("login");
+      document.querySelectorAll(".ifinmail-nav-item").forEach(n => n.classList.remove("active"));
+      scheduledNav.classList.add("active");
+      showView("settings");
+      await renderSettings("scheduled");
+      const section = document.getElementById("scheduledSection");
+      if (section) section.scrollIntoView({ behavior: "smooth" });
+    });
+  }
+
+  // Unified Inbox toggle
+  const unifiedCheck = document.getElementById("unifiedToggleCheck");
+  if (unifiedCheck) {
+    unifiedCheck.checked = state.unifiedView;
+    unifiedCheck.addEventListener("change", () => {
+      state.unifiedView = unifiedCheck.checked;
+      if (state.unifiedView) {
+        state.unifiedFolder = "INBOX";
+        state.unifiedPerPage = 50;
+        state.folder = "UNIFIED";
+        state.currentMsg = null;
+        showView("inbox");
+        fetchUnifiedMessages();
+        document.querySelectorAll(".ifinmail-nav-item").forEach(n => n.classList.remove("active"));
+        // Highlight INBOX
+        document.querySelector('.ifinmail-nav-item[data-folder="INBOX"]')?.classList.add("active");
+      } else {
+        state.folder = "INBOX";
+        state.currentMsg = null;
+        showView("inbox");
+        fetchMessages();
+        document.querySelectorAll(".ifinmail-nav-item").forEach(n => n.classList.remove("active"));
+      }
+      updateHash();
+    });
+  }
+
   fetchFolderCounts();
+  fetchScheduledCount();
 }
 
 function toggleDark() {
@@ -278,6 +397,102 @@ async function renderSettings() {
       document.getElementById("vacationError").textContent = "Saved";
     } catch { document.getElementById("vacationError").textContent = "Network error"; }
   });
+
+  // ── Desktop Preferences (Electron only) ──
+  const desktopPrefs = document.getElementById("desktopPrefs");
+  if (isElectron && desktopPrefs) {
+    const api = window.ifinmail;
+    desktopPrefs.style.display = "";
+
+    api.getAppVersion().then(v => document.getElementById("prefVersion").textContent = v);
+    api.getAutoStart().then(v => document.getElementById("prefAutoStart").checked = v);
+    api.getPref("minimizeToTray", true).then(v => document.getElementById("prefMinimizeToTray").checked = v);
+    api.getPref("notifications", true).then(v => document.getElementById("prefNotifications").checked = v);
+    api.getPref("theme", "system").then(v => document.getElementById("prefTheme").value = v);
+    api.getZoom().then(v => {
+      const pct = Math.round(v * 100);
+      document.getElementById("prefZoom").value = pct;
+      document.getElementById("zoomLabel").textContent = pct + "%";
+    });
+
+    document.getElementById("prefAutoStart").addEventListener("change", function() {
+      api.setAutoStart(this.checked);
+    });
+    document.getElementById("prefMinimizeToTray").addEventListener("change", function() {
+      api.setPref("minimizeToTray", this.checked);
+    });
+    document.getElementById("prefNotifications").addEventListener("change", function() {
+      api.setPref("notifications", this.checked);
+    });
+    document.getElementById("prefZoom").addEventListener("input", function() {
+      const pct = parseInt(this.value);
+      document.getElementById("zoomLabel").textContent = pct + "%";
+      api.setZoom(pct / 100);
+    });
+    document.getElementById("prefTheme").addEventListener("change", function() {
+      api.setPref("theme", this.value);
+      if (this.value === "light") {
+        localStorage.setItem("ifinmail_dark", "0");
+        document.documentElement.removeAttribute("data-theme");
+      } else if (this.value === "dark") {
+        localStorage.setItem("ifinmail_dark", "1");
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    });
+  }
+
+  // ── Signature (Rich Text) ──
+  (async () => {
+    try {
+      const res = await apiFetch(`${API}/mail/settings/signature`);
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById("signatureEnabled").checked = data.signature_enabled;
+        document.getElementById("signatureEditor").innerHTML = data.signature;
+        updateSignaturePreview();
+      }
+    } catch {}
+
+    document.getElementById("signatureEditor").addEventListener("input", updateSignaturePreview);
+
+    // toolbar buttons
+    document.querySelectorAll("#sigToolbar .ifinmail-editor-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cmd = btn.dataset.cmd;
+        if (cmd === "createLink") {
+          const url = prompt("Enter link URL:", "https://");
+          if (url) document.execCommand(cmd, false, url);
+        } else {
+          document.execCommand(cmd, false, null);
+        }
+        document.getElementById("signatureEditor").focus();
+        updateSignaturePreview();
+      });
+    });
+
+    document.getElementById("saveSignature").addEventListener("click", async () => {
+      const sig = document.getElementById("signatureEditor").innerHTML;
+      const enabled = document.getElementById("signatureEnabled").checked;
+      try {
+        const res = await apiFetch(`${API}/mail/settings/signature`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ signature: sig, signature_enabled: enabled }),
+        });
+        if (!res.ok) { document.getElementById("signatureError").textContent = "Failed to save"; return; }
+        document.getElementById("signatureError").style.color = "green";
+        document.getElementById("signatureError").textContent = "Saved";
+        state.signature = sig;
+        state.signatureEnabled = enabled;
+      } catch { document.getElementById("signatureError").textContent = "Network error"; }
+    });
+  })();
+
+  function updateSignaturePreview() {
+    const preview = document.getElementById("signaturePreview");
+    const html = document.getElementById("signatureEditor").innerHTML;
+    if (preview) preview.innerHTML = html && html !== "<br>" ? html : "<em style='color:var(--text-light)'>No signature</em>";
+  }
 
   // Load forwarding
   async function loadForwarding() {
@@ -356,7 +571,8 @@ async function renderSettings() {
           info.style.flex = "1";
           const dt = new Date(m.scheduled_at);
           const dateStr = dt.toLocaleString();
-          info.innerHTML = `<strong>${m.subject || "(no subject)"}</strong> → ${m.to_addr}<br><span style="font-size:11px;color:var(--muted)">${dateStr} · ${m.status}</span>`;
+          const repeatInfo = m.repeat_interval ? ` · <strong>repeats ${m.repeat_interval}</strong>${m.repeat_until ? ` until ${new Date(m.repeat_until).toLocaleDateString()}` : ''}` : '';
+          info.innerHTML = `<strong>${m.subject || "(no subject)"}</strong> → ${m.to_addr}<br><span style="font-size:11px;color:var(--muted)">${dateStr} · ${m.status}${repeatInfo}</span>`;
           const del = document.createElement("button");
           del.className = "ifinmail-btn ifinmail-btn-sm";
           del.textContent = "Cancel";
@@ -959,6 +1175,7 @@ async function fetchFolderCounts() {
     if (res.ok) {
       const counts = await res.json();
       document.querySelectorAll(".ifinmail-badge[id^='count-']").forEach(el => {
+        if (el.id === "count-SCHEDULED") return;
         const folder = el.id.replace("count-", "");
         el.textContent = counts[folder] > 0 ? counts[folder] : "";
       });
@@ -967,6 +1184,22 @@ async function fetchFolderCounts() {
         const badge = el.querySelector(".ifinmail-badge");
         if (badge) badge.textContent = counts[folder] > 0 ? counts[folder] : "";
       });
+      if (isElectron && counts.INBOX !== undefined) {
+        window.ifinmail.setBadge(counts.INBOX);
+      }
+    }
+  } catch {}
+}
+
+async function fetchScheduledCount() {
+  const badge = document.getElementById("count-SCHEDULED");
+  if (!badge) return;
+  try {
+    const res = await apiFetch(`${API}/mail/scheduled`);
+    if (res.ok) {
+      const msgs = await res.json();
+      const pending = msgs.filter(m => m.status === "pending").length;
+      badge.textContent = pending > 0 ? pending : "";
     }
   } catch {}
 }
@@ -1010,6 +1243,14 @@ async function markAllRead() {
   } catch {}
 }
 
+function toggleConvView() {
+  state.convView = !state.convView;
+  const btn = document.getElementById("convToggleBtn");
+  if (btn) btn.style.opacity = state.convView ? "1" : "0.5";
+  showToast(state.convView ? "Conversation view on" : "Flat view");
+  fetchMessages();
+}
+
 // ── Admin Dashboard ──
 
 async function renderAdmin() {
@@ -1037,15 +1278,13 @@ async function renderAdmin() {
     tab.addEventListener("click", () => showATab(tab.dataset.atab));
   });
 
-  const icons = {
-    Users: "👥", Domains: "🌐", Messages: "✉️", Storage: "💾",
-    Attachments: "📎", Aliases: "🔄", Mailboxes: "📬", "Active today": "⚡",
-  };
   const trends = {
     Users: "registered", Domains: "custom domains", Messages: "last 7 days",
     Storage: "of 100 GB", Attachments: "total size", Aliases: "this week",
     Mailboxes: "active today", "Active today": "last login",
   };
+
+  const s = (d) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px">${d}</svg>`;
 
   try {
     const res = await apiFetch(`${API}/admin/stats`);
@@ -1054,14 +1293,14 @@ async function renderAdmin() {
     const cards = document.getElementById("adminCards");
     cards.innerHTML = "";
     const items = [
-      { label: "Users", value: stats.total_users, trend: `+${stats.users_last_24h} this month`, icon: "👥" },
-      { label: "Domains", value: stats.total_domains, trend: `${stats.total_domains} custom domains`, icon: "🌐" },
-      { label: "Messages", value: stats.total_messages, trend: `${stats.total_messages} total`, icon: "✉️" },
-      { label: "Storage", value: (stats.total_storage_bytes / 1024).toFixed(1) + " KB", trend: "of 100 GB", icon: "💾" },
-      { label: "Attachments", value: stats.total_attachments, trend: `${stats.total_attachments} files`, icon: "📎" },
-      { label: "Aliases", value: stats.total_aliases, trend: `${stats.total_aliases} created`, icon: "🔄" },
-      { label: "Mailboxes", value: stats.total_mailboxes, trend: `${stats.active_today} active today`, icon: "📬" },
-      { label: "Active today", value: stats.active_today, trend: "last 24 hours", icon: "⚡" },
+      { label: "Users", value: stats.total_users, trend: `+${stats.users_last_24h} this month`, icon: s('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') },
+      { label: "Domains", value: stats.total_domains, trend: `${stats.total_domains} custom domains`, icon: s('<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>') },
+      { label: "Messages", value: stats.total_messages, trend: `${stats.total_messages} total`, icon: s('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>') },
+      { label: "Storage", value: (stats.total_storage_bytes / 1024).toFixed(1) + " KB", trend: "of 100 GB", icon: s('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>') },
+      { label: "Attachments", value: stats.total_attachments, trend: `${stats.total_attachments} files`, icon: s('<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>') },
+      { label: "Aliases", value: stats.total_aliases, trend: `${stats.total_aliases} created`, icon: s('<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') },
+      { label: "Mailboxes", value: stats.total_mailboxes, trend: `${stats.active_today} active today`, icon: s('<path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><polyline points="15,9 18,9 18,11"/><path d="M6.5 5C9 5 11 7 11 9.5V17a2 2 0 0 1-2 2"/>') },
+      { label: "Active today", value: stats.active_today, trend: "last 24 hours", icon: s('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>') },
     ];
     items.forEach(item => {
       const card = document.createElement("div");
@@ -1070,7 +1309,7 @@ async function renderAdmin() {
       cards.appendChild(card);
     });
 
-    if (typeof Chart !== "undefined") {
+      if (typeof Chart !== "undefined") {
       const growthRes = await apiFetch(`${API}/admin/stats/growth?days=30`);
       if (growthRes.ok) {
         const growth = await growthRes.json();
@@ -1079,7 +1318,10 @@ async function renderAdmin() {
           new Chart(ctx1, {
             type: "line",
             data: {
-              labels: growth.map(g => g.date.slice(5)),
+              labels: growth.map(g => {
+                const d = new Date(g.date + "T00:00:00");
+                return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              }),
               datasets: [{
                 label: "New Users",
                 data: growth.map(g => g.count),
@@ -1088,7 +1330,11 @@ async function renderAdmin() {
                 fill: true, tension: 0.3, pointRadius: 3,
               }],
             },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } },
+            options: {
+              responsive: true, maintainAspectRatio: true,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } },
+            },
           });
         }
       }
@@ -1101,7 +1347,10 @@ async function renderAdmin() {
           new Chart(ctx2, {
             type: "bar",
             data: {
-              labels: vol.map(v => v.date.slice(5)),
+              labels: vol.map(v => {
+                const d = new Date(v.date + "T00:00:00");
+                return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              }),
               datasets: [{
                 label: "Messages",
                 data: vol.map(v => v.count),
@@ -1109,7 +1358,11 @@ async function renderAdmin() {
                 borderRadius: 6,
               }],
             },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } },
+            options: {
+              responsive: true, maintainAspectRatio: true,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } },
+            },
           });
         }
       }
@@ -1408,6 +1661,7 @@ document.addEventListener("click", async (e) => {
         render();
         connectWS();
         requestNotifyPermission();
+        registerPush();
       } else if (event.data.type === "sso-error") {
         window.removeEventListener("message", handler);
         showToast("SSO login failed");
@@ -1603,6 +1857,7 @@ async function fetchMessages(append) {
   if (append && !state.hasMore) return;
 
   const list = document.getElementById("messageList");
+  if (!list) return;
 
   if (!append) {
     state.page = 1;
@@ -1637,8 +1892,10 @@ async function fetchMessages(append) {
   if (filterAttach) p.set("has_attachment", "true");
   if (filterStarred) p.set("starred", "true");
 
+  const endpoint = state.convView && ["INBOX", "PRIORITY"].includes(state.folder) ? `${API}/mail/conversations` : `${API}/mail`;
+
   try {
-    const res = await apiFetch(`${API}/mail?${p}`);
+    const res = await apiFetch(`${endpoint}?${p}`);
     if (!res.ok) {
       if (res.status === 401) {
         state.token = null;
@@ -1651,13 +1908,20 @@ async function fetchMessages(append) {
       return;
     }
     state.totalCount = parseInt(res.headers.get("X-Total-Count") || "0");
-    const msgs = await res.json();
+    const data = await res.json();
     state.hasMore = state.page * state.perPage < state.totalCount;
 
-    if (append) {
-      state.messages.push(...msgs);
+    state._focusIdx = -1;
+    if (state.convView && ["INBOX", "PRIORITY"].includes(state.folder)) {
+      state.conversations = data;
+      state.messages = [];
     } else {
-      state.messages = msgs;
+      if (append) {
+        state.messages.push(...data);
+      } else {
+        state.messages = data;
+      }
+      state.conversations = [];
     }
 
     renderMessageList(append);
@@ -1669,7 +1933,272 @@ async function fetchMessages(append) {
   state.loading = false;
 }
 
+// ── Unified Inbox ──
+
+async function fetchUnifiedMessages(append) {
+  const list = document.getElementById("messageList");
+  const colors = ["#4361ee","#e63946","#2ec4b6","#ff9f1c","#7209b7","#f72585","#06d6a0","#ef476f"];
+
+  if (!append) {
+    state.messages = [];
+    list.innerHTML = '<div class="ifinmail-spinner">Loading unified inbox...</div>';
+  }
+
+  const folder = state.unifiedFolder || "INBOX";
+  const pp = state.unifiedPerPage;
+  const allMsgs = append ? [...state.unifiedMessages] : [];
+
+  for (let i = 0; i < state.accounts.length; i++) {
+    const acc = state.accounts[i];
+    try {
+      const res = await fetch(`${API}/mail?folder=${folder}&per_page=${pp}`, {
+        headers: { Authorization: `Bearer ${acc.token}` },
+      });
+      if (res.ok) {
+        const msgs = await res.json();
+        const existingIds = new Set(allMsgs.map(m => `${m._account}_${m.id}`));
+        msgs.forEach(m => {
+          const key = `${acc.email}_${m.id}`;
+          if (!existingIds.has(key)) {
+            m._account = acc.email;
+            m._accountIndex = i;
+            m._accountColor = colors[i % colors.length];
+            allMsgs.push(m);
+            existingIds.add(key);
+          }
+        });
+      }
+    } catch {}
+  }
+
+  allMsgs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  state.unifiedMessages = allMsgs;
+  state.messages = allMsgs;
+  state.totalCount = allMsgs.length;
+  renderUnifiedMessageList();
+}
+
+function renderUnifiedMessageList() {
+  const list = document.getElementById("messageList");
+  const countEl = document.getElementById("searchCount");
+  if (countEl) countEl.textContent = `${state.messages.length} across ${state.accounts.length} account${state.accounts.length !== 1 ? "s" : ""}`;
+
+  if (!state.messages.length) {
+    list.innerHTML = '<div class="ifinmail-empty">No messages across accounts</div>';
+    clearSelection();
+    return;
+  }
+
+  list.innerHTML = "";
+  state.messages.forEach(msg => {
+    const row = document.getElementById("messageRowTmpl").content.cloneNode(true);
+    const div = row.querySelector(".ifinmail-row");
+    div.dataset.id = msg.id;
+    if (!msg.read) div.classList.add("unread");
+    if (msg.priority_score && msg.priority_score >= 2) div.classList.add("priority");
+
+    const cb = row.querySelector(".ifinmail-row-cb");
+    cb.checked = state._selected?.has(msg.id) || false;
+    cb.addEventListener("change", () => {
+      if (!state._selected) state._selected = new Set();
+      if (cb.checked) state._selected.add(msg.id);
+      else state._selected.delete(msg.id);
+      updateBatchBar();
+    });
+    cb.addEventListener("click", e => e.stopPropagation());
+
+    const dot = row.querySelector(".ifinmail-row-unread-dot");
+    dot.addEventListener("click", e => { e.stopPropagation(); toggleRead(msg); });
+
+    const star = row.querySelector(".ifinmail-row-star");
+    star.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="' + (msg.starred ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+    if (msg.starred) star.classList.add("starred");
+    star.addEventListener("click", e => { e.stopPropagation(); toggleStar(msg); });
+
+    const sender = row.querySelector(".ifinmail-row-sender");
+    let senderHtml = `<span class="ifinmail-account-badge" style="background:${msg._accountColor}" title="${msg._account}"></span>`;
+    if (msg.priority_score && msg.priority_score >= 2) {
+      senderHtml += '<span class="ifinmail-priority-badge" title="Priority: ' + msg.priority_score.toFixed(1) + '">!</span> ';
+    }
+    if (msg.has_attachments) {
+      senderHtml += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+    }
+    senderHtml += msg.from_addr;
+    sender.innerHTML = senderHtml;
+
+    row.querySelector(".ifinmail-row-subject").textContent = msg.subject || "(no subject)";
+    row.querySelector(".ifinmail-row-date").textContent = formatDate(msg.created_at);
+
+    const labelsEl = row.querySelector(".ifinmail-row-labels");
+    if (msg.labels) {
+      const lcolors = ["#e74c3c","#e67e22","#f1c40f","#2ecc71","#3498db","#9b59b6","#1abc9c","#e84393"];
+      msg.labels.split(",").forEach((l, i) => {
+        const tag = document.createElement("span");
+        tag.className = "ifinmail-label-badge";
+        tag.textContent = l.trim();
+        tag.style.background = lcolors[i % lcolors.length] + "22";
+        tag.style.color = lcolors[i % lcolors.length];
+        labelsEl.appendChild(tag);
+      });
+    }
+
+    div.addEventListener("click", async () => {
+      // Switch to the account this message belongs to
+      const acc = state.accounts.find(a => a.email === msg._account);
+      if (acc && acc.email !== state.email) {
+        await switchAccount(acc.email, acc.token, acc.refreshToken);
+        // Re-fetch with that account active
+        state.folder = "INBOX";
+        state.unifiedView = false;
+        const unifiedCheck = document.getElementById("unifiedToggleCheck");
+        if (unifiedCheck) unifiedCheck.checked = false;
+        fetchMessages();
+      }
+      if (msg.folder === "DRAFTS") {
+        showCompose("edit", msg);
+      } else {
+        openMessage(msg.id);
+      }
+    });
+    list.appendChild(row);
+  });
+
+  // Load more button
+  const loadMoreBtn = document.createElement("button");
+  loadMoreBtn.className = "ifinmail-btn ifinmail-btn-sm";
+  loadMoreBtn.textContent = "Load more";
+  loadMoreBtn.style.cssText = "display:block;margin:16px auto;padding:8px 24px";
+  loadMoreBtn.addEventListener("click", async () => {
+    state.unifiedPerPage += 50;
+    loadMoreBtn.textContent = "Loading...";
+    loadMoreBtn.disabled = true;
+    await fetchUnifiedMessages(true);
+    loadMoreBtn.textContent = "Load more";
+    loadMoreBtn.disabled = false;
+  });
+  list.appendChild(loadMoreBtn);
+
+  clearSelection();
+}
+
+function filterUnifiedMessages() {
+  const q = (document.getElementById("searchInput")?.value || "").toLowerCase();
+  if (!q) {
+    state.messages = state.unifiedMessages;
+  } else {
+    state.messages = state.unifiedMessages.filter(m =>
+      (m.from_addr || "").toLowerCase().includes(q) ||
+      (m.subject || "").toLowerCase().includes(q) ||
+      (m.body_text || "").toLowerCase().includes(q)
+    );
+  }
+  renderUnifiedMessageList();
+}
+
+function renderConversationList() {
+  const list = document.getElementById("messageList");
+  const countEl = document.getElementById("searchCount");
+  if (countEl) {
+    const searchVal = document.getElementById("searchInput")?.value;
+    countEl.textContent = searchVal ? `${state.totalCount} conversation${state.totalCount !== 1 ? "s" : ""}` : "";
+  }
+
+  if (!state.conversations.length) {
+    list.innerHTML = `<div class="ifinmail-empty">${state.folder === "INBOX" ? "inbox" : "folder"} is empty</div>`;
+    clearSelection();
+    return;
+  }
+
+  list.innerHTML = "";
+  state.conversations.forEach(conv => {
+    const div = document.createElement("div");
+    div.className = "ifinmail-conversation";
+    div.dataset.convId = conv.id;
+
+    const unreadCount = conv.unread_count || 0;
+    const header = document.createElement("div");
+    header.className = "ifinmail-conv-header";
+    header.innerHTML = `
+      <span class="ifinmail-conv-toggle">▸</span>
+      <span class="ifinmail-conv-subject">${conv.subject || "(no subject)"}</span>
+      <span class="ifinmail-conv-count">${conv.total_count} ${conv.total_count === 1 ? "msg" : "msgs"}</span>
+      ${unreadCount > 0 ? `<span class="ifinmail-badge">${unreadCount} unread</span>` : ""}
+      <span class="ifinmail-conv-latest">${conv.latest_from}</span>
+      <span class="ifinmail-conv-date">${formatDate(conv.latest_at)}</span>
+    `;
+    div.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "ifinmail-conv-body";
+    body.style.display = "none";
+
+    conv.messages.forEach(msg => {
+      const row = document.getElementById("messageRowTmpl").content.cloneNode(true);
+      const rowDiv = row.querySelector(".ifinmail-row");
+      rowDiv.dataset.id = msg.id;
+      if (!msg.read) rowDiv.classList.add("unread");
+      if (msg.priority_score && msg.priority_score >= 2) rowDiv.classList.add("priority");
+
+      const cb = row.querySelector(".ifinmail-row-cb");
+      cb.checked = state._selected?.has(msg.id) || false;
+      cb.addEventListener("change", () => {
+        if (!state._selected) state._selected = new Set();
+        if (cb.checked) state._selected.add(msg.id);
+        else state._selected.delete(msg.id);
+        updateBatchBar();
+      });
+      cb.addEventListener("click", (e) => e.stopPropagation());
+
+      const dot = row.querySelector(".ifinmail-row-unread-dot");
+      dot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleRead(msg);
+      });
+
+      const star = row.querySelector(".ifinmail-row-star");
+      star.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="' + (msg.starred ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      if (msg.starred) star.classList.add("starred");
+      star.addEventListener("click", (e) => { e.stopPropagation(); toggleStar(msg); });
+
+      const sender = row.querySelector(".ifinmail-row-sender");
+      let senderHtml = "";
+      if (msg.priority_score && msg.priority_score >= 2) {
+        senderHtml = '<span class="ifinmail-priority-badge" title="Priority: ' + msg.priority_score.toFixed(1) + '">!</span> ';
+      }
+      senderHtml += msg.from_addr;
+      sender.innerHTML = senderHtml;
+
+      row.querySelector(".ifinmail-row-subject").textContent = msg.subject || "(no subject)";
+      row.querySelector(".ifinmail-row-date").textContent = formatDate(msg.created_at);
+
+      rowDiv.addEventListener("click", () => openMessage(msg.id));
+      if (isElectron) {
+        rowDiv.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          window.ifinmail.showMessageContextMenu(msg);
+        });
+      }
+      body.appendChild(row);
+    });
+
+    div.appendChild(body);
+
+    header.addEventListener("click", () => {
+      const isOpen = body.style.display !== "none";
+      body.style.display = isOpen ? "none" : "";
+      header.querySelector(".ifinmail-conv-toggle").textContent = isOpen ? "▸" : "▾";
+    });
+
+    list.appendChild(div);
+  });
+}
+
 function renderMessageList(append) {
+  if (state.conversations.length > 0) {
+    renderConversationList();
+    return;
+  }
+
   const list = document.getElementById("messageList");
   const totalPages = Math.ceil(state.totalCount / state.perPage) || 1;
 
@@ -1694,6 +2223,7 @@ function renderMessageList(append) {
     const div = row.querySelector(".ifinmail-row");
     div.dataset.id = msg.id;
     if (!msg.read) div.classList.add("unread");
+    if (msg.priority_score && msg.priority_score >= 2) div.classList.add("priority");
 
     const cb = row.querySelector(".ifinmail-row-cb");
     cb.checked = state._selected?.has(msg.id) || false;
@@ -1717,11 +2247,15 @@ function renderMessageList(append) {
     star.addEventListener("click", (e) => { e.stopPropagation(); toggleStar(msg); });
 
     const sender = row.querySelector(".ifinmail-row-sender");
-    if (msg.has_attachments) {
-      sender.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' + msg.from_addr;
-    } else {
-      sender.textContent = msg.from_addr;
+    let senderHtml = "";
+    if (msg.priority_score && msg.priority_score >= 2) {
+      senderHtml = '<span class="ifinmail-priority-badge" title="Priority: ' + msg.priority_score.toFixed(1) + '">!</span> ';
     }
+    if (msg.has_attachments) {
+      senderHtml += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+    }
+    senderHtml += msg.from_addr;
+    sender.innerHTML = senderHtml;
 
     row.querySelector(".ifinmail-row-subject").textContent = msg.subject || "(no subject)";
     row.querySelector(".ifinmail-row-date").textContent = formatDate(msg.created_at);
@@ -2153,6 +2687,22 @@ async function renderAttachments() {
       const link = row.querySelector(".ifinmail-attachment-link");
       link.href = `${API}/mail/${msg.id}/attachments/${att.id}/download`;
       link.textContent = att.filename;
+      if (isElectron) {
+        link.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const res = await apiFetch(link.href);
+          if (!res.ok) return;
+          const blob = await res.blob();
+          const buf = await blob.arrayBuffer();
+          const result = await window.ifinmail.showSaveDialog({
+            defaultPath: att.filename,
+            filters: [{ name: "All Files", extensions: ["*"] }],
+          });
+          if (!result.canceled && result.filePath) {
+            await window.ifinmail.writeFile(result.filePath, Array.from(new Uint8Array(buf)));
+          }
+        });
+      }
       const sizeEl = row.querySelector(".ifinmail-attachment-size");
       sizeEl.textContent = formatSize(att.size);
       container.appendChild(row);
@@ -2271,7 +2821,7 @@ function renderLabels() {
   container.innerHTML = "";
   const editBtn = document.createElement("button");
   editBtn.className = "ifinmail-btn ifinmail-btn-sm";
-  editBtn.textContent = "✎ Labels";
+  editBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Labels';
   editBtn.onclick = () => {
     const input = document.createElement("input");
     input.value = msg.labels || "";
@@ -2363,7 +2913,7 @@ async function toggleRead(msg) {
 let _composeAttachmentIds = [];
 let _composeEditId = null;
 
-function showCompose(mode, msg) {
+async function showCompose(mode, msg) {
   document.getElementById("composeView").innerHTML = document.getElementById("composeTmpl").innerHTML;
   showView("compose");
   _composeAttachmentIds = [];
@@ -2374,30 +2924,60 @@ function showCompose(mode, msg) {
 
   toEl.value = "";
   subjEl.value = "";
-  bodyEl.value = "";
+  bodyEl.innerHTML = "";
   const quoteEl = document.getElementById("composeQuote");
   quoteEl.textContent = "";
+  quoteEl.style.display = "none";
   document.getElementById("composeError").textContent = "";
   document.getElementById("composeAttachList").innerHTML = "";
+
+  async function appendSignature() {
+    if (!state.signatureEnabled && !state.signature) {
+      try {
+        const res = await apiFetch(`${API}/mail/settings/signature`);
+        if (res.ok) {
+          const data = await res.json();
+          state.signature = data.signature;
+          state.signatureEnabled = data.signature_enabled;
+        }
+      } catch {}
+    }
+    if (state.signatureEnabled && state.signature) {
+      const sigHtml = `<div><br></div><div>--<br>${state.signature}</div>`;
+      if (bodyEl.innerHTML === "" || bodyEl.innerHTML === "<br>") {
+        bodyEl.innerHTML = sigHtml;
+      } else {
+        bodyEl.insertAdjacentHTML("beforeend", sigHtml);
+      }
+    }
+  }
 
   if (mode === "edit" && msg) {
     _composeEditId = msg.id;
     toEl.value = msg.to_addrs || "";
     subjEl.value = msg.subject || "";
-    bodyEl.value = msg.body_text || "";
+    bodyEl.innerHTML = msg.body_html || msg.body_text || "";
     document.querySelector(".ifinmail-compose-header h2").textContent = "Edit Draft";
   } else if (mode === "reply" && msg) {
     toEl.value = msg.from_addr;
     subjEl.value = msg.subject?.startsWith("Re:") ? msg.subject : `Re: ${msg.subject}`;
-    quoteEl.textContent = `--- Original message ---\nFrom: ${msg.from_addr}\nDate: ${formatDate(msg.created_at)}\nSubject: ${msg.subject}\n\n${msg.body_text || ""}`;
+    quoteEl.innerHTML = `<hr><div style="font-size:12px;color:var(--text-light)">On ${formatDate(msg.created_at)}, ${msg.from_addr} wrote:</div><blockquote style="margin:4px 0 0;padding:0 0 0 12px;border-left:2px solid var(--border);color:var(--text-light)">${msg.body_html || msg.body_text || ""}</blockquote>`;
+    quoteEl.style.display = "block";
+    await appendSignature();
   } else if (mode === "replyAll" && msg) {
     const allTo = [msg.from_addr, ...(msg.to_addrs ? msg.to_addrs.split(",").map(s => s.trim()).filter(s => s !== state.email) : [])];
     toEl.value = [...new Set(allTo)].join(", ");
     subjEl.value = msg.subject?.startsWith("Re:") ? msg.subject : `Re: ${msg.subject}`;
-    quoteEl.textContent = `--- Original message ---\nFrom: ${msg.from_addr}\nDate: ${formatDate(msg.created_at)}\nSubject: ${msg.subject}\n\n${msg.body_text || ""}`;
+    quoteEl.innerHTML = `<hr><div style="font-size:12px;color:var(--text-light)">On ${formatDate(msg.created_at)}, ${msg.from_addr} wrote:</div><blockquote style="margin:4px 0 0;padding:0 0 0 12px;border-left:2px solid var(--border);color:var(--text-light)">${msg.body_html || msg.body_text || ""}</blockquote>`;
+    quoteEl.style.display = "block";
+    await appendSignature();
   } else if (mode === "forward" && msg) {
     subjEl.value = msg.subject?.startsWith("Fwd:") ? msg.subject : `Fwd: ${msg.subject}`;
-    quoteEl.textContent = `--- Forwarded message ---\nFrom: ${msg.from_addr}\nDate: ${formatDate(msg.created_at)}\nSubject: ${msg.subject}\nTo: ${msg.to_addrs}\n\n${msg.body_text || ""}`;
+    quoteEl.innerHTML = `<hr><div style="font-size:12px;color:var(--text-light)">---------- Forwarded message ----------<br>From: ${msg.from_addr}<br>Date: ${formatDate(msg.created_at)}<br>Subject: ${msg.subject}<br>To: ${msg.to_addrs}</div><blockquote style="margin:4px 0 0;padding:0 0 0 12px;border-left:2px solid var(--border);color:var(--text-light)">${msg.body_html || msg.body_text || ""}</blockquote>`;
+    quoteEl.style.display = "block";
+    await appendSignature();
+  } else {
+    await appendSignature();
   }
 
   if (mode === "reply" || mode === "replyAll" || mode === "forward") {
@@ -2412,10 +2992,17 @@ function showCompose(mode, msg) {
   document.getElementById("composeSubject").addEventListener("input", saveDraft);
   document.getElementById("composeBody").addEventListener("input", saveDraft);
   const scheduleBtn = document.getElementById("composeScheduleBtn");
+  const schedulePanel = document.getElementById("composeSchedulePanel");
   const scheduleAt = document.getElementById("composeScheduleAt");
   scheduleBtn.onclick = () => {
-    scheduleAt.style.display = scheduleAt.style.display === "none" ? "block" : "none";
-    if (scheduleAt.style.display === "block") scheduleAt.focus();
+    const show = schedulePanel.style.display === "none";
+    schedulePanel.style.display = show ? "flex" : "none";
+    if (show) {
+      scheduleAt.focus();
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      scheduleAt.value = now.toISOString().slice(0, 16);
+    }
   };
   window._composeDirty = true;
 
@@ -2423,6 +3010,23 @@ function showCompose(mode, msg) {
   const attachBtn = document.getElementById("attachBtn");
   attachBtn.onclick = () => attachInput.click();
   attachInput.onchange = handleAttachSelect;
+
+  if (isElectron) {
+    const composeArea = document.getElementById("composeArea") || attachBtn.closest(".ifinmail-compose");
+    if (composeArea) {
+      composeArea.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); });
+      composeArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length) {
+          const dt = new DataTransfer();
+          files.forEach(f => dt.items.add(f));
+          attachInput.files = dt.files;
+          handleAttachSelect();
+        }
+      });
+    }
+  }
 
   // ── Org autocomplete for To field ──
   (async () => {
@@ -2473,7 +3077,7 @@ function saveDraft() {
   if (_composeAutoSaveTimer) clearTimeout(_composeAutoSaveTimer);
   const to = document.getElementById("composeTo")?.value;
   const subject = document.getElementById("composeSubject")?.value;
-  const body = document.getElementById("composeBody")?.value;
+  const body = document.getElementById("composeBody")?.innerText;
   if (!to && !subject && !body) return;
   _composeAutoSaveTimer = setTimeout(() => doSaveDraft(false), 1000);
 }
@@ -2486,10 +3090,11 @@ function sendToOrgEmail(orgId, email) {
 async function doSaveDraft(showToastMsg) {
   const to = document.getElementById("composeTo")?.value;
   const subject = document.getElementById("composeSubject")?.value;
-  const body = document.getElementById("composeBody")?.value;
+  const bodyEl = document.getElementById("composeBody");
+  const body = bodyEl?.innerText;
   if (!to && !subject && !body) return;
   try {
-    const bodyData = { to: to || "", subject: subject || "", body_text: body || "" };
+    const bodyData = { to: to || "", subject: subject || "", body_text: body || "", body_html: bodyEl?.innerHTML || "" };
     if (_composeAttachmentIds.length) bodyData.attachment_ids = _composeAttachmentIds;
     if (_composeEditId) {
       await apiFetch(`${API}/mail/${_composeEditId}`, {
@@ -2529,7 +3134,9 @@ async function handleComposeSubmit(e) {
   btn.textContent = "Sending...";
   const to = document.getElementById("composeTo").value;
   const subject = document.getElementById("composeSubject").value;
-  const body = document.getElementById("composeBody").value;
+  const composeBodyEl = document.getElementById("composeBody");
+  const body = composeBodyEl.innerText;
+  const bodyHtml = composeBodyEl.innerHTML;
   document.getElementById("composeError").textContent = "";
 
   const scheduleAt = document.getElementById("composeScheduleAt");
@@ -2537,8 +3144,19 @@ async function handleComposeSubmit(e) {
 
   try {
     if (scheduleVal) {
-      const scheduled_at = new Date(scheduleVal).toISOString();
-      const bodyData = { to_addr: to, subject, body_text: body, scheduled_at };
+      let scheduled_at = new Date(scheduleVal).toISOString();
+      const tz = document.getElementById("composeScheduleTz")?.value || "local";
+      if (tz !== "UTC" && tz !== "local") {
+        try {
+          const options = { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false };
+          const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(new Date(scheduleVal));
+          const get = (t) => parts.find(p => p.type === t)?.value || "0";
+          scheduled_at = `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:00`;
+        } catch {}
+      }
+      const repeat = document.getElementById("composeScheduleRepeat")?.value || "";
+      const bodyData = { to_addr: to, subject, body_text: body, body_html: bodyHtml, scheduled_at };
+      if (repeat) bodyData.repeat_interval = repeat;
       if (_composeAttachmentIds.length) bodyData.attachment_ids = _composeAttachmentIds;
       const res = await apiFetch(`${API}/mail/schedule`, {
         method: "POST",
@@ -2550,13 +3168,15 @@ async function handleComposeSubmit(e) {
         document.getElementById("composeError").textContent = data.detail || "Failed to schedule";
         return;
       }
+      schedulePanel.style.display = "none";
       showView("inbox");
       fetchMessages();
-      showToast("Email scheduled");
+      fetchScheduledCount();
+      showToast(repeat ? "Recurring email scheduled" : "Email scheduled");
       return;
     }
 
-    const bodyData = { to, subject, body_text: body };
+    const bodyData = { to, subject, body_text: body, body_html: bodyHtml };
     if (_composeAttachmentIds.length) bodyData.attachment_ids = _composeAttachmentIds;
     const res = await apiFetch(`${API}/mail`, {
       method: "POST",
@@ -2610,7 +3230,7 @@ async function handleAttachSelect() {
       }
       const att = await res.json();
       _composeAttachmentIds.push(att.id);
-      item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ' + file.name + ' (' + formatSize(file.size) + ') <button class="ifinmail-btn ifinmail-btn-sm ifinmail-attach-remove" data-att-id="' + att.id + '" style="margin-left:8px;padding:1px 6px;font-size:11px;background:rgba(230,57,70,0.1);color:var(--danger);border:1px solid rgba(230,57,70,0.3);border-radius:4px;cursor:pointer">✕</button>'
+      item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ' + file.name + ' (' + formatSize(file.size) + ') <button class="ifinmail-btn ifinmail-btn-sm ifinmail-attach-remove" data-att-id="' + att.id + '" style="margin-left:8px;padding:1px 6px;font-size:11px;background:rgba(230,57,70,0.1);color:var(--danger);border:1px solid rgba(230,57,70,0.3);border-radius:4px;cursor:pointer"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
     } catch {
       item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;color:var(--danger)"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + file.name;
     }
@@ -2636,18 +3256,31 @@ document.addEventListener("click", (e) => {
 document.addEventListener("click", (e) => {
   if (e.target.id === "searchBtn" || e.target.closest("#searchBtn")) {
     e.preventDefault();
-    fetchMessages();
+    if (state.unifiedView) {
+      filterUnifiedMessages();
+    } else {
+      fetchMessages();
+    }
   }
 });
 document.addEventListener("input", (e) => {
   if (e.target.id === "searchInput" && !e.target.value) {
-    fetchMessages();
+    if (state.unifiedView) {
+      state.messages = state.unifiedMessages;
+      renderUnifiedMessageList();
+    } else {
+      fetchMessages();
+    }
   }
 });
 document.addEventListener("keydown", (e) => {
   if (e.target.id === "searchInput" && e.key === "Enter") {
     e.preventDefault();
-    fetchMessages();
+    if (state.unifiedView) {
+      filterUnifiedMessages();
+    } else {
+      fetchMessages();
+    }
   }
 });
 
@@ -2659,7 +3292,11 @@ document.addEventListener("click", (e) => {
   }
   if (e.target.id === "applyFiltersBtn" || e.target.closest("#applyFiltersBtn")) {
     e.preventDefault();
-    fetchMessages();
+    if (state.unifiedView) {
+      filterUnifiedMessages();
+    } else {
+      fetchMessages();
+    }
   }
   if (e.target.id === "clearFiltersBtn" || e.target.closest("#clearFiltersBtn")) {
     e.preventDefault();
@@ -2671,7 +3308,12 @@ document.addEventListener("click", (e) => {
     document.getElementById("filterRead").value = "";
     document.getElementById("filterAttach").checked = false;
     document.getElementById("filterStarred").checked = false;
-    fetchMessages();
+    if (state.unifiedView) {
+      state.messages = state.unifiedMessages;
+      renderUnifiedMessageList();
+    } else {
+      fetchMessages();
+    }
   }
 });
 
@@ -2711,7 +3353,11 @@ function showToast(message) {
 document.addEventListener("click", (e) => {
   if (e.target.id === "refreshBtn" || e.target.closest("#refreshBtn")) {
     e.preventDefault();
-    fetchMessages();
+    if (state.unifiedView) {
+      fetchUnifiedMessages();
+    } else {
+      fetchMessages();
+    }
   }
 });
 
@@ -2744,6 +3390,26 @@ function showUndoToast(message, undoCallback) {
       setTimeout(() => toast.remove(), 300);
     }
   }, 10000);
+}
+
+// ── List navigation helpers (j/k) ──
+
+function _focusNextMessage(dir) {
+  if (!state.messages.length) return;
+  if (state._focusIdx === undefined) state._focusIdx = -1;
+  const newIdx = Math.max(0, Math.min(state.messages.length - 1, state._focusIdx + dir));
+  if (newIdx === state._focusIdx) return;
+  state._focusIdx = newIdx;
+  _focusRow(state.messages[newIdx].id);
+}
+
+function _focusRow(id) {
+  document.querySelectorAll(".ifinmail-row").forEach(r => r.classList.remove("ifinmail-row-focused"));
+  const row = document.querySelector(`.ifinmail-row[data-id="${id}"]`);
+  if (row) {
+    row.classList.add("ifinmail-row-focused");
+    row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
 }
 
 // ── Keyboard shortcuts ──
@@ -2856,6 +3522,47 @@ document.addEventListener("keydown", (e) => {
       e.preventDefault();
       const trashBtn = document.getElementById("trashBtn");
       if (trashBtn) trashBtn.click();
+      break;
+    case "j":
+    case "J":
+      e.preventDefault();
+      _focusNextMessage(1);
+      break;
+    case "k":
+    case "K":
+      e.preventDefault();
+      _focusNextMessage(-1);
+      break;
+    case "Enter":
+      if (state._focusIdx >= 0 && state.messages[state._focusIdx]) {
+        e.preventDefault();
+        const focused = state.messages[state._focusIdx];
+        const row = document.querySelector(`.ifinmail-row[data-id="${focused.id}"]`);
+        if (row) row.click();
+      }
+      break;
+    case "a":
+    case "e":
+      if (state._focusIdx >= 0 && state.messages[state._focusIdx]) {
+        e.preventDefault();
+        const focused = state.messages[state._focusIdx];
+        const row = document.querySelector(`.ifinmail-row[data-id="${focused.id}"]`);
+        if (row) { state.currentMsg = focused; _focusRow(focused.id); }
+        const archiveBtn = document.getElementById("archiveBtn");
+        if (archiveBtn) archiveBtn.click();
+      }
+      break;
+    case "s":
+      if (state._focusIdx >= 0 && state.messages[state._focusIdx]) {
+        e.preventDefault();
+        const focused = state.messages[state._focusIdx];
+        toggleStar(focused);
+      }
+      break;
+    case "/":
+      e.preventDefault();
+      const searchInput = document.getElementById("searchInput");
+      if (searchInput) searchInput.focus();
       break;
     case "Escape":
       if (document.getElementById("composeView").style.display === "block") {
@@ -2990,13 +3697,13 @@ function showAIPanel() {
       const data = await res.json();
       const r = data.result;
       if (r.subject) document.getElementById("composeSubject").value = r.subject;
-      if (r.body) document.getElementById("composeBody").value = r.body;
-      resultEl.textContent = "✓ Inserted!";
+      if (r.body) document.getElementById("composeBody").innerHTML = r.body;
+      resultEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;color:var(--success)"><polyline points="20 6 9 17 4 12"/></svg> Inserted!';
     } catch { resultEl.textContent = "Network error"; }
   };
 
   document.getElementById("aiSummarizeBtn").onclick = async () => {
-    const body = document.getElementById("composeBody")?.value || state.currentMsg?.body_text || "";
+    const body = document.getElementById("composeBody")?.innerText || state.currentMsg?.body_text || "";
     const subject = document.getElementById("composeSubject")?.value || state.currentMsg?.subject || "";
     if (!body) { showToast("No email body to summarize"); return; }
     const resultEl = document.getElementById("aiResult");
@@ -3015,7 +3722,7 @@ function showAIPanel() {
   };
 
   document.getElementById("aiTranslateBtn").onclick = async () => {
-    const text = document.getElementById("composeBody")?.value || state.currentMsg?.body_text || "";
+    const text = document.getElementById("composeBody")?.innerText || state.currentMsg?.body_text || "";
     const target_lang = document.getElementById("aiTargetLang").value;
     if (!text) { showToast("No email body to translate"); return; }
     const resultEl = document.getElementById("aiResult");
@@ -3030,8 +3737,8 @@ function showAIPanel() {
       if (!res.ok) { resultEl.textContent = "Translation failed"; return; }
       const data = await res.json();
       const translated = data.result.translated_text || "";
-      if (translated) document.getElementById("composeBody").value = translated;
-      resultEl.textContent = "✓ Translation inserted!";
+      if (translated) document.getElementById("composeBody").innerHTML = translated;
+      resultEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;color:var(--success)"><polyline points="20 6 9 17 4 12"/></svg> Translation inserted!';
     } catch { resultEl.textContent = "Network error"; }
   };
 }
@@ -3175,9 +3882,27 @@ async function loadTeamsOrg(orgId) {
     roleDisplay.style.color = org.my_role === "owner" ? "#d97706" : "var(--text)";
     roleDisplay.style.fontWeight = org.my_role === "owner" ? "600" : "400";
 
+    const roleBadge = document.getElementById("teamsRoleBadge");
+    if (roleBadge) roleBadge.textContent = "Role: " + (org.my_role || "member");
+
     const isOwner = org.my_role === "owner";
     const isAdmin = org.my_role === "admin";
-    document.getElementById("teamsDeleteBtn").style.display = isOwner ? "" : "none";
+    const deleteSection = document.getElementById("teamsDeleteSection");
+    if (deleteSection) deleteSection.style.display = isOwner ? "" : "none";
+
+    // Member chips in org tab
+    const chipsEl = document.getElementById("teamsMemberChips");
+    const countEl = document.getElementById("teamsMemberSummaryCount");
+    if (chipsEl && org.members) {
+      const ownerRole = (r) => r === "owner" ? "owner" : "";
+      chipsEl.innerHTML = org.members.map(m =>
+        `<span class="ifinmail-teams-chip">
+          ${m.email || "User #" + m.user_id}
+          <span class="ifinmail-teams-chip-role ${ownerRole(m.role)}">${m.role}</span>
+        </span>`
+      ).join("");
+    }
+    if (countEl && org.members) countEl.textContent = `(${org.members.length})`;
 
     // Members tab
     const mlist = document.getElementById("teamsMembersList");
@@ -3345,7 +4070,7 @@ async function loadOrgSharedInbox(orgId, statusFilter) {
     const el = document.getElementById("teamsInboxMessages");
     if (!el) return;
     if (!data.items.length) {
-      el.innerHTML = '<div class="ifinmail-teams-empty">📭 No messages yet<br><small>When someone emails your mailing list, messages will appear here</small></div>';
+      el.innerHTML = '<div class="ifinmail-teams-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 12px;opacity:0.4"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>No messages yet<br><small>When someone emails your mailing list, messages will appear here</small></div>';
       return;
     }
     el.innerHTML = data.items.map(m =>
@@ -3355,7 +4080,7 @@ async function loadOrgSharedInbox(orgId, statusFilter) {
           '<span>From: ' + m.from_email + '</span>' +
           statusBadge(m.status) +
           '<span>' + new Date(m.created_at).toLocaleDateString() + '</span>' +
-          (m.assignee_email ? '<span>👤 ' + m.assignee_email + '</span>' : '') +
+          (m.assignee_email ? '<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + m.assignee_email + '</span>' : '') +
         '</div>' +
       '</div>'
     ).join("");
@@ -3551,6 +4276,20 @@ async function removeOrgMember(orgId, userId) {
     const res = await apiFetch(`${API}/orgs/${orgId}/remove/${userId}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
     if (res.ok) { showToast("Removed"); await loadTeamsOrg(orgId); }
   } catch {}
+}
+
+async function sendToAllMembers() {
+  if (!teamsOrgId) return;
+  try {
+    const res = await apiFetch(`${API}/orgs/${teamsOrgId}`);
+    if (!res.ok) { showToast("Failed to load org"); return; }
+    const org = await res.json();
+    const emails = (org.members || []).map(m => m.email).filter(Boolean);
+    if (!emails.length) { showToast("No members with email addresses"); return; }
+    showCompose();
+    document.getElementById("composeTo").value = emails.join(", ");
+    showToast(`Composing to ${emails.length} member${emails.length > 1 ? "s" : ""}`);
+  } catch { showToast("Network error"); }
 }
 
 async function sendTestEmail() {
@@ -3886,11 +4625,10 @@ function connectWS() {
           fetchMessages();
           fetchFolderCounts();
         }
-        // Browser notification
-        if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        if (document.hidden) {
           const from = (msg.data && msg.data.from) || "Someone";
           const subject = (msg.data && msg.data.subject) || "(no subject)";
-          new Notification("New mail from " + from, { body: subject, icon: "/static/favicon.ico" });
+          sendNotification("New mail from " + from, { body: subject, icon: "/static/favicon.ico" });
         }
       }
     } catch {}
@@ -3909,6 +4647,64 @@ function connectWS() {
 function requestNotifyPermission() {
   if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
+  }
+}
+
+function updateOfflineBanner() {
+  const banner = document.getElementById("offlineBanner");
+  if (!banner) return;
+  banner.style.display = navigator.onLine ? "none" : "block";
+}
+
+async function registerPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  try {
+    window.addEventListener("online", updateOfflineBanner);
+    window.addEventListener("offline", updateOfflineBanner);
+    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    await navigator.serviceWorker.ready;
+    updateOfflineBanner();
+    let sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      // Unsubscribe if no longer valid
+      const resp = await apiFetch("/api/push/vapid-public-key");
+      if (!resp.ok) return;
+      const { public_key } = await resp.json();
+      const keyMatch = btoa(String.fromCharCode(...new Uint8Array(sub.options.applicationServerKey))) === public_key;
+      if (!keyMatch) {
+        await sub.unsubscribe();
+        sub = null;
+      }
+    }
+    if (!sub) {
+      const resp = await apiFetch("/api/push/vapid-public-key");
+      if (!resp.ok) return;
+      const { public_key } = await resp.json();
+      const keyBuf = Uint8Array.from(atob(public_key), (c) => c.charCodeAt(0));
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: keyBuf,
+      });
+    }
+    const subJson = sub.toJSON();
+    await apiFetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: subJson.endpoint,
+        keys: subJson.keys,
+      }),
+    });
+  } catch {}
+}
+
+function sendNotification(title, opts) {
+  if (isElectron) {
+    window.ifinmail.showNotification({ title, body: (opts && opts.body) || "" });
+    return;
+  }
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, opts);
   }
 }
 
@@ -4067,9 +4863,10 @@ window.addEventListener("beforeunload", () => {
   if (document.getElementById("composeView")?.style.display !== "block") return;
   const to = document.getElementById("composeTo")?.value;
   const subject = document.getElementById("composeSubject")?.value;
-  const body = document.getElementById("composeBody")?.value;
+  const bodyEl = document.getElementById("composeBody");
+  const body = bodyEl?.innerText;
   if (!to && !subject && !body) return;
-  const bodyData = { to: to || "", subject: subject || "", body_text: body || "" };
+  const bodyData = { to: to || "", subject: subject || "", body_text: body || "", body_html: bodyEl?.innerHTML || "" };
   if (_composeAttachmentIds.length) bodyData.attachment_ids = _composeAttachmentIds;
   try {
     if (!_composeEditId) bodyData.draft = true;
@@ -4118,7 +4915,7 @@ async function showContactEngagementDetail(contactId) {
     html += `<div class="ifinmail-dialog" style="max-width:700px;max-height:80vh;overflow-y:auto">`;
     html += `<div class="ifinmail-dialog-header">
       <h3>${data.name || data.email}</h3>
-      <button class="ifinmail-btn ifinmail-btn-back" onclick="closeEngagementDetail()">✕</button>
+      <button class="ifinmail-btn ifinmail-btn-back" onclick="closeEngagementDetail()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>`;
     html += `<div class="ifinmail-dialog-body">`;
     html += `<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
@@ -4134,8 +4931,8 @@ async function showContactEngagementDetail(contactId) {
       html += `<table style="width:100%;border-collapse:collapse;font-size:12px">`;
       html += `<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:4px 6px">Date</th><th style="text-align:left;padding:4px 6px">Subject</th><th style="text-align:center;padding:4px 6px">Status</th><th style="text-align:center;padding:4px 6px">Opened</th><th style="text-align:center;padding:4px 6px">Clicked</th></tr></thead><tbody>`;
       data.deliveries.forEach(d => {
-        const opened = d.opened_at ? '<span style="color:var(--success)">✓</span>' : '—';
-        const clicked = d.clicked_at ? '<span style="color:var(--primary)">✓</span>' : '—';
+        const opened = d.opened_at ? '<span style="color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="20 6 9 17 4 12"/></svg></span>' : '—';
+        const clicked = d.clicked_at ? '<span style="color:var(--primary)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="20 6 9 17 4 12"/></svg></span>' : '—';
         html += `<tr style="border-bottom:1px solid var(--border)">
           <td style="padding:4px 6px;white-space:nowrap">${new Date(d.sent_at).toLocaleDateString()}</td>
           <td style="padding:4px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.subject || '(no subject)'}</td>

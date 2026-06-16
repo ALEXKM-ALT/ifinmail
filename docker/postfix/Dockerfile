@@ -1,6 +1,6 @@
-FROM postfix:3.9-alpine
+FROM alpine:3.21
 
-RUN apk add --no-cache postfix-pgsql
+RUN apk add --no-cache postfix postfix-pgsql musl-locales
 
 COPY conf/main.cf /etc/postfix/main.cf
 COPY conf/master.cf /etc/postfix/master.cf

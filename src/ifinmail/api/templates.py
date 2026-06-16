@@ -7,7 +7,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
+from ifinmail.api.config import settings
 from ifinmail.api.deps import get_db
+from ifinmail.api.mail import _relay_send
 from ifinmail.db.models import EmailTemplate, User
 
 logger = logging.getLogger("ifinmail.templates")
@@ -34,6 +36,12 @@ class TemplateUpdate(BaseModel):
 class TemplateRender(BaseModel):
     template_id: int
     variables: dict[str, str]
+
+
+class TemplateTestSend(BaseModel):
+    template_id: int
+    to: str
+    variables: dict[str, str] = {}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -165,3 +173,30 @@ def render_template(
         "body_html": _replace(template.body_html or ""),
         "body_text": _replace(template.body_text or ""),
     }
+
+
+@router.post("/test-send")
+def test_send_template(
+    req: TemplateTestSend,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    template = db.query(EmailTemplate).filter(EmailTemplate.id == req.template_id, EmailTemplate.user_id == user.id).first()
+    if not template:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+
+    if not settings.smtp_host:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="SMTP relay not configured")
+
+    def _replace(text: str) -> str:
+        if not text:
+            return ""
+        return VARIABLE_PATTERN.sub(lambda m: req.variables.get(m.group(1), m.group(0)), text)
+
+    subject = _replace(template.subject)
+    body_text = _replace(template.body_text or "")
+    body_html = _replace(template.body_html or "")
+
+    _relay_send(user.email, req.to, subject, body_text, body_html or None)
+
+    return {"message": "Test email sent", "to": req.to, "subject": subject}

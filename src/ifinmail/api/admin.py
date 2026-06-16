@@ -17,6 +17,9 @@ from ifinmail.api.auth import _create_access_token, get_current_user
 from ifinmail.api.billing import PLANS
 from ifinmail.api.deps import get_db
 from ifinmail.api.limiter import admin_strict
+from ifinmail.api.maintenance import disable as maint_disable
+from ifinmail.api.maintenance import enable as maint_enable
+from ifinmail.api.maintenance import is_enabled as maint_is_enabled
 from ifinmail.db.models import Alias, Attachment, AuditLog, Backup, Domain, Mailbox, Message, SecurityEvent, User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -1172,3 +1175,31 @@ def admin_audit_logs(
             "total_pages": max(1, -(-total // per_page)),
         },
     }
+
+
+# ── Maintenance mode ──
+
+
+class MaintenanceToggleRequest(BaseModel):
+    enabled: bool
+
+
+@router.get("/maintenance")
+def get_maintenance_status(user: User = Depends(admin_required)):
+    return {"enabled": maint_is_enabled()}
+
+
+@router.post("/maintenance")
+def toggle_maintenance(
+    req: MaintenanceToggleRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(admin_required),
+):
+    if req.enabled:
+        maint_enable()
+    else:
+        maint_disable()
+    log_admin_action(db=db, admin=user, action="toggle_maintenance",
+                     details=f"maintenance_mode={'enabled' if req.enabled else 'disabled'}")
+    db.commit()
+    return {"enabled": maint_is_enabled()}

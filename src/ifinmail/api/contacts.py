@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
 from ifinmail.api.deps import get_db
-from ifinmail.db.models import Contact, EmailDelivery, Message, TrackingEvent, User
+from ifinmail.db.models import Contact, ContactGroup, ContactGroupMember, EmailDelivery, Message, TrackingEvent, User
 
 logger = logging.getLogger("ifinmail.contacts")
 
@@ -359,3 +359,164 @@ def contact_engagement_detail(
         total_clicks=total_clicks,
         deliveries=delivery_list,
     )
+
+
+# ── Contact Groups ──
+
+
+class GroupCreate(BaseModel):
+    name: str
+
+
+class GroupResponse(BaseModel):
+    id: int
+    name: str
+    member_count: int = 0
+    created_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GroupAddRemove(BaseModel):
+    contact_ids: list[int]
+
+
+@router.get("/groups")
+def list_groups(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    groups = db.query(ContactGroup).filter(ContactGroup.user_id == user.id).order_by(ContactGroup.name).all()
+    return [
+        GroupResponse(
+            id=g.id,
+            name=g.name,
+            member_count=db.query(ContactGroupMember).filter(ContactGroupMember.group_id == g.id).count(),
+            created_at=g.created_at,
+        )
+        for g in groups
+    ]
+
+
+@router.post("/groups", status_code=status.HTTP_201_CREATED)
+def create_group(
+    req: GroupCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    name = req.name.strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Group name is required")
+    existing = db.query(ContactGroup).filter(ContactGroup.user_id == user.id, ContactGroup.name == name).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Group already exists")
+    group = ContactGroup(user_id=user.id, name=name)
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+    return GroupResponse(id=group.id, name=group.name, created_at=group.created_at)
+
+
+@router.get("/groups/{group_id}")
+def get_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    group = db.query(ContactGroup).filter(ContactGroup.id == group_id, ContactGroup.user_id == user.id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    members = (
+        db.query(Contact)
+        .join(ContactGroupMember, ContactGroupMember.contact_id == Contact.id)
+        .filter(ContactGroupMember.group_id == group.id)
+        .all()
+    )
+    return {
+        "id": group.id,
+        "name": group.name,
+        "members": [
+            {"id": c.id, "email": c.email, "name": c.name}
+            for c in members
+        ],
+        "member_count": len(members),
+        "created_at": group.created_at.isoformat() if group.created_at else None,
+    }
+
+
+@router.put("/groups/{group_id}")
+def update_group(
+    group_id: int,
+    req: GroupCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    group = db.query(ContactGroup).filter(ContactGroup.id == group_id, ContactGroup.user_id == user.id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    group.name = req.name.strip()
+    db.commit()
+    db.refresh(group)
+    return GroupResponse(id=group.id, name=group.name, created_at=group.created_at)
+
+
+@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    group = db.query(ContactGroup).filter(ContactGroup.id == group_id, ContactGroup.user_id == user.id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    db.delete(group)
+    db.commit()
+
+
+@router.post("/groups/{group_id}/members")
+def add_group_members(
+    group_id: int,
+    req: GroupAddRemove,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    group = db.query(ContactGroup).filter(ContactGroup.id == group_id, ContactGroup.user_id == user.id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    added = 0
+    for cid in req.contact_ids:
+        contact = db.query(Contact).filter(Contact.id == cid, Contact.user_id == user.id).first()
+        if not contact:
+            continue
+        existing = db.query(ContactGroupMember).filter(
+            ContactGroupMember.group_id == group.id,
+            ContactGroupMember.contact_id == cid,
+        ).first()
+        if existing:
+            continue
+        db.add(ContactGroupMember(group_id=group.id, contact_id=cid))
+        added += 1
+    db.commit()
+    return {"added": added, "message": f"{added} contact(s) added to group"}
+
+
+@router.delete("/groups/{group_id}/members")
+def remove_group_members(
+    group_id: int,
+    req: GroupAddRemove,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    group = db.query(ContactGroup).filter(ContactGroup.id == group_id, ContactGroup.user_id == user.id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    deleted = (
+        db.query(ContactGroupMember)
+        .filter(
+            ContactGroupMember.group_id == group.id,
+            ContactGroupMember.contact_id.in_(req.contact_ids),
+        )
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return {"removed": deleted, "message": f"{deleted} contact(s) removed from group"}

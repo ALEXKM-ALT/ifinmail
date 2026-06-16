@@ -5,7 +5,7 @@ import smtplib
 from datetime import UTC, datetime, timedelta
 from email.message import EmailMessage
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ifinmail.api.config import settings
 from ifinmail.api.deps import get_db, get_redis
 from ifinmail.api.limiter import strict
-from ifinmail.db.models import ApiKey, Domain, Mailbox, User
+from ifinmail.db.models import ApiKey, Domain, Mailbox, User, UserSession
 
 logger = logging.getLogger("ifinmail.auth")
 
@@ -131,6 +131,27 @@ def _blacklist_token(token: str, expire_seconds: int) -> None:
         pass
 
 
+def _create_session(
+    db: Session,
+    user: User,
+    refresh_token: str,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+) -> UserSession:
+    token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+    now = datetime.now(UTC)
+    session = UserSession(
+        user_id=user.id,
+        token_hash=token_hash,
+        ip_address=ip_address,
+        user_agent=user_agent[:512] if user_agent else None,
+        last_used_at=now,
+        expires_at=now + timedelta(days=settings.refresh_token_expire_days),
+    )
+    db.add(session)
+    return session
+
+
 def _ensure_domain(email: str, db: Session) -> Domain:
     domain_part = email.split("@", 1)[-1]
     domain = db.query(Domain).filter(Domain.domain == domain_part).first()
@@ -174,8 +195,10 @@ def get_current_user(
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=RegisterResponse)
 def register(req: RegisterRequest, db: Session = Depends(get_db), _: None = strict):
-    if not req.email or "@" not in req.email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
+    from ifinmail.api.verify import validate_email_syntax
+    syntax_err = validate_email_syntax(req.email)
+    if syntax_err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=syntax_err)
 
     existing = db.query(User).filter(User.email == req.email).first()
     if existing:
@@ -203,20 +226,68 @@ def register(req: RegisterRequest, db: Session = Depends(get_db), _: None = stri
     return RegisterResponse(message="User registered", email=req.email, id=user.id, is_admin=bool(user.is_admin))
 
 
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCKOUT_MINUTES = 15
+
+
+def _login_attempt_key(email: str) -> str:
+    return f"login_attempts:{email.lower()}"
+
+
 @router.post("/login")
-def login(req: LoginRequest, db: Session = Depends(get_db), _: None = strict):
-    user = db.query(User).filter(User.email == req.email).first()
+def login(
+    req: LoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = strict,
+):
+    email_lower = req.email.lower().strip()
+    try:
+        r = get_redis()
+        attempts_key = _login_attempt_key(email_lower)
+        failed = int(r.get(attempts_key) or 0)
+        if failed >= LOGIN_MAX_ATTEMPTS:
+            ttl = r.ttl(attempts_key)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Account locked. Try again in {max(1, ttl // 60)} minute(s).",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    user = db.query(User).filter(User.email == email_lower).first()
     if not user or not pwd_context.verify(req.password, user.password):
+        try:
+            r = get_redis()
+            r.incr(attempts_key)
+            r.expire(attempts_key, LOGIN_LOCKOUT_MINUTES * 60)
+        except Exception:
+            pass
+        from ifinmail.api.metrics import failed_logins_total
+        failed_logins_total.inc()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+    try:
+        r = get_redis()
+        r.delete(attempts_key)
+    except Exception:
+        pass
 
     access_token = _create_access_token(user.id)
     refresh_token = _create_refresh_token(user.id)
+
+    user_agent = request.headers.get("user-agent")
+    ip_address = request.client.host if request.client else None
+    _create_session(db, user, refresh_token, ip_address=ip_address, user_agent=user_agent)
+    db.commit()
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token, is_admin=bool(user.is_admin))
 
 
 @router.post("/refresh")
-def refresh(req: RefreshRequest, db: Session = Depends(get_db)):
+def refresh(req: RefreshRequest, db: Session = Depends(get_db), _: None = strict):
     if _is_token_blacklisted(req.refresh_token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
 
@@ -224,7 +295,53 @@ def refresh(req: RefreshRequest, db: Session = Depends(get_db)):
     access_token = _create_access_token(user_id)
     user = db.query(User).filter(User.id == user_id).first()
 
+    token_hash = hashlib.sha256(req.refresh_token.encode()).hexdigest()
+    session = db.query(UserSession).filter(UserSession.token_hash == token_hash).first()
+    if session:
+        session.last_used_at = datetime.now(UTC)
+        db.commit()
+
     return {"access_token": access_token, "token_type": "bearer", "is_admin": bool(user.is_admin) if user else False}
+
+
+@router.get("/sessions")
+def list_sessions(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    sessions = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user.id)
+        .order_by(UserSession.last_used_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": s.id,
+            "ip_address": s.ip_address,
+            "user_agent": s.user_agent,
+            "last_used_at": s.last_used_at.isoformat() if s.last_used_at else None,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+            "expires_at": s.expires_at.isoformat() if s.expires_at else None,
+        }
+        for s in sessions
+    ]
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    session = db.query(UserSession).filter(
+        UserSession.id == session_id,
+        UserSession.user_id == user.id,
+    ).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    db.delete(session)
+    db.commit()
 
 
 @router.post("/logout")

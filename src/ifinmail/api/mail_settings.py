@@ -1,7 +1,8 @@
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from sqlalchemy.orm import Session
 
 from ifinmail.api.auth import get_current_user
@@ -29,12 +30,22 @@ class VacationRequest(BaseModel):
     subject: str = "Auto-reply"
     body: str = ""
     enabled: bool = False
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    only_contacts: bool = False
 
 
 class VacationResponse(BaseModel):
     subject: str
     body: str
     enabled: bool
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    only_contacts: bool = False
+
+    @field_serializer("start_date", "end_date")
+    def serialize_dt(self, v: datetime | None) -> str | None:
+        return v.isoformat() if v else None
 
 
 @router.get("/vacation", response_model=VacationResponse)
@@ -43,7 +54,8 @@ def get_vacation(db: Session = Depends(get_db), user: User = Depends(get_current
     vr = db.query(VacationResponder).filter(VacationResponder.mailbox_id == mailbox.id).first()
     if not vr:
         return VacationResponse(subject="Auto-reply", body="", enabled=False)
-    return VacationResponse(subject=vr.subject, body=vr.body, enabled=bool(vr.enabled))
+    return VacationResponse(subject=vr.subject, body=vr.body, enabled=bool(vr.enabled),
+                           start_date=vr.start_date, end_date=vr.end_date, only_contacts=bool(vr.only_contacts))
 
 
 @router.put("/vacation", response_model=VacationResponse)
@@ -61,9 +73,13 @@ def set_vacation(
     vr.subject = req.subject
     vr.body = req.body
     vr.enabled = int(req.enabled)
+    vr.start_date = req.start_date
+    vr.end_date = req.end_date
+    vr.only_contacts = int(req.only_contacts)
     db.commit()
     db.refresh(vr)
-    return VacationResponse(subject=vr.subject, body=vr.body, enabled=bool(vr.enabled))
+    return VacationResponse(subject=vr.subject, body=vr.body, enabled=bool(vr.enabled),
+                           start_date=vr.start_date, end_date=vr.end_date, only_contacts=bool(vr.only_contacts))
 
 
 # ── Forwarding ──
@@ -140,3 +156,39 @@ def delete_forwarding(rule_id: int, db: Session = Depends(get_db), user: User = 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
     db.delete(rule)
     db.commit()
+
+
+# ── Signature ──
+
+
+class SignatureResponse(BaseModel):
+    signature: str = ""
+    signature_enabled: bool = False
+
+
+class SignatureUpdate(BaseModel):
+    signature: str = ""
+    signature_enabled: bool = False
+
+
+@router.get("/signature", response_model=SignatureResponse)
+def get_signature(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    mailbox = _get_mailbox(user, db)
+    return SignatureResponse(
+        signature=mailbox.signature or "",
+        signature_enabled=bool(mailbox.signature_enabled),
+    )
+
+
+@router.put("/signature", response_model=SignatureResponse)
+def set_signature(
+    req: SignatureUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    mailbox = _get_mailbox(user, db)
+    mailbox.signature = req.signature
+    mailbox.signature_enabled = int(req.signature_enabled)
+    db.commit()
+    db.refresh(mailbox)
+    return SignatureResponse(signature=mailbox.signature or "", signature_enabled=bool(mailbox.signature_enabled))

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from ifinmail.api.config import settings
 from ifinmail.db.models import Attachment, Message, ScheduledMessage
+from ifinmail.db.models import Mailbox as MailboxModel
 
 logger = logging.getLogger("ifinmail.scheduler")
 
@@ -33,6 +34,13 @@ async def start_scheduler():
         trigger="interval",
         seconds=30,
         id="process_scheduled_messages",
+        replace_existing=True,
+    )
+    sched.add_job(
+        _unsnooze_expired,
+        trigger="interval",
+        seconds=60,
+        id="unsnooze_expired",
         replace_existing=True,
     )
     sched.start()
@@ -145,3 +153,57 @@ def _send_scheduled(db: Session, sm: ScheduledMessage):
     sm.message_id = msg_id
     sm.error = None
     logger.info("Sent scheduled message %d to %s", sm.id, sm.to_addr)
+
+    if sm.repeat_interval and (not sm.repeat_until or sm.repeat_until > datetime.utcnow()):
+        from datetime import timedelta
+        delta = None
+        if sm.repeat_interval == "daily":
+            delta = timedelta(days=1)
+        elif sm.repeat_interval == "weekly":
+            delta = timedelta(weeks=1)
+        elif sm.repeat_interval == "monthly":
+            delta = timedelta(days=30)
+        if delta:
+            next_at = sm.scheduled_at + delta
+            if not sm.repeat_until or next_at <= sm.repeat_until:
+                new_sm = ScheduledMessage(
+                    user_id=sm.user_id,
+                    campaign_id=sm.campaign_id,
+                    campaign_step_id=sm.campaign_step_id,
+                    to_addr=sm.to_addr,
+                    cc_addr=sm.cc_addr,
+                    bcc_addr=sm.bcc_addr,
+                    subject=sm.subject,
+                    body_text=sm.body_text,
+                    body_html=sm.body_html,
+                    attachment_ids=sm.attachment_ids,
+                    scheduled_at=next_at,
+                    repeat_interval=sm.repeat_interval,
+                    repeat_until=sm.repeat_until,
+                )
+                db.add(new_sm)
+                logger.info("Scheduled next recurring message %s for %s", sm.repeat_interval, next_at)
+
+
+def _unsnooze_expired():
+    """Move snoozed messages back to their original folder after resume_at passes."""
+    from datetime import UTC, datetime
+    db = _SessionLocal()
+    try:
+        now = datetime.now(UTC)
+        rows = (
+            db.query(Message)
+            .filter(Message.folder == "SNOOZED", Message.snoozed_until.isnot(None), Message.snoozed_until <= now)
+            .all()
+        )
+        for msg in rows:
+            msg.folder = msg.previous_folder or "INBOX"
+            msg.previous_folder = None
+            msg.snoozed_until = None
+        if rows:
+            db.commit()
+            logger.info("Unsnoozed %d messages", len(rows))
+    except Exception:
+        logger.exception("Failed to unsnooze messages")
+    finally:
+        db.close()

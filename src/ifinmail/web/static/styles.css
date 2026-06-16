@@ -1,5 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
   --sidebar-bg: #1a1a2e;
   --sidebar-text: #ccc;
@@ -7,15 +9,25 @@
   --sidebar-active: #0f3460;
   --primary: #4361ee;
   --primary-hover: #3a56d4;
+  --primary-gradient: linear-gradient(135deg, #4361ee, #7c3aed);
+  --primary-gradient-hover: linear-gradient(135deg, #3a56d4, #6d28d9);
   --danger: #e63946;
   --bg: #f5f6fa;
   --card-bg: #fff;
   --border: #e0e0e0;
-  --text: #333;
-  --text-light: #888;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --text-muted: #94a3b8;
+  --muted: var(--text-muted);
   --unread-bg: #f0f4ff;
   --row-hover: #f8f9ff;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.10);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 html, body { height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
@@ -27,14 +39,21 @@ html, body { height: 100%; font-family: var(--font); color: var(--text); backgro
   --sidebar-active: #1f2937;
   --primary: #58a6ff;
   --primary-hover: #79c0ff;
+  --primary-gradient: linear-gradient(135deg, #58a6ff, #a855f7);
+  --primary-gradient-hover: linear-gradient(135deg, #79c0ff, #c084fc);
   --danger: #f85149;
   --bg: #0d1117;
   --card-bg: #161b22;
   --border: #30363d;
-  --text: #c9d1d9;
+  --text: #e6edf3;
   --text-light: #8b949e;
+  --text-muted: #6b7280;
+  --muted: var(--text-muted);
   --unread-bg: #0d419d33;
   --row-hover: #161b22;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.5);
 }
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -57,7 +76,12 @@ a:hover { text-decoration: underline; }
 }
 .ifinmail-btn-compose:hover { background: var(--primary-hover); }
 
-.ifinmail-nav { flex: 1; padding: 0 8px; }
+.ifinmail-nav-section-label {
+  padding: 12px 12px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-muted); opacity: 0.5;
+}
+.ifinmail-nav { padding: 0 8px; }
+.ifinmail-nav + .ifinmail-nav { margin-top: 2px; }
 .ifinmail-nav-item {
   display: flex; align-items: center; padding: 10px 12px; border-radius: 6px;
   cursor: pointer; color: var(--sidebar-text); font-size: 14px; transition: 0.1s;
@@ -85,6 +109,7 @@ a:hover { text-decoration: underline; }
   border-bottom:1px solid rgba(255,255,255,0.08); flex-wrap:wrap;
 }
 .ifinmail-accounts-container-list { display:flex; align-items:center; gap:6px; flex:1; flex-wrap:wrap; }
+.ifinmail-account-avatar { position:relative; }
 .ifinmail-account-avatar-wrapper {
   position:relative; cursor:pointer; border-radius:50%; flex-shrink:0;
   transition:0.15s; outline:2px solid transparent; outline-offset:2px;
@@ -93,7 +118,7 @@ a:hover { text-decoration: underline; }
 .ifinmail-account-avatar-wrapper.active { outline-color:var(--primary); }
 .ifinmail-account-avatar-wrapper .ifinmail-account-avatar {
   width:36px; height:36px; border-radius:50%; display:flex; align-items:center;
-  justify-content:center; font-size:14px; font-weight:700; color:#fff; overflow:hidden;
+  justify-content:center; font-size:14px; font-weight:700; color:#fff; overflow:visible; position:relative;
 }
 .ifinmail-account-avatar-wrapper .ifinmail-account-avatar img {
   width:100%; height:100%; object-fit:cover; border-radius:50%;
@@ -125,16 +150,27 @@ a:hover { text-decoration: underline; }
 }
 
 .ifinmail-btn {
-  padding: 10px 18px; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 22px; border: 1px solid var(--border); border-radius: 40px;
   background: var(--card-bg); cursor: pointer; font-size: 14px; font-family: var(--font);
-  transition: 0.15s; color: var(--text); display:inline-flex; align-items:center; gap:6px;
+  transition: all 0.2s; color: var(--text); display:inline-flex; align-items:center; gap:8px;
 }
 .ifinmail-btn svg { display:block; flex-shrink:0; }
-.ifinmail-btn:hover { background: var(--row-hover); }
+.ifinmail-btn:hover { background: var(--row-hover); border-color:var(--primary); }
+.ifinmail-btn-sm { padding:6px 14px; font-size:12px; }
 .ifinmail-btn-primary {
   background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600;
+  transition: all 0.2s ease;
 }
-.ifinmail-btn-primary:hover { background: var(--primary-hover); }
+.ifinmail-btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(67,97,238,0.2); }
+.ifinmail-btn-gradient {
+  background: var(--primary-gradient); color: #fff; border: none; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(67,97,238,0.25);
+}
+.ifinmail-btn-gradient:hover {
+  background: var(--primary-gradient-hover); box-shadow: 0 4px 16px rgba(67,97,238,0.35);
+  transform: translateY(-1px); color: #fff;
+}
+.ifinmail-btn-gradient:active { transform: translateY(0); }
 .ifinmail-btn-back { background: none; border: none; color: var(--primary); font-size: 14px; padding: 0; }
 .ifinmail-btn-back:hover { text-decoration: underline; }
 
@@ -160,7 +196,7 @@ a:hover { text-decoration: underline; }
 }
 .ifinmail-btn-search:hover { background: var(--primary-hover); }
 .ifinmail-search-count {
-  font-size: 12px; color: var(--text-light); white-space: nowrap; flex-shrink: 0;
+  font-size: 12px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0;
 }
 
 /* ── Filter Panel (advanced search) ── */
@@ -175,7 +211,7 @@ a:hover { text-decoration: underline; }
   display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 140px;
 }
 .ifinmail-filter-field label {
-  font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.3px; margin: 0;
+  font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin: 0;
 }
 .ifinmail-filter-field .ifinmail-input {
   padding: 7px 10px; font-size: 13px;
@@ -188,7 +224,7 @@ a:hover { text-decoration: underline; }
 /* ── Spinner ── */
 .ifinmail-spinner {
   display: flex; align-items: center; justify-content: center; padding: 48px 24px; gap: 10px;
-  color: var(--text-light); font-size: 14px;
+  color: var(--text-muted); font-size: 14px;
 }
 .ifinmail-spinner::before {
   content: ""; width: 20px; height: 20px;
@@ -232,21 +268,23 @@ a:hover { text-decoration: underline; }
 
 .ifinmail-message-list { }
 .ifinmail-row {
-  display: flex; align-items: center; padding: 12px 24px; cursor: pointer;
-  border-bottom: 1px solid var(--border); gap: 12px; transition: 0.1s;
+  display: flex; align-items: center; padding: 14px 24px; cursor: pointer;
+  border-bottom: 1px solid var(--border); gap: 12px; transition: background 0.15s;
 }
 .ifinmail-row:hover { background: var(--row-hover); }
-.ifinmail-row.unread { background: var(--unread-bg); font-weight: 600; }
-.ifinmail-row.unread:hover { background: #e8edff; }
+.ifinmail-row.unread { background: var(--unread-bg); font-weight: 600; border-left:3px solid var(--primary); }
+.ifinmail-row.unread:hover { background: var(--row-hover); }
+.ifinmail-row.priority { border-left: 3px solid var(--primary); }
 [data-theme="dark"] .ifinmail-row.unread:hover { background: #0d419d55; }
 .ifinmail-row-star { display:flex; align-items:center; justify-content:center; width:20px; height:20px; flex-shrink:0; cursor:pointer; color:#ccc; }
 .ifinmail-row-star svg { display:block; }
 .ifinmail-row-star.starred { color: #f59e0b; }
+.ifinmail-priority-badge { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--primary); color:#fff; font-size:10px; font-weight:700; line-height:1; flex-shrink:0; }
 .ifinmail-row-sender { width: 180px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; display:flex; align-items:center; gap:2px; }
 .ifinmail-row-subject { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--text-light); }
 .ifinmail-row.unread .ifinmail-row-subject { color: var(--text); }
-.ifinmail-row-date { width: 80px; text-align: right; font-size: 12px; color: var(--text-light); flex-shrink: 0; }
-.ifinmail-empty { padding: 48px 24px; text-align: center; color: var(--text-light); font-size: 14px; }
+.ifinmail-row-date { width: 80px; text-align: right; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+.ifinmail-empty { padding: 48px 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
 
 /* ── Message view ── */
 .ifinmail-message-header {
@@ -255,7 +293,7 @@ a:hover { text-decoration: underline; }
 }
 .ifinmail-message-actions { margin-left: auto; display: flex; gap: 8px; }
 .ifinmail-message-subject { padding: 24px 24px 0; font-size: 22px; letter-spacing: -0.3px; }
-.ifinmail-message-meta { padding: 12px 24px 20px; font-size: 13px; color: var(--text-light); display: flex; flex-direction: column; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.ifinmail-message-meta { padding: 12px 24px 20px; font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
 .ifinmail-message-body { padding: 0 24px 40px; line-height: 1.7; font-size: 15px; white-space: pre-wrap; word-break: break-word; }
 
 /* ── Compose ── */
@@ -275,15 +313,30 @@ a:hover { text-decoration: underline; }
 
 /* ── Attachments ── */
 .ifinmail-attachments { padding: 0 24px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-.ifinmail-attachments-title { font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.ifinmail-attachments-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 .ifinmail-attachment-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; }
 .ifinmail-attachment-icon { font-size: 16px; flex-shrink: 0; display:flex; align-items:center; }
 .ifinmail-attachment-link { color: var(--primary); text-decoration: none; }
 .ifinmail-attachment-link:hover { text-decoration: underline; }
-.ifinmail-attachment-size { margin-left: auto; font-size: 12px; color: var(--text-light); flex-shrink: 0; }
+.ifinmail-attachment-size { margin-left: auto; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
 .ifinmail-compose-attachments { padding: 8px 0; }
 .ifinmail-attach-btn-wrapper { margin-bottom: 8px; }
-.ifinmail-attach-item { font-size: 13px; color: var(--text-light); padding: 2px 0; }
+.ifinmail-attach-item { font-size: 13px; color: var(--text-muted); padding: 2px 0; }
+
+/* ── Message list focus (j/k navigation) ── */
+.ifinmail-row-focused { background:var(--hover-bg) !important; box-shadow:inset 3px 0 0 var(--primary); }
+
+.ifinmail-conversation { border:1px solid var(--border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
+.ifinmail-conv-header { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; background:var(--card-bg); }
+.ifinmail-conv-header:hover { background:var(--row-hover); }
+.ifinmail-conv-toggle { font-size:12px; color:var(--text-light); width:14px; flex-shrink:0; }
+.ifinmail-conv-subject { flex:1; font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ifinmail-conv-count { font-size:11px; color:var(--text-light); white-space:nowrap; }
+.ifinmail-conv-latest { font-size:12px; color:var(--text-light); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ifinmail-conv-date { font-size:11px; color:var(--text-light); white-space:nowrap; }
+.ifinmail-conv-body .ifinmail-row { border:0; border-top:1px solid var(--border); border-radius:0; }
+.ifinmail-conv-body .ifinmail-row:last-child { border-bottom:0; }
+
 
 /* ── Shortcuts help dialog ── */
 .ifinmail-overlay {
@@ -324,16 +377,21 @@ a:hover { text-decoration: underline; }
   font-size:13px; font-family:var(--font); outline:none; width:200px;
 }
 .ifinmail-label-input:focus { border-color:var(--primary); }
-.ifinmail-btn-sm { padding:6px 12px; font-size:12px; }
 
 /* ── Settings ── */
 .ifinmail-settings-header {
-  padding:16px 24px; border-bottom:1px solid var(--border); background:var(--card-bg);
+  padding:20px 28px; border-bottom:1px solid var(--border); background:var(--card-bg);
 }
-.ifinmail-settings-header h2 { font-size:20px; }
-.ifinmail-settings-body { padding:24px; max-width:600px; }
-.ifinmail-settings-section { margin-bottom:32px; }
-.ifinmail-settings-section h3 { font-size:16px; font-weight:600; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+.ifinmail-settings-header h2 { font-size:24px; font-weight:700; letter-spacing:-0.3px; }
+.ifinmail-settings-body { padding:28px; max-width:680px; }
+.ifinmail-settings-section {
+  margin-bottom:28px; background:var(--card-bg); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:24px; transition:box-shadow 0.2s ease;
+}
+.ifinmail-settings-section:hover { box-shadow: var(--shadow-md); }
+.ifinmail-settings-section h3 {
+  font-size:16px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
 .ifinmail-settings-section label { display:block; font-size:13px; color:var(--text-light); margin-bottom:4px; }
 
 .ifinmail-toast {
@@ -352,6 +410,10 @@ a:hover { text-decoration: underline; }
   font-size:14px; font-family:var(--font); outline:none; margin-bottom:12px;
 }
 .ifinmail-input:focus { border-color:var(--primary); }
+.ifinmail-input[contenteditable]:empty:before { content:attr(data-placeholder); color:var(--text-light); pointer-events:none; }
+.ifinmail-account-badge { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; flex-shrink:0; }
+.ifinmail-editor-toolbar .ifinmail-editor-btn:hover { background:var(--hover-bg); }
+.ifinmail-editor-toolbar .ifinmail-editor-btn.active { background:var(--primary); color:#fff; }
 
 .ifinmail-pw-wrap { position:relative; display:flex; align-items:stretch; }
 .ifinmail-pw-wrap input { flex:1; padding-right:44px; }
@@ -471,31 +533,47 @@ a:hover { text-decoration: underline; }
 .ifinmail-admin-tab-content[style*="display:none"] { display:none; }
 
 .ifinmail-admin-stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px; margin-bottom:28px; }
-.ifinmail-admin-stat-card { background:var(--card-bg); border-radius:16px; padding:20px; border:1px solid var(--border); transition:all .2s; }
-.ifinmail-admin-stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.06); }
-.ifinmail-admin-stat-title { font-size:13px; font-weight:500; color:var(--text-light); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.ifinmail-premium-card {
+  background:var(--card-bg); border-radius:var(--radius-lg); padding:24px;
+  border:1px solid var(--border); transition:all 0.2s ease;
+}
+.ifinmail-premium-card:hover {
+  transform:translateY(-2px); box-shadow:var(--shadow-lg); border-color:var(--primary);
+}
+.ifinmail-premium-card-accent {
+  position:relative; overflow:hidden;
+}
+.ifinmail-premium-card-accent::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--primary-gradient);
+}
+.ifinmail-admin-stat-card { background:var(--card-bg); border-radius:var(--radius-lg); padding:24px; border:1px solid var(--border); transition:all .25s; }
+.ifinmail-admin-stat-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.ifinmail-admin-stat-title { font-size:13px; font-weight:500; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
 .ifinmail-admin-stat-number { font-size:28px; font-weight:800; color:var(--text); }
 .ifinmail-admin-stat-trend { font-size:11px; margin-top:6px; color:var(--primary); }
 
 .ifinmail-admin-charts-row { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px; }
-.ifinmail-admin-chart-card { background:var(--card-bg); border-radius:16px; padding:20px; border:1px solid var(--border); }
+.ifinmail-admin-chart-card { background:var(--card-bg); border-radius:16px; padding:24px; border:1px solid var(--border); }
 .ifinmail-admin-chart-title { font-weight:600; margin-bottom:16px; color:var(--text); font-size:14px; }
 .ifinmail-admin-chart-card canvas { max-height:220px; max-width:100%; }
 
-.ifinmail-admin-activity-card { background:var(--card-bg); border-radius:16px; padding:20px; border:1px solid var(--border); }
+.ifinmail-admin-activity-card { background:var(--card-bg); border-radius:16px; padding:24px; border:1px solid var(--border); }
 .ifinmail-admin-activity-card h3 { font-size:15px; font-weight:600; margin:0 0 16px; }
 .ifinmail-admin-activity-table-wrap { overflow-x:auto; }
 .ifinmail-admin-activity-table { width:100%; border-collapse:collapse; font-size:13px; }
 .ifinmail-admin-activity-table th { text-align:left; padding:10px 8px; color:var(--text-light); font-weight:500; border-bottom:1px solid var(--border); font-size:12px; }
 .ifinmail-admin-activity-table td { padding:10px 8px; border-bottom:1px solid var(--border); color:var(--text); }
 
-.ifinmail-admin-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; margin-bottom:20px; overflow:hidden; }
-.ifinmail-admin-card-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+.ifinmail-admin-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; margin-bottom:24px; overflow:hidden; }
+.ifinmail-admin-card-header { display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
 .ifinmail-admin-card-header h3 { font-size:15px; font-weight:600; margin:0; }
-.ifinmail-admin-card-body { padding:20px; }
+.ifinmail-admin-card-body { padding:24px; }
 .ifinmail-admin-table { width:100%; border-collapse:collapse; font-size:13px; }
 .ifinmail-admin-table th { padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-light); font-weight:500; }
 .ifinmail-admin-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.ifinmail-admin-table tbody tr { transition:background 0.15s; }
+.ifinmail-admin-table tbody tr:hover { background:var(--row-hover); }
 .ifinmail-admin-inline-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .ifinmail-admin-inline-form input, .ifinmail-admin-inline-form select { padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:var(--font); background:var(--card-bg); color:var(--text); outline:none; }
 .ifinmail-admin-inline-form input:focus, .ifinmail-admin-inline-form select:focus { border-color:var(--primary); }
@@ -523,7 +601,7 @@ a:hover { text-decoration: underline; }
 .ifinmail-dashboard-period button:hover { color:var(--text); background:var(--row-hover); }
 .ifinmail-dashboard-period button.active { background:var(--primary); color:#fff; font-weight:600; }
 
-.ifinmail-dashboard-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+.ifinmail-dashboard-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:16px; margin-bottom:28px; }
 .ifinmail-dashboard-card {
   background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:0; overflow:hidden;
 }
@@ -569,8 +647,6 @@ a:hover { text-decoration: underline; }
 .ifinmail-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
 
 .ifinmail-export-btns { display:flex; gap:6px; }
-.ifinmail-btn-sm { padding:5px 14px; font-size:12px; border-radius:6px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); cursor:pointer; font-family:var(--font); }
-.ifinmail-btn-sm:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
 
 /* ── Domain Wizard ── */
 .ifinmail-domain-wizard { margin-top:12px; border:1px solid var(--border); border-radius:10px; padding:16px; background:var(--card-bg); }
@@ -579,80 +655,197 @@ a:hover { text-decoration: underline; }
 .ifinmail-domain-wizard-row:last-child { border-bottom:none; }
 .ifinmail-domain-wizard-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
 
-/* ── Teams (tabbed layout) ── */
+/* ── Teams (premium redesign) ── */
 .ifinmail-teams { flex:1; overflow-y:auto; background:var(--bg); }
-.ifinmail-teams-container { max-width:900px; margin:0 auto; padding:32px 24px; }
-.ifinmail-teams-container h1 { font-size:24px; margin:0; letter-spacing:-0.3px; }
-.ifinmail-teams-subtitle { color:var(--text-light); margin:4px 0 24px; font-size:14px; }
-.ifinmail-teams-topbar { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+.ifinmail-teams-container { max-width:960px; margin:0 auto; padding:40px 32px; }
+.ifinmail-teams-container h1 { font-size:28px; font-weight:700; letter-spacing:-0.3px; margin:0; }
+.ifinmail-teams-subtitle { color:var(--text-muted); margin:4px 0 28px; font-size:15px; }
+.ifinmail-teams-topbar { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:0; }
 .ifinmail-teams-org-selector { display:flex; align-items:center; gap:8px; }
-.ifinmail-teams-org-selector select { padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--font); background:var(--card-bg); color:var(--text); outline:none; min-width:180px; }
+.ifinmail-teams-org-selector select { padding:10px 14px; border:1px solid var(--border); border-radius:12px; font-size:14px; font-family:var(--font); background:var(--card-bg); color:var(--text); outline:none; min-width:200px; transition:0.2s; }
+.ifinmail-teams-org-selector select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,70,229,0.08); }
 
-.ifinmail-teams-tabs { display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:0; }
-.ifinmail-teams-tab { padding:10px 20px; background:none; border:none; border-radius:10px 10px 0 0; cursor:pointer; font-size:14px; color:var(--text-light); font-family:var(--font); transition:all .15s; margin-bottom:-1px; border-bottom:2px solid transparent; }
-.ifinmail-teams-tab:hover { color:var(--text); background:var(--row-hover); }
-.ifinmail-teams-tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+/* ── Shared premium card/grid/btn system ── */
+.card {
+  background:var(--card-bg); border-radius:20px; padding:32px; margin-bottom:28px;
+  border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,0.02);
+  transition:box-shadow 0.2s;
+}
+.card:hover { box-shadow:0 8px 24px rgba(0,0,0,0.06); }
+.card-header {
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;
+}
+.card-header h3 { font-size:18px; font-weight:600; margin:0; }
+.card-body {}
+.badge-role { font-size:13px; color:var(--text-light); font-weight:400; }
 
+.teams-grid { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; font-weight:500; font-size:13px; color:var(--text); margin-bottom:6px; }
+.form-group input, .form-group select {
+  width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px;
+  font-size:14px; background:var(--bg); transition:0.2s; font-family:var(--font); color:var(--text);
+}
+.form-group input:focus, .form-group select:focus {
+  outline:none; border-color:var(--primary); background:var(--card-bg);
+  box-shadow:0 0 0 3px rgba(79,70,229,0.08);
+}
+.form-group input[readonly] { background:var(--row-hover); color:var(--text-light); }
+.form-group .hint, .form-hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
+
+.form-actions { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+
+.btn {
+  padding:10px 24px; border:none; border-radius:40px; font-weight:500; font-size:14px;
+  cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font);
+}
+.btn-primary {
+  background:var(--primary-gradient); color:#fff; box-shadow:0 2px 8px rgba(79,70,229,0.25);
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,70,229,0.35); }
+.btn-secondary { background:var(--row-hover); color:var(--text); }
+.btn-secondary:hover { background:var(--border); }
+.btn-outline { background:transparent; color:var(--primary); border:1.5px solid var(--primary); }
+.btn-outline:hover { background:var(--primary); color:#fff; }
+.btn-ghost { background:transparent; color:var(--text-light); border:none; padding:6px 12px; border-radius:6px; }
+.btn-ghost:hover { background:var(--row-hover); color:var(--text); }
+.btn-danger { background:#fef2f2; color:#b91c1c; }
+.btn-danger:hover { background:#fee2e2; }
+.btn-sm { padding:6px 14px; font-size:12px; }
+
+/* ── Tabs ── */
+.ifinmail-teams-tabs {
+  display:flex; gap:8px; border-bottom:1px solid var(--border); margin-bottom:32px; padding-bottom:0;
+}
+.ifinmail-teams-tab {
+  padding:10px 24px; background:none; border:none; font-weight:500; font-size:14px;
+  color:var(--text-light); cursor:pointer; border-radius:30px 30px 0 0; transition:0.2s;
+  font-family:var(--font); margin-bottom:-1px; border-bottom:2px solid transparent;
+}
+.ifinmail-teams-tab:hover { background:var(--row-hover); color:var(--text); }
+.ifinmail-teams-tab.active { color:var(--primary); background:var(--unread-bg); border-bottom-color:var(--primary); }
 .ifinmail-teams-tab-content { display:none; }
 .ifinmail-teams-tab-content.active { display:block; }
 
-.ifinmail-teams-card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; overflow:hidden; }
-.ifinmail-teams-card-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); }
-.ifinmail-teams-card-header h3 { font-size:16px; font-weight:600; margin:0; }
-.ifinmail-teams-card-body { padding:20px; }
+/* ── Member chips ── */
+.ifinmail-teams-member-chips { display:flex; flex-wrap:wrap; gap:10px; }
+.ifinmail-teams-chip {
+  display:inline-flex; align-items:center; gap:10px; padding:8px 18px;
+  background:var(--row-hover); border-radius:40px; font-size:13px;
+}
+.ifinmail-teams-chip-role {
+  font-size:10px; font-weight:600; text-transform:uppercase;
+  padding:2px 10px; border-radius:40px;
+  background:var(--unread-bg); color:var(--primary);
+}
+.ifinmail-teams-chip-role.owner { background:#fef3c7; color:#d97706; }
 
-.ifinmail-teams-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-.ifinmail-teams-field { margin-bottom:16px; }
-.ifinmail-teams-field label { display:block; font-size:13px; font-weight:500; color:var(--text-light); margin-bottom:6px; }
-.ifinmail-teams-field input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--font); outline:none; background:var(--card-bg); color:var(--text); }
-.ifinmail-teams-field input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(67,97,238,0.12); }
-.ifinmail-teams-field input[readonly] { background:var(--row-hover); }
-.ifinmail-teams-field small { display:block; font-size:12px; color:var(--text-light); margin-top:4px; }
+.mailing-list-card { background:var(--row-hover); border-color:var(--border); }
 
-.ifinmail-teams-info-box { background:var(--row-hover); padding:16px; border-radius:10px; font-size:14px; line-height:1.6; }
-.ifinmail-teams-info-box p + p { margin-top:8px; }
+/* ── Danger zone ── */
+.danger-zone {
+  border:2px solid #fecaca; border-radius:20px; padding:28px; margin-top:16px;
+  background:var(--card-bg);
+}
+.danger-zone h4 { color:#b91c1c; margin:0 0 8px; font-size:16px; }
+.danger-zone p { color:var(--text-light); font-size:14px; margin-bottom:16px; }
 
+/* ── Members list ── */
 .ifinmail-teams-member-list { list-style:none; }
-.ifinmail-teams-member-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+.ifinmail-teams-member-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 0; border-bottom:1px solid var(--border);
+}
 .ifinmail-teams-member-item:last-child { border-bottom:none; }
-.ifinmail-teams-member-info { display:flex; align-items:center; gap:10px; }
+.ifinmail-teams-member-info { display:flex; align-items:center; gap:12px; }
 .ifinmail-teams-member-info strong { font-size:14px; }
-.ifinmail-teams-member-role { font-size:11px; padding:3px 10px; border-radius:20px; background:var(--unread-bg); color:var(--primary); font-weight:500; }
+.ifinmail-teams-member-role {
+  font-size:11px; padding:3px 12px; border-radius:40px;
+  background:var(--unread-bg); color:var(--primary); font-weight:600;
+}
 .ifinmail-teams-member-role.owner { background:#fef3c7; color:#d97706; }
 .ifinmail-teams-member-actions { display:flex; align-items:center; gap:8px; }
-.ifinmail-teams-role-select { padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:var(--font); background:var(--card-bg); color:var(--text); outline:none; }
+.ifinmail-teams-role-select {
+  padding:5px 10px; border:1px solid var(--border); border-radius:8px;
+  font-size:12px; font-family:var(--font); background:var(--card-bg); color:var(--text); outline:none;
+}
 
-.ifinmail-teams-filter-group { display:flex; gap:4px; }
-.ifinmail-teams-filter-group .ifinmail-btn { font-size:12px; padding:5px 12px; }
+/* ── Shared inbox ── */
+.ifinmail-teams-filter-group { display:flex; gap:6px; flex-wrap:wrap; }
+.ifinmail-teams-filter-group .ifinmail-btn { font-size:12px; padding:6px 14px; background:var(--row-hover); color:var(--text); border-radius:40px; border:1px solid transparent; }
 .ifinmail-teams-filter-group .ifinmail-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-
-.ifinmail-teams-message-item { padding:14px 16px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; cursor:pointer; transition:all .15s; }
+.ifinmail-teams-message-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 18px; border:1px solid var(--border); border-radius:12px;
+  margin-bottom:10px; cursor:pointer; transition:all .15s;
+}
 .ifinmail-teams-message-item:hover { border-color:var(--primary); background:var(--row-hover); }
-.ifinmail-teams-message-subject { font-weight:600; font-size:14px; margin-bottom:6px; color:var(--text); }
-.ifinmail-teams-message-meta { font-size:12px; color:var(--text-light); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.ifinmail-teams-message-subject { font-weight:600; font-size:14px; flex:1; color:var(--text); }
+.ifinmail-teams-message-meta { font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 
-.ifinmail-teams-badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:500; }
-.ifinmail-teams-badge.pending { background:#fef3c7; color:#d97706; }
+.ifinmail-teams-badge {
+  display:inline-block; padding:2px 14px; border-radius:40px; font-size:11px; font-weight:500;
+}
+.ifinmail-teams-badge.pending { background:#fef3c7; color:#d97706; animation:ifinmail-pulse 2s ease-in-out infinite; }
+@keyframes ifinmail-pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
 .ifinmail-teams-badge.assigned { background:var(--unread-bg); color:var(--primary); }
 .ifinmail-teams-badge.resolved { background:#d4edda; color:#10b981; }
 
-.ifinmail-teams-contact-list { list-style:none; }
-.ifinmail-teams-contact-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
-.ifinmail-teams-contact-item:last-child { border-bottom:none; }
-
-.ifinmail-teams-empty { text-align:center; padding:32px; color:var(--text-light); font-size:14px; }
+.ifinmail-teams-empty { text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
 .ifinmail-teams-empty small { font-size:12px; }
 
-.ifinmail-engagement-card:hover { border-color:var(--primary) !important; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition:all 0.15s ease; }
+/* ── Contacts ── */
+.ifinmail-teams-contact-list { list-style:none; }
+.ifinmail-teams-contact-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 0; border-bottom:1px solid var(--border);
+}
+.ifinmail-teams-contact-item:last-child { border-bottom:none; }
 
-.btn-danger { background:#fee2e2; color:#ef4444; border:1px solid #fecaca; }
-.btn-danger:hover { background:#fecaca; }
+/* ── Premium Billing / Plan ── */
+.ifinmail-billing-grid {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:20px; margin-top:16px;
+}
+.ifinmail-billing-plan-card {
+  background:var(--card-bg); border:2px solid var(--border); border-radius:var(--radius-lg);
+  padding:24px; text-align:center; transition:all 0.2s ease; cursor:pointer; position:relative;
+}
+.ifinmail-billing-plan-card:hover { border-color:var(--primary); box-shadow:var(--shadow-md); }
+.ifinmail-billing-plan-card.featured { border-color:var(--primary); background:var(--unread-bg); }
+.ifinmail-billing-plan-card.featured .ifinmail-plan-badge {
+  position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+  background:var(--primary-gradient); color:#fff; font-size:10px; font-weight:700;
+  padding:3px 14px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px;
+}
+.ifinmail-billing-plan-name { font-size:14px; font-weight:600; color:var(--text-muted); margin-bottom:4px; }
+.ifinmail-billing-plan-price { font-size:28px; font-weight:800; color:var(--text); }
+.ifinmail-billing-plan-price span { font-size:14px; font-weight:400; color:var(--text-muted); }
+.ifinmail-billing-plan-features { list-style:none; margin:12px 0; padding:0; font-size:12px; color:var(--text-muted); }
+.ifinmail-billing-plan-features li { padding:4px 0; border-bottom:1px solid var(--border); }
+.ifinmail-billing-plan-features li:last-child { border-bottom:none; }
+
+.ifinmail-payment-card {
+  background:var(--card-bg); border-radius:var(--radius-lg); padding:24px;
+  border:1px solid var(--border); transition:all 0.2s ease; cursor:pointer;
+}
+.ifinmail-payment-card:hover { box-shadow:var(--shadow-md); border-color:var(--primary); }
+.ifinmail-payment-card.selected { border-color:var(--primary); box-shadow:0 0 0 2px rgba(67,97,238,0.2); }
+.ifinmail-payment-card-icon { font-size:28px; margin-bottom:8px; }
+.ifinmail-payment-card-name { font-size:14px; font-weight:600; color:var(--text); }
+
+.ifinmail-api-token-item {
+  display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
+  background:var(--row-hover); border-radius:var(--radius-sm); margin-bottom:8px; font-size:13px;
+}
+.ifinmail-api-token-item:hover { background:var(--unread-bg); }
 
 @media (max-width:768px) {
   .ifinmail-teams-container { padding:20px 16px; }
-  .ifinmail-teams-grid2 { grid-template-columns:1fr; }
+  .teams-grid { grid-template-columns:1fr; }
   .ifinmail-teams-topbar { flex-direction:column; }
   .ifinmail-teams-org-selector select { min-width:140px; }
-  .ifinmail-teams-tabs { overflow-x:auto; }
-  .ifinmail-teams-tab { padding:8px 14px; font-size:13px; white-space:nowrap; }
+  .ifinmail-teams-tabs { overflow-x:auto; flex-wrap:nowrap; }
+  .ifinmail-teams-tab { padding:8px 16px; font-size:13px; white-space:nowrap; }
+  .card { padding:20px; }
 }

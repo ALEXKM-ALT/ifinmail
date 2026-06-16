@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from ifinmail.api.auth import get_current_user
 from ifinmail.api.config import settings
 from ifinmail.api.deps import get_db
+from ifinmail.api.personalize import MemberInfo, personalise
 from ifinmail.api.webhooks import fire_webhook
 from ifinmail.api.ws_manager import fire_notification
 from ifinmail.db.models import (
@@ -49,6 +50,8 @@ class OrgUpdate(BaseModel):
 class InviteMember(BaseModel):
     email: str
     role: str = "member"
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 class OrgContactCreate(BaseModel):
@@ -156,6 +159,8 @@ def get_org(
                 "user_id": m.user_id,
                 "email": m.user.email if m.user else None,
                 "role": m.role,
+                "first_name": m.first_name or (m.user.first_name if m.user else None),
+                "last_name": m.last_name or (m.user.last_name if m.user else None),
             }
             for m in members
         ],
@@ -226,7 +231,13 @@ def invite_member(
 
     target = db.query(User).filter(User.email == req.email).first()
     if target:
-        member = OrganizationMember(organization_id=org.id, user_id=target.id, role=req.role)
+        member = OrganizationMember(
+            organization_id=org.id,
+            user_id=target.id,
+            role=req.role,
+            first_name=req.first_name or target.first_name,
+            last_name=req.last_name or target.last_name,
+        )
         db.add(member)
         db.commit()
         fire_notification(target.id, "org.invite", {"organization_id": org.id, "organization_name": org.name, "role": req.role})
@@ -240,6 +251,8 @@ def invite_member(
         email=req.email,
         token=token,
         role=req.role,
+        first_name=req.first_name,
+        last_name=req.last_name,
         expires_at=datetime.now(UTC) + timedelta(hours=48),
     )
     db.add(invite)
@@ -305,7 +318,13 @@ def accept_invite(
         invite.accepted = 1
         db.commit()
         return {"message": "Already a member", "organization_id": invite.organization_id}
-    member = OrganizationMember(organization_id=invite.organization_id, user_id=user.id, role=invite.role)
+    member = OrganizationMember(
+        organization_id=invite.organization_id,
+        user_id=user.id,
+        role=invite.role,
+        first_name=invite.first_name or user.first_name,
+        last_name=invite.last_name or user.last_name,
+    )
     db.add(member)
     invite.accepted = 1
     db.commit()
@@ -1201,13 +1220,16 @@ def send_org_test_email(
         mb = db.query(Mailbox).filter(Mailbox.user_id == m.user_id).first()
         if not mb:
             continue
+        _fn = m.first_name or (m.user.first_name if m.user else "")
+        _ln = m.last_name or (m.user.last_name if m.user else "")
+        info = MemberInfo(first_name=_fn or mb.email.split("@")[0], last_name=_ln, email=mb.email)
         local_msg = Message(
             mailbox_id=mb.id,
             message_id=msg_id_str,
             from_addr=user.email,
             to_addrs=org.email,
-            subject=subject,
-            body_text=body_text,
+            subject=personalise(subject, info),
+            body_text=personalise(body_text, info),
             size=size,
             folder="INBOX",
         )

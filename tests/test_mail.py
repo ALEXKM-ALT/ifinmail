@@ -262,3 +262,106 @@ class TestCustomFolders:
             headers=headers,
         )
         assert r.status_code == 400
+
+
+class TestSmartReply:
+    def test_suggest_reply_returns_suggestions(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post(
+            "/mail",
+            json={"to": "x@y.com", "subject": "Can you help?", "body_text": "I have a question about the project."},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+
+        r = client.post(f"/mail/{mid}/suggest-reply", headers=headers)
+        assert r.status_code == 200
+        data = r.json()
+        assert "suggestions" in data
+        assert len(data["suggestions"]) > 0
+        assert all(isinstance(s, str) for s in data["suggestions"])
+
+    def test_suggest_reply_not_found(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post("/mail/99999/suggest-reply", headers=headers)
+        assert r.status_code == 404
+
+    def test_suggest_reply_question_detection(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post(
+            "/mail",
+            json={"to": "q@y.com", "subject": "Quick question", "body_text": "Could you please review the doc?"},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+
+        r = client.post(f"/mail/{mid}/suggest-reply", headers=headers)
+        assert r.status_code == 200
+        suggestions = r.json()["suggestions"]
+        assert any("check" in s.lower() or "sure" in s.lower() or "thanks" in s.lower() for s in suggestions)
+
+    def test_suggest_reply_thank_you_detection(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post(
+            "/mail",
+            json={"to": "t@y.com", "subject": "Thanks!", "body_text": "Thank you so much for your help."},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+
+        r = client.post(f"/mail/{mid}/suggest-reply", headers=headers)
+        assert r.status_code == 200
+        suggestions = r.json()["suggestions"]
+        assert any("welcome" in s.lower() or "glad" in s.lower() or "happy" in s.lower() for s in suggestions)
+
+
+class TestSpamLearning:
+    def test_report_spam(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post(
+            "/mail",
+            json={"to": "a@y.com", "subject": "Win a prize!", "body_text": "You won"},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+
+        r = client.post(f"/mail/{mid}/report-spam", headers=headers)
+        assert r.status_code == 200
+        assert r.json()["message"] == "Message marked as spam"
+
+        r = client.get(f"/mail/{mid}", headers=headers)
+        assert r.json()["folder"] == "SPAM"
+
+    def test_report_ham(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post(
+            "/mail",
+            json={"to": "b@y.com", "subject": "Meeting", "body_text": "See you at 3"},
+            headers=headers,
+        )
+        mid = r.json()["id"]
+
+        r = client.post(f"/mail/{mid}/report-spam", headers=headers)
+        assert r.status_code == 200
+
+        r = client.post(f"/mail/{mid}/report-ham", headers=headers)
+        assert r.status_code == 200
+        assert r.json()["message"] == "Message marked as not spam"
+
+    def test_report_spam_not_found(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post("/mail/99999/report-spam", headers=headers)
+        assert r.status_code == 404
+
+    def test_report_ham_not_found(self, client, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        r = client.post("/mail/99999/report-ham", headers=headers)
+        assert r.status_code == 404
+
+    def test_report_spam_unauthorized(self, client):
+        r = client.post("/mail/1/report-spam")
+        assert r.status_code == 401
+
+    def test_report_ham_unauthorized(self, client):
+        r = client.post("/mail/1/report-ham")
+        assert r.status_code == 401

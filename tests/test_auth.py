@@ -89,3 +89,13 @@ def test_logout(client):
 
     r = client.post("/auth/refresh", json={"refresh_token": refresh_token})
     assert r.status_code == 401
+
+
+def test_metrics(client):
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    body = r.text
+    assert "ifinmail_users_total" in body
+    assert "ifinmail_http_requests_total" in body
+    assert "ifinmail_up" in body
+    assert "text/plain" in r.headers.get("content-type", "")
