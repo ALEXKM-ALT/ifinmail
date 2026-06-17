@@ -37,3 +37,6 @@ docker/**/__pycache__/
 desktop/node_modules/
 desktop/dist/
 desktop/out/
+
+desktop/
+vapid_keys.json
