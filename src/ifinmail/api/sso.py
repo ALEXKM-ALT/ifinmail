@@ -62,7 +62,10 @@ def _get_sso_config(provider: str) -> dict:
     if not client_id or not client_secret:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail=f"SSO {provider} is not configured. Set SSO_{provider.upper()}_CLIENT_ID and SSO_{provider.upper()}_CLIENT_SECRET in .env",
+            detail=(
+                f"SSO {provider} is not configured. "
+                f"Set SSO_{provider.upper()}_CLIENT_ID and SSO_{provider.upper()}_CLIENT_SECRET in .env"
+            ),
         )
     cfg = dict(base)
     cfg["client_id"] = client_id
@@ -230,10 +233,14 @@ def sso_callback(
 ):
     _cleanup_expired_states(db)
 
-    sso_state = db.query(SSOState).filter(
-        SSOState.state == state,
-        SSOState.provider == provider,
-    ).first()
+    sso_state = (
+        db.query(SSOState)
+        .filter(
+            SSOState.state == state,
+            SSOState.provider == provider,
+        )
+        .first()
+    )
     if not sso_state:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state")
 

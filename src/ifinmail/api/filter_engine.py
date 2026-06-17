@@ -68,7 +68,7 @@ def _apply_actions(rule: FilterRule, msg: Message, mailbox: Mailbox, db: Session
             msg.starred = 1 if avalue != "0" else 0
         elif atype == "add_label":
             existing = (msg.labels or "").strip()
-            labels = [l.strip() for l in existing.split(",") if l.strip()]
+            labels = [label.strip() for label in existing.split(",") if label.strip()]
             if avalue and avalue not in labels:
                 labels.append(avalue)
                 msg.labels = ",".join(labels)
@@ -93,6 +93,7 @@ def _action_forward(target: str, ctx: dict | None, mailbox: Mailbox, db: Session
         return
     try:
         from ifinmail.api.mail import _relay_send
+
         _relay_send(
             from_addr=mailbox.email,
             to_addr=target,
@@ -113,6 +114,7 @@ def _action_auto_reply(template_body: str, ctx: dict | None, mailbox: Mailbox, d
         if not original_from or "@" not in original_from:
             return
         from ifinmail.db.models import Message
+
         reply = Message(
             mailbox_id=mailbox.id,
             from_addr=mailbox.email,
@@ -124,6 +126,7 @@ def _action_auto_reply(template_body: str, ctx: dict | None, mailbox: Mailbox, d
         db.add(reply)
         db.flush()
         from ifinmail.api.mail import _relay_send
+
         _relay_send(
             from_addr=mailbox.email,
             to_addr=original_from,
@@ -139,15 +142,18 @@ def _action_notify(webhook_url: str, ctx: dict | None, mailbox: Mailbox):
     if not ctx or not webhook_url or not webhook_url.startswith("http"):
         return
     try:
-        import urllib.request
         import json as _json
-        payload = _json.dumps({
-            "event": "filter_matched",
-            "mailbox": mailbox.email,
-            "from": ctx.get("from_addr", ""),
-            "to": ctx.get("to_addr", ""),
-            "subject": ctx.get("subject", ""),
-        }).encode()
+        import urllib.request
+
+        payload = _json.dumps(
+            {
+                "event": "filter_matched",
+                "mailbox": mailbox.email,
+                "from": ctx.get("from_addr", ""),
+                "to": ctx.get("to_addr", ""),
+                "subject": ctx.get("subject", ""),
+            }
+        ).encode()
         req = urllib.request.Request(webhook_url, data=payload, headers={"Content-Type": "application/json"})
         urllib.request.urlopen(req, timeout=10)
     except Exception as exc:

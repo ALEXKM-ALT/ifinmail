@@ -123,7 +123,9 @@ async def mpesa_stk_push(
             "user_id": user.id,
             "created_at": datetime.now(UTC).isoformat(),
         }
-        return MpesaSTKPushResponse(success=True, checkout_request_id=checkout_id, message="STK push sent (sandbox mode)")
+        return MpesaSTKPushResponse(
+            success=True, checkout_request_id=checkout_id, message="STK push sent (sandbox mode)"
+        )
 
     token = await _get_mpesa_token()
     timestamp = _get_timestamp()
@@ -159,7 +161,9 @@ async def mpesa_stk_push(
                 "created_at": datetime.now(UTC).isoformat(),
             }
             return MpesaSTKPushResponse(success=True, checkout_request_id=checkout_id, message="STK push sent")
-        return MpesaSTKPushResponse(success=False, checkout_request_id=None, message=data.get("errorMessage", "STK push failed"))
+        return MpesaSTKPushResponse(
+            success=False, checkout_request_id=None, message=data.get("errorMessage", "STK push failed")
+        )
 
 
 @router.post("/mpesa/callback")

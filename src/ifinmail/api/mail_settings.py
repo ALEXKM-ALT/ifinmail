@@ -54,8 +54,14 @@ def get_vacation(db: Session = Depends(get_db), user: User = Depends(get_current
     vr = db.query(VacationResponder).filter(VacationResponder.mailbox_id == mailbox.id).first()
     if not vr:
         return VacationResponse(subject="Auto-reply", body="", enabled=False)
-    return VacationResponse(subject=vr.subject, body=vr.body, enabled=bool(vr.enabled),
-                           start_date=vr.start_date, end_date=vr.end_date, only_contacts=bool(vr.only_contacts))
+    return VacationResponse(
+        subject=vr.subject,
+        body=vr.body,
+        enabled=bool(vr.enabled),
+        start_date=vr.start_date,
+        end_date=vr.end_date,
+        only_contacts=bool(vr.only_contacts),
+    )
 
 
 @router.put("/vacation", response_model=VacationResponse)
@@ -78,8 +84,14 @@ def set_vacation(
     vr.only_contacts = int(req.only_contacts)
     db.commit()
     db.refresh(vr)
-    return VacationResponse(subject=vr.subject, body=vr.body, enabled=bool(vr.enabled),
-                           start_date=vr.start_date, end_date=vr.end_date, only_contacts=bool(vr.only_contacts))
+    return VacationResponse(
+        subject=vr.subject,
+        body=vr.body,
+        enabled=bool(vr.enabled),
+        start_date=vr.start_date,
+        end_date=vr.end_date,
+        only_contacts=bool(vr.only_contacts),
+    )
 
 
 # ── Forwarding ──

@@ -38,15 +38,15 @@ def fire_notification(user_id: int, event: str, data: dict | None = None) -> Non
         except Exception:
             pass
     if event in _PUSH_EVENTS:
-        threading.Thread(
-            target=_push_notify, args=(user_id, event, data), daemon=True
-        ).start()
+        threading.Thread(target=_push_notify, args=(user_id, event, data), daemon=True).start()
 
 
 def _push_notify(user_id: int, event: str, data: dict | None = None) -> None:
     try:
         from ifinmail.api.push import notify_user as push_notify
+
         push_notify(user_id, event, data)
     except Exception:
         import logging
+
         logging.getLogger("ifinmail.ws_manager").exception("push_notify failed")

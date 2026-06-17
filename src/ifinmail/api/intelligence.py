@@ -11,8 +11,44 @@ logger = logging.getLogger("ifinmail.intelligence")
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 
-POSITIVE_WORDS = {"great", "excellent", "amazing", "fantastic", "wonderful", "good", "happy", "love", "best", "thank", "thanks", "pleased", "delighted", "perfect", "awesome"}
-NEGATIVE_WORDS = {"bad", "terrible", "awful", "horrible", "poor", "worst", "hate", "angry", "upset", "disappointed", "frustrated", "sorry", "apologize", "complaint", "issue", "problem", "error", "failed", "broken"}
+POSITIVE_WORDS = {
+    "great",
+    "excellent",
+    "amazing",
+    "fantastic",
+    "wonderful",
+    "good",
+    "happy",
+    "love",
+    "best",
+    "thank",
+    "thanks",
+    "pleased",
+    "delighted",
+    "perfect",
+    "awesome",
+}
+NEGATIVE_WORDS = {
+    "bad",
+    "terrible",
+    "awful",
+    "horrible",
+    "poor",
+    "worst",
+    "hate",
+    "angry",
+    "upset",
+    "disappointed",
+    "frustrated",
+    "sorry",
+    "apologize",
+    "complaint",
+    "issue",
+    "problem",
+    "error",
+    "failed",
+    "broken",
+}
 
 LANG_PATTERNS = {
     "english": r"\b(the|is|are|was|were|have|has|been|will|would|could|should|this|that|with|from|your|our|their)\b",
@@ -68,7 +104,23 @@ def analyze(
 
 
 def _calc_spam(text: str, words: list[str]) -> int:
-    spam_triggers = {"free", "win", "winner", "click here", "act now", "limited time", "urgent", "guaranteed", "exclusive offer", "buy now", "cash", "bonus", "congratulations", "risk free", "100%"}
+    spam_triggers = {
+        "free",
+        "win",
+        "winner",
+        "click here",
+        "act now",
+        "limited time",
+        "urgent",
+        "guaranteed",
+        "exclusive offer",
+        "buy now",
+        "cash",
+        "bonus",
+        "congratulations",
+        "risk free",
+        "100%",
+    }
     text_lower = text.lower()
     score = 0
     for t in spam_triggers:
@@ -108,7 +160,25 @@ def _detect_language(text: str) -> str:
 
 
 def _calc_business_score(text: str, email: str, word_count: int) -> int:
-    biz_words = {"meeting", "proposal", "invoice", "contract", "project", "deadline", "budget", "report", "client", "partner", "revenue", "growth", "strategy", "team", "schedule", "deliverable", "agenda"}
+    biz_words = {
+        "meeting",
+        "proposal",
+        "invoice",
+        "contract",
+        "project",
+        "deadline",
+        "budget",
+        "report",
+        "client",
+        "partner",
+        "revenue",
+        "growth",
+        "strategy",
+        "team",
+        "schedule",
+        "deliverable",
+        "agenda",
+    }
     word_set = set(text.lower().split())
     biz_hits = len(word_set & biz_words)
     score = 30 + biz_hits * 5

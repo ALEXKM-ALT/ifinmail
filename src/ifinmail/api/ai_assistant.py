@@ -12,7 +12,8 @@ logger = logging.getLogger("ifinmail.ai")
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-PROMPT_GENERATE = """You are an expert email writer. Write a professional email based on the user's request. Keep it concise and clear.
+PROMPT_GENERATE = """You are an expert email writer. Write a professional email
+based on the user's request. Keep it concise and clear.
 
 User request: {prompt}
 
@@ -23,7 +24,8 @@ Additional context:
 
 Output the email as JSON with "subject" and "body" keys. Body should be plain text."""
 
-PROMPT_REPLY = """Write a reply email to the following email. Match the tone of the original.
+PROMPT_REPLY = """Write a reply email to the following email.
+Match the tone of the original.
 
 Original email:
 {original_email}
@@ -34,14 +36,16 @@ Additional context:
 
 Output the reply as JSON with "body" as the only key. Keep it concise."""
 
-PROMPT_SUMMARIZE = """Summarize the following email in 2-3 sentences. Capture the key points, action items, and any deadlines mentioned.
+PROMPT_SUMMARIZE = """Summarize the following email in 2-3 sentences.
+Capture the key points, action items, and any deadlines mentioned.
 
 Email subject: {subject}
 Email body: {body}
 
 Output the summary as JSON with "summary" as the only key."""
 
-PROMPT_TRANSLATE = """Translate the following email text from {source_lang} to {target_lang}. Preserve the tone and formality of the original.
+PROMPT_TRANSLATE = """Translate the following email text from {source_lang}
+to {target_lang}. Preserve the tone and formality of the original.
 
 Text to translate:
 {text}
@@ -124,7 +128,10 @@ def _fallback_local_response(prompt: str) -> dict:
         return {"body": "[Reply would appear here — set OPENAI_API_KEY to enable AI replies]"}
     return {
         "subject": "[Subject would appear here]",
-        "body": "[Email body would appear here. Set OPENAI_API_KEY in environment to enable AI-powered email generation.]",
+        "body": (
+            "[Email body would appear here. Set OPENAI_API_KEY"
+            " in environment to enable AI-powered email generation.]"
+        ),
     }
 
 

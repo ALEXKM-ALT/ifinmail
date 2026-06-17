@@ -79,9 +79,7 @@ class Mailbox(Base):
 
 class Alias(Base):
     __tablename__ = "aliases"
-    __table_args__ = (
-        UniqueConstraint("source", "target", name="uq_alias_source_target"),
-    )
+    __table_args__ = (UniqueConstraint("source", "target", name="uq_alias_source_target"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     source = Column(String(255), nullable=False, index=True)
@@ -310,9 +308,7 @@ class ContactGroup(Base):
 
 class ContactGroupMember(Base):
     __tablename__ = "contact_group_members"
-    __table_args__ = (
-        UniqueConstraint("group_id", "contact_id", name="uq_group_contact"),
-    )
+    __table_args__ = (UniqueConstraint("group_id", "contact_id", name="uq_group_contact"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     group_id = Column(Integer, ForeignKey("contact_groups.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -511,7 +507,9 @@ class OrgSharedInboxNote(Base):
     __tablename__ = "org_shared_inbox_notes"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    shared_inbox_message_id = Column(Integer, ForeignKey("org_shared_inbox_messages.id", ondelete="CASCADE"), nullable=False)
+    shared_inbox_message_id = Column(
+        Integer, ForeignKey("org_shared_inbox_messages.id", ondelete="CASCADE"), nullable=False
+    )
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     note = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
@@ -548,8 +546,9 @@ class Campaign(Base):
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
     creator = relationship("User")
-    steps = relationship("CampaignStep", back_populates="campaign", cascade="all, delete-orphan",
-                         order_by="CampaignStep.order")
+    steps = relationship(
+        "CampaignStep", back_populates="campaign", cascade="all, delete-orphan", order_by="CampaignStep.order"
+    )
 
 
 class CampaignStep(Base):

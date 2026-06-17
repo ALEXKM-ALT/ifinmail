@@ -61,12 +61,14 @@ def score_message(msg: Message, db: Session) -> float:
 
 def _user_id_for_mailbox(mailbox_id: int, db: Session) -> int:
     from ifinmail.db.models import Mailbox
+
     mb = db.query(Mailbox).filter(Mailbox.id == mailbox_id).first()
     return mb.user_id if mb else 0
 
 
 def _user_domain_for_mailbox(mailbox_id: int, db: Session) -> str | None:
     from ifinmail.db.models import Mailbox
+
     mb = db.query(Mailbox).filter(Mailbox.id == mailbox_id).first()
     if mb and "@" in mb.email:
         return mb.email.split("@")[1]

@@ -296,7 +296,14 @@ def update_domain(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
     if req.verified is not None:
         domain.verified = int(req.verified)
-    log_admin_action(db, admin, "update_domain", target_email=domain.domain, details=f"verified={req.verified}", ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "update_domain",
+        target_email=domain.domain,
+        details=f"verified={req.verified}",
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     db.refresh(domain)
     return domain
@@ -312,7 +319,13 @@ def delete_domain(
     domain = db.query(Domain).filter(Domain.id == domain_id).first()
     if not domain:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
-    log_admin_action(db, admin, "delete_domain", target_email=domain.domain, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "delete_domain",
+        target_email=domain.domain,
+        ip_address=request.client.host if request.client else None,
+    )
     db.delete(domain)
     db.commit()
 
@@ -378,7 +391,9 @@ def create_user(
     )
     db.add(user)
     db.flush()
-    log_admin_action(db, admin, "create_user", target_user=req.email, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db, admin, "create_user", target_user=req.email, ip_address=request.client.host if request.client else None
+    )
     db.commit()
     db.refresh(user)
     return user
@@ -422,7 +437,14 @@ def update_user(
         user.first_name = req.first_name
     if req.last_name is not None:
         user.last_name = req.last_name
-    log_admin_action(db, admin, "update_user", target_user=user.email, details=f"is_admin={req.is_admin}" if req.is_admin is not None else None, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "update_user",
+        target_user=user.email,
+        details=f"is_admin={req.is_admin}" if req.is_admin is not None else None,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     db.refresh(user)
     return user
@@ -438,7 +460,9 @@ def delete_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    log_admin_action(db, admin, "delete_user", target_user=user.email, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db, admin, "delete_user", target_user=user.email, ip_address=request.client.host if request.client else None
+    )
     db.delete(user)
     db.commit()
 
@@ -457,7 +481,9 @@ def update_user_password(
     if len(req.password) < 6:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password too short")
     user.password = pwd_context.hash(req.password)
-    log_admin_action(db, admin, "update_password", target_user=user.email, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db, admin, "update_password", target_user=user.email, ip_address=request.client.host if request.client else None
+    )
     db.commit()
     return {"message": "Password updated"}
 
@@ -562,7 +588,9 @@ def create_mailbox(
     mailbox = Mailbox(email=email, user_id=user_obj.id, quota_mb=quota_mb, plan="free")
     db.add(mailbox)
     db.flush()
-    log_admin_action(db, admin, "create_mailbox", target_email=email, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db, admin, "create_mailbox", target_email=email, ip_address=request.client.host if request.client else None
+    )
     db.commit()
     db.refresh(mailbox)
     return mailbox
@@ -578,7 +606,13 @@ def delete_mailbox(
     mailbox = db.query(Mailbox).filter(Mailbox.id == mailbox_id).first()
     if not mailbox:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mailbox not found")
-    log_admin_action(db, admin, "delete_mailbox", target_email=mailbox.email, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "delete_mailbox",
+        target_email=mailbox.email,
+        ip_address=request.client.host if request.client else None,
+    )
     db.delete(mailbox)
     db.commit()
 
@@ -610,7 +644,14 @@ def create_alias(
     alias = Alias(source=source, target=target, domain_id=domain.id)
     db.add(alias)
     db.flush()
-    log_admin_action(db, admin, "create_alias", target_email=source, details=f"target={target}", ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "create_alias",
+        target_email=source,
+        details=f"target={target}",
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     db.refresh(alias)
     return alias
@@ -626,7 +667,9 @@ def delete_alias(
     alias = db.query(Alias).filter(Alias.id == alias_id).first()
     if not alias:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alias not found")
-    log_admin_action(db, admin, "delete_alias", target_email=alias.source, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db, admin, "delete_alias", target_email=alias.source, ip_address=request.client.host if request.client else None
+    )
     db.delete(alias)
     db.commit()
 
@@ -686,7 +729,14 @@ def admin_update_subscription(
         mailbox.quota_mb = req.quota_mb
     if req.enabled is not None:
         mailbox.enabled = int(req.enabled)
-    log_admin_action(db, admin, "update_subscription", target_email=mailbox.email, details=f"plan={req.plan}" if req.plan else None, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "update_subscription",
+        target_email=mailbox.email,
+        details=f"plan={req.plan}" if req.plan else None,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     db.refresh(mailbox)
     return mailbox
@@ -702,7 +752,13 @@ def admin_delete_subscription(
     mailbox = db.query(Mailbox).filter(Mailbox.id == mailbox_id).first()
     if not mailbox:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mailbox not found")
-    log_admin_action(db, admin, "delete_subscription", target_email=mailbox.email, ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "delete_subscription",
+        target_email=mailbox.email,
+        ip_address=request.client.host if request.client else None,
+    )
     db.delete(mailbox)
     db.commit()
 
@@ -799,7 +855,13 @@ def create_backup(
         backup = Backup(filename=filename, size_bytes=0, status="failed")
     db.add(backup)
     db.flush()
-    log_admin_action(db, admin, "create_backup", details=f"filename={filename}", ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "create_backup",
+        details=f"filename={filename}",
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     db.refresh(backup)
     return backup
@@ -851,7 +913,13 @@ def delete_backup(
     backup_path = os.path.join(backup_dir, backup.filename)
     if os.path.exists(backup_path):
         os.remove(backup_path)
-    log_admin_action(db, admin, "delete_backup", details=f"filename={backup.filename}", ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "delete_backup",
+        details=f"filename={backup.filename}",
+        ip_address=request.client.host if request.client else None,
+    )
     db.delete(backup)
     db.commit()
 
@@ -923,7 +991,11 @@ def admin_user_activity(
         .all()
     )
     return {
-        "user": {"id": user.id, "email": user.email, "last_login": user.last_login.isoformat() if user.last_login else None},
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+        },
         "activity": [
             {
                 "id": log.id,
@@ -1010,7 +1082,9 @@ def admin_flush_queue(_: User = Depends(admin_required)):
         subprocess.run(["postqueue", "-f"], capture_output=True, timeout=30)
         return {"success": True, "message": "Mail queue flush initiated"}
     except FileNotFoundError:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="postqueue not available on this system")
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="postqueue not available on this system"
+        )
 
 
 # ── Security ──
@@ -1044,7 +1118,13 @@ def create_security_event(
     )
     db.add(event)
     db.flush()
-    log_admin_action(db, admin, "create_security_event", details=f"type={req.event_type}", ip_address=request.client.host if request.client else None)
+    log_admin_action(
+        db,
+        admin,
+        "create_security_event",
+        details=f"type={req.event_type}",
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     db.refresh(event)
     return event
@@ -1093,7 +1173,13 @@ def block_ip(
         r = get_redis()
         key = f"blocked_ip:{req.ip}"
         r.setex(key, 86400, req.reason or "Blocked by admin")
-        log_admin_action(db, admin, "block_ip", details=f"ip={req.ip} reason={req.reason}", ip_address=request.client.host if request.client else None)
+        log_admin_action(
+            db,
+            admin,
+            "block_ip",
+            details=f"ip={req.ip} reason={req.reason}",
+            ip_address=request.client.host if request.client else None,
+        )
         return {"message": f"IP {req.ip} blocked", "ip": req.ip}
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Redis not available")
@@ -1111,7 +1197,9 @@ def unblock_ip(
 
         r = get_redis()
         r.delete(f"blocked_ip:{ip}")
-        log_admin_action(db, admin, "unblock_ip", details=f"ip={ip}", ip_address=request.client.host if request.client else None)
+        log_admin_action(
+            db, admin, "unblock_ip", details=f"ip={ip}", ip_address=request.client.host if request.client else None
+        )
     except Exception:
         pass
     return None
@@ -1145,27 +1233,24 @@ def admin_audit_logs(
     if target_user:
         query = query.filter(AuditLog.target_user.ilike(f"%{target_user}%"))
     total = query.count()
-    items = (
-        query.order_by(AuditLog.created_at.desc())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-        .all()
-    )
+    items = query.order_by(AuditLog.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
     result = []
     for log in items:
         admin_email = None
         if log.admin:
             admin_email = log.admin.email
-        result.append({
-            "id": log.id,
-            "admin_email": admin_email,
-            "action": log.action,
-            "target_user": log.target_user,
-            "target_email": log.target_email,
-            "details": log.details,
-            "ip_address": log.ip_address,
-            "created_at": log.created_at.isoformat() if log.created_at else None,
-        })
+        result.append(
+            {
+                "id": log.id,
+                "admin_email": admin_email,
+                "action": log.action,
+                "target_user": log.target_user,
+                "target_email": log.target_email,
+                "details": log.details,
+                "ip_address": log.ip_address,
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+            }
+        )
     return {
         "items": result,
         "pagination": {
@@ -1199,7 +1284,11 @@ def toggle_maintenance(
         maint_enable()
     else:
         maint_disable()
-    log_admin_action(db=db, admin=user, action="toggle_maintenance",
-                     details=f"maintenance_mode={'enabled' if req.enabled else 'disabled'}")
+    log_admin_action(
+        db=db,
+        admin=user,
+        action="toggle_maintenance",
+        details=f"maintenance_mode={'enabled' if req.enabled else 'disabled'}",
+    )
     db.commit()
     return {"enabled": maint_is_enabled()}

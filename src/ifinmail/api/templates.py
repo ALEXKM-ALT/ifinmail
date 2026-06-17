@@ -50,7 +50,13 @@ def create_template(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    variables = sorted(set(VARIABLE_PATTERN.findall(req.subject) + VARIABLE_PATTERN.findall(req.body_html or "") + VARIABLE_PATTERN.findall(req.body_text or "")))
+    variables = sorted(
+        set(
+            VARIABLE_PATTERN.findall(req.subject)
+            + VARIABLE_PATTERN.findall(req.body_html or "")
+            + VARIABLE_PATTERN.findall(req.body_text or "")
+        )
+    )
     template = EmailTemplate(
         user_id=user.id,
         name=req.name,
@@ -130,7 +136,13 @@ def update_template(
     subject = req.subject if req.subject is not None else template.subject
     body_html = req.body_html if req.body_html is not None else template.body_html
     body_text = req.body_text if req.body_text is not None else template.body_text
-    variables = sorted(set(VARIABLE_PATTERN.findall(subject) + VARIABLE_PATTERN.findall(body_html or "") + VARIABLE_PATTERN.findall(body_text or "")))
+    variables = sorted(
+        set(
+            VARIABLE_PATTERN.findall(subject)
+            + VARIABLE_PATTERN.findall(body_html or "")
+            + VARIABLE_PATTERN.findall(body_text or "")
+        )
+    )
     template.variables = json.dumps(variables)
     db.commit()
     db.refresh(template)
@@ -161,13 +173,17 @@ def render_template(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    template = db.query(EmailTemplate).filter(EmailTemplate.id == req.template_id, EmailTemplate.user_id == user.id).first()
+    template = (
+        db.query(EmailTemplate).filter(EmailTemplate.id == req.template_id, EmailTemplate.user_id == user.id).first()
+    )
     if not template:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+
     def _replace(text: str) -> str:
         if not text:
             return ""
         return VARIABLE_PATTERN.sub(lambda m: req.variables.get(m.group(1), m.group(0)), text)
+
     return {
         "subject": _replace(template.subject),
         "body_html": _replace(template.body_html or ""),
@@ -181,7 +197,9 @@ def test_send_template(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    template = db.query(EmailTemplate).filter(EmailTemplate.id == req.template_id, EmailTemplate.user_id == user.id).first()
+    template = (
+        db.query(EmailTemplate).filter(EmailTemplate.id == req.template_id, EmailTemplate.user_id == user.id).first()
+    )
     if not template:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
 

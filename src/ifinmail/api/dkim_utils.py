@@ -13,11 +13,13 @@ def generate_dkim_key(bits: int = 1024) -> tuple[str, str]:
         pub_path = f"{tmpdir}/dkim_public.pem"
         subprocess.run(
             ["openssl", "genrsa", "-out", priv_path, str(bits)],
-            capture_output=True, check=True,
+            capture_output=True,
+            check=True,
         )
         subprocess.run(
             ["openssl", "rsa", "-in", priv_path, "-pubout", "-out", pub_path],
-            capture_output=True, check=True,
+            capture_output=True,
+            check=True,
         )
         with open(priv_path) as f:
             priv = f.read()

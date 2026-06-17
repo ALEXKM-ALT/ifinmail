@@ -169,10 +169,14 @@ def get_current_user(
 ) -> User:
     if x_api_key:
         key_hash = hashlib.sha256(x_api_key.encode()).hexdigest()
-        api_key = db.query(ApiKey).filter(
-            ApiKey.key_hash == key_hash,
-            ApiKey.active == 1,
-        ).first()
+        api_key = (
+            db.query(ApiKey)
+            .filter(
+                ApiKey.key_hash == key_hash,
+                ApiKey.active == 1,
+            )
+            .first()
+        )
         if not api_key:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
         user = db.query(User).filter(User.id == api_key.user_id).first()
@@ -196,6 +200,7 @@ def get_current_user(
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=RegisterResponse)
 def register(req: RegisterRequest, db: Session = Depends(get_db), _: None = strict):
     from ifinmail.api.verify import validate_email_syntax
+
     syntax_err = validate_email_syntax(req.email)
     if syntax_err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=syntax_err)
@@ -266,6 +271,7 @@ def login(
         except Exception:
             pass
         from ifinmail.api.metrics import failed_logins_total
+
         failed_logins_total.inc()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
@@ -310,10 +316,7 @@ def list_sessions(
     user: User = Depends(get_current_user),
 ):
     sessions = (
-        db.query(UserSession)
-        .filter(UserSession.user_id == user.id)
-        .order_by(UserSession.last_used_at.desc())
-        .all()
+        db.query(UserSession).filter(UserSession.user_id == user.id).order_by(UserSession.last_used_at.desc()).all()
     )
     return [
         {
@@ -334,10 +337,14 @@ def revoke_session(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    session = db.query(UserSession).filter(
-        UserSession.id == session_id,
-        UserSession.user_id == user.id,
-    ).first()
+    session = (
+        db.query(UserSession)
+        .filter(
+            UserSession.id == session_id,
+            UserSession.user_id == user.id,
+        )
+        .first()
+    )
     if not session:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     db.delete(session)

@@ -207,6 +207,7 @@ function render() {
 
 function renderSidebar() {
   const tmpl = document.getElementById("sidebarTmpl");
+  if (!tmpl) return;
   $("#sidebar").innerHTML = tmpl.innerHTML;
   document.getElementById("userEmail").textContent = state.email;
 

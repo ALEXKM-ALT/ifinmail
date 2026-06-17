@@ -18,6 +18,7 @@ router = APIRouter(prefix="/mail", tags=["mail_scheduler"])
 
 # ── Pydantic schemas ──
 
+
 class ScheduleRequest(BaseModel):
     to_addr: str
     subject: str = ""
@@ -66,6 +67,7 @@ class ScheduleUpdateRequest(BaseModel):
 
 # ── Campaign schemas ──
 
+
 class CampaignCreate(BaseModel):
     name: str
     description: str = ""
@@ -108,6 +110,7 @@ class CampaignLaunch(BaseModel):
 
 
 # ── Standalone scheduling ──
+
 
 @router.post("/schedule", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
 def schedule_email(
@@ -173,7 +176,11 @@ def list_scheduled(
 
 @router.get("/scheduled/{message_id}", response_model=ScheduleResponse)
 def get_scheduled(message_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    sm = db.query(ScheduledMessage).filter(ScheduledMessage.id == message_id, ScheduledMessage.user_id == user.id).first()
+    sm = (
+        db.query(ScheduledMessage)
+        .filter(ScheduledMessage.id == message_id, ScheduledMessage.user_id == user.id)
+        .first()
+    )
     if not sm:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled message not found")
     return ScheduleResponse(
@@ -196,7 +203,11 @@ def update_scheduled(
     user: User = Depends(get_current_user),
     _: None = user_moderate,
 ):
-    sm = db.query(ScheduledMessage).filter(ScheduledMessage.id == message_id, ScheduledMessage.user_id == user.id).first()
+    sm = (
+        db.query(ScheduledMessage)
+        .filter(ScheduledMessage.id == message_id, ScheduledMessage.user_id == user.id)
+        .first()
+    )
     if not sm:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled message not found")
     if sm.status != "pending":
@@ -221,7 +232,9 @@ def update_scheduled(
         sm.scheduled_at = req.scheduled_at
     if req.repeat_interval is not None:
         if req.repeat_interval not in ("daily", "weekly", "monthly"):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="repeat_interval must be daily, weekly, or monthly")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="repeat_interval must be daily, weekly, or monthly"
+            )
         sm.repeat_interval = req.repeat_interval
     if req.repeat_until is not None:
         sm.repeat_until = req.repeat_until
@@ -241,7 +254,11 @@ def update_scheduled(
 
 @router.delete("/scheduled/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
 def cancel_scheduled(message_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    sm = db.query(ScheduledMessage).filter(ScheduledMessage.id == message_id, ScheduledMessage.user_id == user.id).first()
+    sm = (
+        db.query(ScheduledMessage)
+        .filter(ScheduledMessage.id == message_id, ScheduledMessage.user_id == user.id)
+        .first()
+    )
     if not sm:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled message not found")
     db.delete(sm)
@@ -249,6 +266,7 @@ def cancel_scheduled(message_id: int, db: Session = Depends(get_db), user: User 
 
 
 # ── Campaigns ──
+
 
 @router.post("/campaigns", response_model=CampaignOut, status_code=status.HTTP_201_CREATED)
 def create_campaign(
@@ -288,15 +306,17 @@ def list_campaigns(db: Session = Depends(get_db), user: User = Depends(get_curre
             )
             for s in c.steps
         ]
-        result.append(CampaignOut(
-            id=c.id,
-            name=c.name,
-            description=c.description,
-            created_by=c.created_by,
-            created_at=c.created_at,
-            updated_at=c.updated_at,
-            steps=steps,
-        ))
+        result.append(
+            CampaignOut(
+                id=c.id,
+                name=c.name,
+                description=c.description,
+                created_by=c.created_by,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+                steps=steps,
+            )
+        )
     return result
 
 
@@ -376,6 +396,7 @@ def delete_campaign(campaign_id: int, db: Session = Depends(get_db), user: User 
 
 # ── Campaign steps ──
 
+
 @router.post("/campaigns/{campaign_id}/steps", response_model=CampaignStepOut, status_code=status.HTTP_201_CREATED)
 def add_campaign_step(
     campaign_id: int,
@@ -416,10 +437,7 @@ def update_campaign_step(
     user: User = Depends(get_current_user),
 ):
     step = (
-        db.query(CampaignStep)
-        .join(Campaign)
-        .filter(CampaignStep.id == step_id, Campaign.created_by == user.id)
-        .first()
+        db.query(CampaignStep).join(Campaign).filter(CampaignStep.id == step_id, Campaign.created_by == user.id).first()
     )
     if not step:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Step not found")
@@ -444,10 +462,7 @@ def update_campaign_step(
 @router.delete("/campaigns/steps/{step_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_campaign_step(step_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     step = (
-        db.query(CampaignStep)
-        .join(Campaign)
-        .filter(CampaignStep.id == step_id, Campaign.created_by == user.id)
-        .first()
+        db.query(CampaignStep).join(Campaign).filter(CampaignStep.id == step_id, Campaign.created_by == user.id).first()
     )
     if not step:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Step not found")
@@ -456,6 +471,7 @@ def delete_campaign_step(step_id: int, db: Session = Depends(get_db), user: User
 
 
 # ── Launch campaign ──
+
 
 @router.post("/campaigns/{campaign_id}/launch", status_code=status.HTTP_200_OK)
 def launch_campaign(

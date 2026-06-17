@@ -3,6 +3,7 @@ import logging
 import os
 import smtplib
 import uuid
+from datetime import UTC
 from email.message import EmailMessage
 from email.parser import BytesParser
 from email.policy import default
@@ -99,13 +100,20 @@ class SMTPHandler:
                 org_member_map: dict[int, OrganizationMember] = {}
                 org = db.query(Organization).filter(Organization.email == rcpt).first()
                 if org:
-                    org_members = db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()
+                    org_members = (
+                        db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()
+                    )
                     org_member_map = {om.user_id: om for om in org_members}
                 for mailbox in mailboxes:
-                    if message_id and db.query(Message).filter(
-                        Message.mailbox_id == mailbox.id,
-                        Message.message_id == message_id,
-                    ).first():
+                    if (
+                        message_id
+                        and db.query(Message)
+                        .filter(
+                            Message.mailbox_id == mailbox.id,
+                            Message.message_id == message_id,
+                        )
+                        .first()
+                    ):
                         continue
                     _subj = subject
                     _text = body_text
@@ -114,7 +122,9 @@ class SMTPHandler:
                     if om:
                         _fn = om.first_name or (om.user.first_name if om.user else "")
                         _ln = om.last_name or (om.user.last_name if om.user else "")
-                        info = MemberInfo(first_name=_fn or mailbox.email.split("@")[0], last_name=_ln, email=mailbox.email)
+                        info = MemberInfo(
+                            first_name=_fn or mailbox.email.split("@")[0], last_name=_ln, email=mailbox.email
+                        )
                         _subj = personalise(_subj, info)
                         _text = personalise(_text, info)
                         _html = personalise(_html, info) if _html else None
@@ -132,10 +142,18 @@ class SMTPHandler:
                         has_attachments=1 if attachments else 0,
                     )
                     from ifinmail.api.priority import score_message
+
                     msg.priority_score = score_message(msg, db)
                     apply_filters_for_mailbox(
-                        db, mailbox, rcpt,
-                        {"from_addr": mailfrom, "subject": subject, "body_text": body_text, "body_html": body_html or ""},
+                        db,
+                        mailbox,
+                        rcpt,
+                        {
+                            "from_addr": mailfrom,
+                            "subject": subject,
+                            "body_text": body_text,
+                            "body_html": body_html or "",
+                        },
                         msg,
                     )
                     db.add(msg)
@@ -170,7 +188,9 @@ class SMTPHandler:
             for rcpt in rcpttos:
                 mailboxes = _resolve_recipients(db, rcpt)
                 for mailbox in mailboxes:
-                    _handle_forwarding(db, mailbox, mailfrom, to_addr, cc_addr, subject, body_text, body_html, data, attachments)
+                    _handle_forwarding(
+                        db, mailbox, mailfrom, to_addr, cc_addr, subject, body_text, body_html, data, attachments
+                    )
                     _handle_autoreply(db, mailbox, mailfrom, mailboxes[0].id if mailboxes else 0)
 
             if stored == 0:
@@ -245,6 +265,7 @@ Prevents sending more than one auto-reply per sender per day per mailbox."""
 
 def _now_date() -> str:
     from datetime import date
+
     return date.today().isoformat()
 
 
@@ -310,10 +331,14 @@ def _handle_forwarding(
     attachments: list[tuple[str, str, bytes]],
 ):
     """Forward a copy of the message to each enabled forwarding target."""
-    rules = db.query(ForwardingRule).filter(
-        ForwardingRule.mailbox_id == mailbox.id,
-        ForwardingRule.enabled == 1,
-    ).all()
+    rules = (
+        db.query(ForwardingRule)
+        .filter(
+            ForwardingRule.mailbox_id == mailbox.id,
+            ForwardingRule.enabled == 1,
+        )
+        .all()
+    )
     if not rules:
         return
 
@@ -350,26 +375,34 @@ def _handle_autoreply(
     rcpt_mailbox_id: int,
 ):
     """Send a vacation auto-reply if enabled, max once per sender per day."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    vr = db.query(VacationResponder).filter(
-        VacationResponder.mailbox_id == mailbox.id,
-        VacationResponder.enabled == 1,
-    ).first()
+    vr = (
+        db.query(VacationResponder)
+        .filter(
+            VacationResponder.mailbox_id == mailbox.id,
+            VacationResponder.enabled == 1,
+        )
+        .first()
+    )
     if not vr:
         return
 
-    now = datetime.now(timezone.utc)
-    if vr.start_date and vr.start_date.replace(tzinfo=timezone.utc) > now:
+    now = datetime.now(UTC)
+    if vr.start_date and vr.start_date.replace(tzinfo=UTC) > now:
         return
-    if vr.end_date and vr.end_date.replace(tzinfo=timezone.utc) < now:
+    if vr.end_date and vr.end_date.replace(tzinfo=UTC) < now:
         return
 
     if vr.only_contacts:
-        contact = db.query(Contact).filter(
-            Contact.email == mailfrom,
-            Contact.user_id == mailbox.user_id,
-        ).first()
+        contact = (
+            db.query(Contact)
+            .filter(
+                Contact.email == mailfrom,
+                Contact.user_id == mailbox.user_id,
+            )
+            .first()
+        )
         if not contact:
             return
 

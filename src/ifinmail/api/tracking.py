@@ -62,7 +62,9 @@ def parse_user_agent(ua: str | None) -> dict:
 GEOIP_CACHE: dict[str, dict] = {}
 
 
-TRACKING_PIXEL_HTML = '<img src="{base}/analytics/track/{delivery_id}/open.gif" width="1" height="1" alt="" style="display:none" />'
+TRACKING_PIXEL_HTML = (
+    '<img src="{base}/analytics/track/{delivery_id}/open.gif" width="1" height="1" alt="" style="display:none" />'
+)
 
 
 def inject_tracking_pixel(html: str, delivery_id: int) -> str:
@@ -100,7 +102,11 @@ def geo_lookup(ip: str) -> dict:
         GEOIP_CACHE[ip] = result
         return result
     try:
-        req = Request(f"https://ip-api.com/json/{ip}?fields=city,region,country", headers={"User-Agent": "ifinmail/1.0"}, method="GET")
+        req = Request(
+            f"https://ip-api.com/json/{ip}?fields=city,region,country",
+            headers={"User-Agent": "ifinmail/1.0"},
+            method="GET",
+        )
         with urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
             result = {

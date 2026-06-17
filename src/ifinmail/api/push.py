@@ -6,13 +6,13 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from ifinmail.api.vapid import create_vapid_jwt, get_vapid_public_key_b64
 from ifinmail.api.database import SessionLocal
+from ifinmail.api.vapid import create_vapid_jwt
 from ifinmail.db.models import PushSubscription
 
 logger = logging.getLogger("ifinmail.push")
@@ -35,15 +35,11 @@ def _encrypt_payload(payload: bytes, p256dh: bytes, auth: bytes) -> tuple[bytes,
     server_pub = server_key.public_key().public_bytes(
         serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint
     )
-    shared_secret = server_key.exchange(ec.ECDH(), ec.EllipticCurvePublicKey.from_encoded_point(
-        ec.SECP256R1(), p256dh
-    ))
-    prk = HKDF(
-        algorithm=hashes.SHA256(), length=32, salt=None, info=b"Content-Encoding: auth\0"
-    ).derive(auth)
-    ikm = HKDF(
-        algorithm=hashes.SHA256(), length=32, salt=salt, info=b"Content-Encoding: aes128gcm\0"
-    ).derive(prk + shared_secret)
+    shared_secret = server_key.exchange(ec.ECDH(), ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), p256dh))
+    prk = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b"Content-Encoding: auth\0").derive(auth)
+    ikm = HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=b"Content-Encoding: aes128gcm\0").derive(
+        prk + shared_secret
+    )
     key, nonce = ikm[:16], ikm[16:]
 
     aesgcm = AESGCM(key)
@@ -64,12 +60,9 @@ def _push_send(sub: PushSubscriptionInfo, payload: bytes | None, vapid_jwt: str)
         headers["Content-Encoding"] = "aes128gcm"
         body, salt, server_pub = _encrypt_payload(payload, sub.p256dh, sub.auth)
     else:
-        salt = server_pub = b""
         body = b""
 
-    req = urllib.request.Request(
-        sub.endpoint, data=body, headers=headers, method="POST"
-    )
+    req = urllib.request.Request(sub.endpoint, data=body, headers=headers, method="POST")
     try:
         resp = urllib.request.urlopen(req, timeout=15)
         logger.debug("Push sent to %s: HTTP %d", sub.endpoint[:60], resp.status)
@@ -90,6 +83,7 @@ def notify_user(user_id: int, event: str, data: dict | None = None) -> None:
         if not subs:
             return
         from ifinmail.db.models import User
+
         user = db.query(User).filter(User.id == user_id).first()
         subject = user.email if user else "noreply@ifinmail.local"
         vapid_jwt = create_vapid_jwt(subject)

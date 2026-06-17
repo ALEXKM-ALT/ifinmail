@@ -64,13 +64,15 @@ def list_webhooks(
     hooks = db.query(Webhook).filter(Webhook.user_id == user.id).order_by(Webhook.created_at.desc()).all()
     result = []
     for h in hooks:
-        result.append(WebhookResponse(
-            id=h.id,
-            url=h.url,
-            events=json.loads(h.events) if h.events else [],
-            active=bool(h.active),
-            created_at=h.created_at.isoformat() if h.created_at else "",
-        ))
+        result.append(
+            WebhookResponse(
+                id=h.id,
+                url=h.url,
+                events=json.loads(h.events) if h.events else [],
+                active=bool(h.active),
+                created_at=h.created_at.isoformat() if h.created_at else "",
+            )
+        )
     return result
 
 
@@ -218,20 +220,27 @@ def fire_webhook(user_id: int, event: str, data: dict, db: Session) -> None:
 async def send_webhook(user_id: int, event: str, data: dict, db: Session) -> None:
     import httpx
 
-    hooks = db.query(Webhook).filter(
-        Webhook.user_id == user_id,
-        Webhook.active == 1,
-    ).all()
+    hooks = (
+        db.query(Webhook)
+        .filter(
+            Webhook.user_id == user_id,
+            Webhook.active == 1,
+        )
+        .all()
+    )
     for hook in hooks:
         try:
             events = json.loads(hook.events) if hook.events else []
             if event not in events:
                 continue
-            payload = json.dumps({
-                "event": event,
-                "timestamp": __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat(),
-                "data": data,
-            }, default=str)
+            payload = json.dumps(
+                {
+                    "event": event,
+                    "timestamp": __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat(),
+                    "data": data,
+                },
+                default=str,
+            )
             signature = hmac.new(
                 hook.secret.encode(),
                 payload.encode(),

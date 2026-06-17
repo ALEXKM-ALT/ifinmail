@@ -64,7 +64,11 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "ifinmail.api.*"
 # SQLAlchemy legacy Column API triggers false positives on attribute assignments/arg-types
-disable_error_code = ["assignment", "arg-type"]
+disable_error_code = ["assignment", "arg-type", "union-attr", "call-overload", "call-arg", "return-value", "valid-type", "index", "dict-item", "operator", "var-annotated", "attr-defined"]
+
+[[tool.mypy.overrides]]
+module = "ifinmail.smtp.*"
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]

@@ -30,12 +30,13 @@ from ifinmail.api.imap_import import router as imap_import_router
 from ifinmail.api.intelligence import router as intelligence_router
 from ifinmail.api.limiter import InMemoryRateLimitMiddleware
 from ifinmail.api.logconf import RequestLogMiddleware, setup_logging
-from ifinmail.api.maintenance import MaintenanceMiddleware, is_enabled as maint_is_enabled
 from ifinmail.api.mail import router as mail_router
-from ifinmail.api.metrics import router as metrics_router
-from ifinmail.api.metrics import MetricsMiddleware
 from ifinmail.api.mail_scheduler import router as mail_scheduler_router
 from ifinmail.api.mail_settings import router as mail_settings_router
+from ifinmail.api.maintenance import MaintenanceMiddleware
+from ifinmail.api.maintenance import is_enabled as maint_is_enabled
+from ifinmail.api.metrics import MetricsMiddleware
+from ifinmail.api.metrics import router as metrics_router
 from ifinmail.api.organizations import router as organizations_router
 from ifinmail.api.payments import router as payments_router
 from ifinmail.api.push_routes import router as push_router
@@ -129,7 +130,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                 conn.commit()
     if "organization_invites" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS organization_invites (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -140,12 +142,16 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     expires_at TIMESTAMP NOT NULL,
                     accepted INTEGER NOT NULL DEFAULT 0
                 )
-            """))
-            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_organization_invites_token ON organization_invites(token)"))
+            """)
+            )
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS ix_organization_invites_token ON organization_invites(token)")
+            )
             conn.commit()
     if "org_contacts" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS org_contacts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -154,7 +160,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """)
+            )
             conn.commit()
     if "organizations" in tables:
         org_cols = [c["name"] for c in inspector.get_columns("organizations")]
@@ -171,7 +178,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                 conn.commit()
     if "spam_reports" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS spam_reports (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
@@ -179,25 +187,29 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     report_type VARCHAR(8) NOT NULL,
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """)
+            )
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_spam_reports_message ON spam_reports(message_id)"))
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_spam_reports_user ON spam_reports(user_id)"))
             conn.commit()
     if "contact_groups" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS contact_groups (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                     name VARCHAR(128) NOT NULL,
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """)
+            )
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_contact_groups_user ON contact_groups(user_id)"))
             conn.commit()
     if "contact_group_members" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS contact_group_members (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     group_id INTEGER NOT NULL REFERENCES contact_groups(id) ON DELETE CASCADE,
@@ -205,7 +217,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(group_id, contact_id)
                 )
-            """))
+            """)
+            )
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_cgm_group ON contact_group_members(group_id)"))
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_cgm_contact ON contact_group_members(contact_id)"))
             conn.commit()
@@ -228,11 +241,14 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE vacation_responders ADD COLUMN start_date TIMESTAMP"))
                 conn.execute(text("ALTER TABLE vacation_responders ADD COLUMN end_date TIMESTAMP"))
-                conn.execute(text("ALTER TABLE vacation_responders ADD COLUMN only_contacts INTEGER DEFAULT 0 NOT NULL"))
+                conn.execute(
+                    text("ALTER TABLE vacation_responders ADD COLUMN only_contacts INTEGER DEFAULT 0 NOT NULL")
+                )
                 conn.commit()
     if "user_sessions" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS user_sessions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -244,12 +260,14 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     expires_at TIMESTAMP NOT NULL,
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """)
+            )
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_sessions_user ON user_sessions(user_id)"))
             conn.commit()
     if "imap_imports" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS imap_imports (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -265,11 +283,13 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """)
+            )
             conn.commit()
     if "push_subscriptions" not in tables:
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS push_subscriptions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -278,10 +298,12 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
                     auth_key VARCHAR(255) NOT NULL,
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """)
+            )
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_push_subscriptions_user ON push_subscriptions(user_id)"))
             conn.commit()
     from ifinmail.api.vapid import get_vapid_public_key_b64
+
     try:
         get_vapid_public_key_b64()
     except Exception:
@@ -299,7 +321,10 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
 app = FastAPI(
     title="ifinmail API",
     version="2.0.0",
-    description="A secure, API-first email hosting platform. Provides email management, admin controls, billing, and real-time notifications.",
+    description=(
+        "A secure, API-first email hosting platform. "
+        "Provides email management, admin controls, billing, and real-time notifications."
+    ),
     lifespan=lifespan,
     contact={
         "name": "ifinmail Support",
@@ -325,7 +350,15 @@ app.add_middleware(MetricsMiddleware)
 class SecurityHeadersMiddleware:
     """Add security-related HTTP headers to every response."""
 
-    CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fastapi.tiangolo.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' data: blob: https://fastapi.tiangolo.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws: wss: https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    CSP = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fastapi.tiangolo.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+        "img-src 'self' data: blob: https://fastapi.tiangolo.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "connect-src 'self' ws: wss: https://cdn.jsdelivr.net; "
+        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
 
     HEADERS = {
         "X-Content-Type-Options": "nosniff",
@@ -511,6 +544,7 @@ if STATIC_DIR.exists():
     @app.get("/sw.js")
     async def service_worker():
         from fastapi.responses import Response
+
         return Response(
             content=(STATIC_DIR / "sw.js").read_bytes(),
             media_type="application/javascript",

@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from ifinmail.api.config import settings
 from ifinmail.db.models import Attachment, Message, ScheduledMessage
-from ifinmail.db.models import Mailbox as MailboxModel
 
 logger = logging.getLogger("ifinmail.scheduler")
 
@@ -114,6 +113,7 @@ def _send_scheduled(db: Session, sm: ScheduledMessage):
     msg_id = None
     if settings.database_url.startswith("sqlite"):
         from sqlalchemy import text as sa_text
+
         db.execute(sa_text("PRAGMA foreign_keys=OFF"))
         try:
             record = Message(
@@ -156,6 +156,7 @@ def _send_scheduled(db: Session, sm: ScheduledMessage):
 
     if sm.repeat_interval and (not sm.repeat_until or sm.repeat_until > datetime.utcnow()):
         from datetime import timedelta
+
         delta = None
         if sm.repeat_interval == "daily":
             delta = timedelta(days=1)
@@ -188,6 +189,7 @@ def _send_scheduled(db: Session, sm: ScheduledMessage):
 def _unsnooze_expired():
     """Move snoozed messages back to their original folder after resume_at passes."""
     from datetime import UTC, datetime
+
     db = _SessionLocal()
     try:
         now = datetime.now(UTC)

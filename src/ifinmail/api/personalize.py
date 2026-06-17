@@ -22,8 +22,7 @@ class MemberInfo:
 def personalise(text: str, member: MemberInfo) -> str:
     """Replace placeholders with the given member's info."""
     return (
-        text
-        .replace("{name}", member.first_name)
+        text.replace("{name}", member.first_name)
         .replace("{first_name}", member.first_name)
         .replace("{full_name}", f"{member.first_name} {member.last_name}".strip())
         .replace("{email}", member.email)

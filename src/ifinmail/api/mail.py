@@ -1,8 +1,8 @@
 import email.utils
 import logging
 import smtplib
-import uuid
 import threading
+import uuid
 from datetime import UTC, datetime, timedelta
 from email.message import EmailMessage
 
@@ -244,6 +244,7 @@ def list_messages(
         query = query.filter(Message.has_attachments == int(has_attachment))
     if search:
         from ifinmail.api.search_parser import parse_search
+
         search_filters, free_text = parse_search(search)
         if search_filters.get("from_addr"):
             query = query.filter(Message.from_addr.ilike(f"%{search_filters['from_addr']}%"))
@@ -337,6 +338,7 @@ def list_conversations(
 
     if search:
         from ifinmail.api.search_parser import parse_search
+
         search_filters, free_text = parse_search(search)
         if search_filters.get("from_addr"):
             base_query = base_query.filter(Message.from_addr.ilike(f"%{search_filters['from_addr']}%"))
@@ -388,18 +390,20 @@ def list_conversations(
         read_count = sum(1 for m in msgs if m.read)
         unread_count = len(msgs) - read_count
         snippet = (latest.body_text or latest.body_html or "")[:120]
-        conversations.append(ConversationOut(
-            id=key,
-            subject=latest.subject,
-            messages=msgs,
-            total_count=len(msgs),
-            read_count=read_count,
-            unread_count=unread_count,
-            participants=participants,
-            latest_at=latest.created_at,
-            latest_from=latest.from_addr,
-            snippet=snippet,
-        ))
+        conversations.append(
+            ConversationOut(
+                id=key,
+                subject=latest.subject,
+                messages=msgs,
+                total_count=len(msgs),
+                read_count=read_count,
+                unread_count=unread_count,
+                participants=participants,
+                latest_at=latest.created_at,
+                latest_from=latest.from_addr,
+                snippet=snippet,
+            )
+        )
 
     conversations.sort(key=lambda c: c.latest_at, reverse=True)
 
@@ -669,7 +673,9 @@ def send_email(
     if req.draft:
         return SendResponse(message="Draft saved", id=msg.id)
 
-    all_recipients = [r for r in [req.to] + ([req.cc] if req.cc else []) + ([req.bcc] if req.bcc else []) if r and "@" in r]
+    all_recipients = [
+        r for r in [req.to] + ([req.cc] if req.cc else []) + ([req.bcc] if req.bcc else []) if r and "@" in r
+    ]
     for addr in all_recipients:
         delivery = EmailDelivery(message_id=msg.id, recipient=addr, status="sent")
         db.add(delivery)
@@ -712,8 +718,15 @@ def send_email(
                     folder="INBOX",
                 )
                 apply_filters_for_mailbox(
-                    db, mb, addr,
-                    {"from_addr": user.email, "subject": req.subject or "", "body_text": body_text, "body_html": body_html or ""},
+                    db,
+                    mb,
+                    addr,
+                    {
+                        "from_addr": user.email,
+                        "subject": req.subject or "",
+                        "body_text": body_text,
+                        "body_html": body_html or "",
+                    },
                     local_msg,
                 )
                 db.add(local_msg)
@@ -726,11 +739,15 @@ def send_email(
                 member_uids.append(mb.user_id)
 
             if first_msg_id:
-                existing_shared = db.query(OrgSharedInboxMessage).filter(
-                    OrgSharedInboxMessage.organization_id == org.id,
-                    OrgSharedInboxMessage.from_email == user.email,
-                    OrgSharedInboxMessage.subject == req.subject,
-                ).first()
+                existing_shared = (
+                    db.query(OrgSharedInboxMessage)
+                    .filter(
+                        OrgSharedInboxMessage.organization_id == org.id,
+                        OrgSharedInboxMessage.from_email == user.email,
+                        OrgSharedInboxMessage.subject == req.subject,
+                    )
+                    .first()
+                )
                 if not existing_shared:
                     shared = OrgSharedInboxMessage(
                         organization_id=org.id,
@@ -766,8 +783,15 @@ def send_email(
             folder="INBOX",
         )
         apply_filters_for_mailbox(
-            db, recipient_mailbox, addr,
-            {"from_addr": user.email, "subject": req.subject or "", "body_text": body_text, "body_html": body_html or ""},
+            db,
+            recipient_mailbox,
+            addr,
+            {
+                "from_addr": user.email,
+                "subject": req.subject or "",
+                "body_text": body_text,
+                "body_html": body_html or "",
+            },
             local_msg,
         )
         db.add(local_msg)
@@ -778,10 +802,14 @@ def send_email(
         return [recipient_mailbox.user_id]
 
     def _maybe_autoreply(mbox: MailboxModel, sender_email: str) -> None:
-        vr = db.query(VacationResponder).filter(
-            VacationResponder.mailbox_id == mbox.id,
-            VacationResponder.enabled == 1,
-        ).first()
+        vr = (
+            db.query(VacationResponder)
+            .filter(
+                VacationResponder.mailbox_id == mbox.id,
+                VacationResponder.enabled == 1,
+            )
+            .first()
+        )
         if not vr:
             return
         now = datetime.now(UTC)
@@ -790,20 +818,30 @@ def send_email(
         if vr.end_date and vr.end_date.replace(tzinfo=UTC) < now:
             return
         if vr.only_contacts:
-            contact = db.query(Contact).filter(
-                Contact.email == sender_email,
-                Contact.user_id == mbox.user_id,
-            ).first()
+            contact = (
+                db.query(Contact)
+                .filter(
+                    Contact.email == sender_email,
+                    Contact.user_id == mbox.user_id,
+                )
+                .first()
+            )
             if not contact:
                 return
         from ifinmail.api.ws_manager import fire_notification as _fire_notif
-        _fire_notif(mbox.user_id, "autoreply.sent", {
-            "to": sender_email,
-            "subject": vr.subject or "Auto-reply",
-        })
+
+        _fire_notif(
+            mbox.user_id,
+            "autoreply.sent",
+            {
+                "to": sender_email,
+                "subject": vr.subject or "Auto-reply",
+            },
+        )
 
     def _copy_attachments(att_ids: list[int], target_msg_id: int):
         from ifinmail.api.attachments import _storage_dir
+
         storage_dir = _storage_dir()
         for att_id in att_ids:
             att = db.query(Attachment).filter(Attachment.id == att_id).first()
@@ -849,7 +887,16 @@ def send_email(
             pass
         if settings.smtp_host:
             try:
-                _relay_send(user.email, req.to, req.subject, body_text, body_html, req.cc, req.bcc, read_receipt_requested=bool(req.request_read_receipt))
+                _relay_send(
+                    user.email,
+                    req.to,
+                    req.subject,
+                    body_text,
+                    body_html,
+                    req.cc,
+                    req.bcc,
+                    read_receipt_requested=bool(req.request_read_receipt),
+                )
             except Exception as exc:
                 logger.warning("SMTP relay failed for %s: %s", user.email, exc)
         for uid in notify_uids:
@@ -858,22 +905,35 @@ def send_email(
             member_ids_ns = []
             try:
                 with next(get_db()) as s:
-                    member_ids_ns = [m.user_id for m in s.query(OrganizationMember).filter(OrganizationMember.organization_id == si["org_id"]).all()]
+                    member_ids_ns = [
+                        m.user_id
+                        for m in s.query(OrganizationMember)
+                        .filter(OrganizationMember.organization_id == si["org_id"])
+                        .all()
+                    ]
             except Exception:
                 pass
             for mid in member_ids_ns:
-                fire_notification(mid, "org.shared_inbox.new", {
-                    "organization_id": si["org_id"],
-                    "message_id": si["id"],
-                    "subject": si["subject"],
-                    "from_email": user.email,
-                })
-        fire_notification(user.id, "mail.sent", {
-            "message_id": msg.id,
-            "to": req.to,
-            "subject": req.subject,
-            "timestamp": datetime.now(UTC).isoformat(),
-        })
+                fire_notification(
+                    mid,
+                    "org.shared_inbox.new",
+                    {
+                        "organization_id": si["org_id"],
+                        "message_id": si["id"],
+                        "subject": si["subject"],
+                        "from_email": user.email,
+                    },
+                )
+        fire_notification(
+            user.id,
+            "mail.sent",
+            {
+                "message_id": msg.id,
+                "to": req.to,
+                "subject": req.subject,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+        )
 
     if deadline:
         timer = threading.Timer(undo_window, _commit_send)
@@ -885,25 +945,45 @@ def send_email(
     for uid in notify_uids:
         fire_notification(uid, "new_mail", {"from": user.email, "subject": req.subject or "(no subject)"})
     for si in shared_inbox_msgs:
-        member_ids = [m.user_id for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == si["org_id"]).all()]
+        member_ids = [
+            m.user_id
+            for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == si["org_id"]).all()
+        ]
         for mid in member_ids:
-            fire_notification(mid, "org.shared_inbox.new", {
-                "organization_id": si["org_id"],
-                "message_id": si["id"],
-                "subject": si["subject"],
-                "from_email": user.email,
-            })
+            fire_notification(
+                mid,
+                "org.shared_inbox.new",
+                {
+                    "organization_id": si["org_id"],
+                    "message_id": si["id"],
+                    "subject": si["subject"],
+                    "from_email": user.email,
+                },
+            )
     if settings.smtp_host:
         try:
-            _relay_send(user.email, req.to, req.subject, body_text, body_html, req.cc, req.bcc, read_receipt_requested=bool(req.request_read_receipt))
+            _relay_send(
+                user.email,
+                req.to,
+                req.subject,
+                body_text,
+                body_html,
+                req.cc,
+                req.bcc,
+                read_receipt_requested=bool(req.request_read_receipt),
+            )
         except Exception as exc:
             logger.warning("SMTP relay failed for %s: %s", user.email, exc)
-    fire_notification(user.id, "mail.sent", {
-        "message_id": msg.id,
-        "to": req.to,
-        "subject": req.subject,
-        "timestamp": datetime.now(UTC).isoformat(),
-    })
+    fire_notification(
+        user.id,
+        "mail.sent",
+        {
+            "message_id": msg.id,
+            "to": req.to,
+            "subject": req.subject,
+            "timestamp": datetime.now(UTC).isoformat(),
+        },
+    )
     return SendResponse(message="Message sent", id=msg.id)
 
 
@@ -971,6 +1051,7 @@ def _relay_send(
             server.login(settings.smtp_user, settings.smtp_password)
         server.sendmail(from_addr, recipients, raw)
     from ifinmail.api.metrics import emails_sent_total
+
     emails_sent_total.inc((to_addr, "success"))
 
 
@@ -1074,10 +1155,14 @@ def undo_send(
     db.flush()
 
     # Remove copies from recipients' inboxes (same message_id within this mailbox scope)
-    recipient_msgs = db.query(Message).filter(
-        Message.message_id == msg.message_id,
-        Message.folder == "INBOX",
-    ).all()
+    recipient_msgs = (
+        db.query(Message)
+        .filter(
+            Message.message_id == msg.message_id,
+            Message.folder == "INBOX",
+        )
+        .all()
+    )
     for rmsg in recipient_msgs:
         db.delete(rmsg)
     db.commit()
@@ -1252,10 +1337,14 @@ def report_spam(
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
-    existing = db.query(SpamReport).filter(
-        SpamReport.message_id == message_id,
-        SpamReport.user_id == user.id,
-    ).first()
+    existing = (
+        db.query(SpamReport)
+        .filter(
+            SpamReport.message_id == message_id,
+            SpamReport.user_id == user.id,
+        )
+        .first()
+    )
     if existing:
         existing.report_type = "spam"
     else:
@@ -1281,10 +1370,14 @@ def report_ham(
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
-    existing = db.query(SpamReport).filter(
-        SpamReport.message_id == message_id,
-        SpamReport.user_id == user.id,
-    ).first()
+    existing = (
+        db.query(SpamReport)
+        .filter(
+            SpamReport.message_id == message_id,
+            SpamReport.user_id == user.id,
+        )
+        .first()
+    )
     if existing:
         existing.report_type = "ham"
     else:
@@ -1347,13 +1440,17 @@ def update_delivery_status(
     if req.bounce_type is not None:
         delivery.bounce_type = req.bounce_type
     db.commit()
-    fire_notification(user.id, "delivery.updated", {
-        "delivery_id": delivery.id,
-        "event": "status_change",
-        "status": req.status,
-        "recipient": delivery.recipient,
-        "timestamp": datetime.now(UTC).isoformat(),
-    })
+    fire_notification(
+        user.id,
+        "delivery.updated",
+        {
+            "delivery_id": delivery.id,
+            "event": "status_change",
+            "status": req.status,
+            "recipient": delivery.recipient,
+            "timestamp": datetime.now(UTC).isoformat(),
+        },
+    )
 
 
 @router.get("/{message_id}/deliveries", response_model=list[DeliveryResponse])
@@ -1366,8 +1463,4 @@ def list_message_deliveries(
     msg = db.query(Message).filter(Message.id == message_id, Message.mailbox_id == mailbox.id).first()
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
-    return (
-        db.query(EmailDelivery)
-        .filter(EmailDelivery.message_id == message_id)
-        .all()
-    )
+    return db.query(EmailDelivery).filter(EmailDelivery.message_id == message_id).all()

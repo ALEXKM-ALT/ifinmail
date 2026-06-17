@@ -31,12 +31,16 @@ def _notify_delivery_event(db: Session, delivery: EmailDelivery, event_type: str
     if message:
         mailbox = message.mailbox
         if mailbox and mailbox.user_id:
-            fire_notification(mailbox.user_id, "delivery.updated", {
-                "delivery_id": delivery.id,
-                "event": event_type,
-                "recipient": delivery.recipient,
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
+            fire_notification(
+                mailbox.user_id,
+                "delivery.updated",
+                {
+                    "delivery_id": delivery.id,
+                    "event": event_type,
+                    "recipient": delivery.recipient,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
+            )
 
 
 @router.get("/track/{delivery_id}/open.gif")
@@ -74,14 +78,22 @@ def track_open(
             sender_mailbox = msg.mailbox
             if sender_mailbox and sender_mailbox.user_id:
                 from ifinmail.api.ws_manager import fire_notification
-                fire_notification(sender_mailbox.user_id, "read_receipt", {
-                    "delivery_id": delivery.id,
-                    "recipient": delivery.recipient,
-                    "message_id": msg.id,
-                    "subject": msg.subject or "(no subject)",
-                    "opened_at": delivery.opened_at.isoformat() if delivery.opened_at else None,
-                })
-    return Response(content=b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x00\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b", media_type="image/gif")
+
+                fire_notification(
+                    sender_mailbox.user_id,
+                    "read_receipt",
+                    {
+                        "delivery_id": delivery.id,
+                        "recipient": delivery.recipient,
+                        "message_id": msg.id,
+                        "subject": msg.subject or "(no subject)",
+                        "opened_at": delivery.opened_at.isoformat() if delivery.opened_at else None,
+                    },
+                )
+    return Response(
+        content=b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x00\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b",
+        media_type="image/gif",
+    )
 
 
 @router.get("/track/{delivery_id}/click")
@@ -116,6 +128,7 @@ def track_click(
         db.commit()
         _notify_delivery_event(db, delivery, "clicked")
     from fastapi.responses import RedirectResponse
+
     return RedirectResponse(url=url)
 
 
@@ -135,14 +148,30 @@ def deliverability(
         .all()
     )
     total = sum(r[1] for r in rows)
-    opened = db.query(sa_func.count(EmailDelivery.id)).filter(
-        EmailDelivery.opened_at.isnot(None),
-        EmailDelivery.created_at >= since,
-    ).join(Message, EmailDelivery.message_id == Message.id).join(User, Message.mailbox_id == User.id).filter(User.id == user.id).scalar() or 0
-    clicked = db.query(sa_func.count(EmailDelivery.id)).filter(
-        EmailDelivery.clicked_at.isnot(None),
-        EmailDelivery.created_at >= since,
-    ).join(Message, EmailDelivery.message_id == Message.id).join(User, Message.mailbox_id == User.id).filter(User.id == user.id).scalar() or 0
+    opened = (
+        db.query(sa_func.count(EmailDelivery.id))
+        .filter(
+            EmailDelivery.opened_at.isnot(None),
+            EmailDelivery.created_at >= since,
+        )
+        .join(Message, EmailDelivery.message_id == Message.id)
+        .join(User, Message.mailbox_id == User.id)
+        .filter(User.id == user.id)
+        .scalar()
+        or 0
+    )
+    clicked = (
+        db.query(sa_func.count(EmailDelivery.id))
+        .filter(
+            EmailDelivery.clicked_at.isnot(None),
+            EmailDelivery.created_at >= since,
+        )
+        .join(Message, EmailDelivery.message_id == Message.id)
+        .join(User, Message.mailbox_id == User.id)
+        .filter(User.id == user.id)
+        .scalar()
+        or 0
+    )
     return {
         "total": total,
         "by_status": {r[0]: r[1] for r in rows},
@@ -237,29 +266,54 @@ def tracking_summary(
         .filter(User.id == user.id, EmailDelivery.created_at >= since)
     ).subquery()
 
-    total_opens = db.query(sa_func.count(TrackingEvent.id)).filter(
-        TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
-        TrackingEvent.event_type == "open",
-    ).scalar() or 0
+    total_opens = (
+        db.query(sa_func.count(TrackingEvent.id))
+        .filter(
+            TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
+            TrackingEvent.event_type == "open",
+        )
+        .scalar()
+        or 0
+    )
 
-    total_clicks = db.query(sa_func.count(TrackingEvent.id)).filter(
-        TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
-        TrackingEvent.event_type == "click",
-    ).scalar() or 0
+    total_clicks = (
+        db.query(sa_func.count(TrackingEvent.id))
+        .filter(
+            TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
+            TrackingEvent.event_type == "click",
+        )
+        .scalar()
+        or 0
+    )
 
-    unique_opens = db.query(sa_func.count(sa_func.distinct(TrackingEvent.delivery_id))).filter(
-        TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
-        TrackingEvent.event_type == "open",
-    ).scalar() or 0
+    unique_opens = (
+        db.query(sa_func.count(sa_func.distinct(TrackingEvent.delivery_id)))
+        .filter(
+            TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
+            TrackingEvent.event_type == "open",
+        )
+        .scalar()
+        or 0
+    )
 
-    unique_clicks = db.query(sa_func.count(sa_func.distinct(TrackingEvent.delivery_id))).filter(
-        TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
-        TrackingEvent.event_type == "click",
-    ).scalar() or 0
+    unique_clicks = (
+        db.query(sa_func.count(sa_func.distinct(TrackingEvent.delivery_id)))
+        .filter(
+            TrackingEvent.delivery_id.in_(db.query(delivery_ids.c.id)),
+            TrackingEvent.event_type == "click",
+        )
+        .scalar()
+        or 0
+    )
 
-    total_deliveries = db.query(sa_func.count(EmailDelivery.id)).filter(
-        EmailDelivery.id.in_(db.query(delivery_ids.c.id)),
-    ).scalar() or 0
+    total_deliveries = (
+        db.query(sa_func.count(EmailDelivery.id))
+        .filter(
+            EmailDelivery.id.in_(db.query(delivery_ids.c.id)),
+        )
+        .scalar()
+        or 0
+    )
 
     return {
         "total_opens": total_opens,
@@ -400,10 +454,7 @@ def tracking_locations(
     )
 
     return {
-        "cities": [
-            {"city": r[0], "country": r[1] or "", "count": r[2]}
-            for r in cities
-        ],
+        "cities": [{"city": r[0], "country": r[1] or "", "count": r[2]} for r in cities],
     }
 
 
@@ -443,15 +494,17 @@ def contact_engagement(
         else:
             score = round((total_opens / total_sent * 0.6 + total_clicks / total_sent * 0.4) * 100, 1)
 
-        result.append({
-            "contact_id": c.id,
-            "email": c.email,
-            "name": c.name,
-            "total_sent": total_sent,
-            "total_opens": total_opens,
-            "total_clicks": total_clicks,
-            "engagement_score": score,
-        })
+        result.append(
+            {
+                "contact_id": c.id,
+                "email": c.email,
+                "name": c.name,
+                "total_sent": total_sent,
+                "total_opens": total_opens,
+                "total_clicks": total_clicks,
+                "engagement_score": score,
+            }
+        )
 
     result.sort(key=lambda r: r["engagement_score"], reverse=True)
     return {"contacts": result}
@@ -471,10 +524,14 @@ def campaign_stats(
         steps = db.query(CampaignStep).filter(CampaignStep.campaign_id == c.id).order_by(CampaignStep.order).all()
         step_stats = []
         for s in steps:
-            sms = db.query(ScheduledMessage).filter(
-                ScheduledMessage.campaign_step_id == s.id,
-                ScheduledMessage.campaign_id == c.id,
-            ).all()
+            sms = (
+                db.query(ScheduledMessage)
+                .filter(
+                    ScheduledMessage.campaign_step_id == s.id,
+                    ScheduledMessage.campaign_id == c.id,
+                )
+                .all()
+            )
             total = len(sms)
             if total == 0:
                 sent = opened = clicked = 0
@@ -487,20 +544,24 @@ def campaign_stats(
                     deliveries = db.query(EmailDelivery).filter(EmailDelivery.message_id.in_(msg_ids)).all()
                     opened = sum(1 for d in deliveries if d.opened_at is not None)
                     clicked = sum(1 for d in deliveries if d.clicked_at is not None)
-            step_stats.append({
-                "step_id": s.id,
-                "order": s.order,
-                "subject": s.subject,
-                "delay_days": s.delay_days,
-                "total": total,
-                "sent": sent,
-                "opened": opened,
-                "clicked": clicked,
-            })
-        result.append({
-            "campaign_id": c.id,
-            "name": c.name,
-            "total_steps": len(step_stats),
-            "steps": step_stats,
-        })
+            step_stats.append(
+                {
+                    "step_id": s.id,
+                    "order": s.order,
+                    "subject": s.subject,
+                    "delay_days": s.delay_days,
+                    "total": total,
+                    "sent": sent,
+                    "opened": opened,
+                    "clicked": clicked,
+                }
+            )
+        result.append(
+            {
+                "campaign_id": c.id,
+                "name": c.name,
+                "total_steps": len(step_stats),
+                "steps": step_stats,
+            }
+        )
     return {"campaigns": result}

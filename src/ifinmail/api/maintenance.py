@@ -1,7 +1,7 @@
 """In-memory maintenance mode toggle for read-only API state."""
 
-import logging
 import json
+import logging
 
 logger = logging.getLogger("ifinmail.maintenance")
 
@@ -39,18 +39,22 @@ class MaintenanceMiddleware:
 
             if method not in self.SAFE_METHODS and not path.startswith("/admin/maintenance"):
                 body = json.dumps({"detail": "Service temporarily in maintenance mode"}).encode("utf-8")
-                await send({
-                    "type": "http.response.start",
-                    "status": 503,
-                    "headers": [
-                        (b"content-type", b"application/json"),
-                        (b"retry-after", b"3600"),
-                    ],
-                })
-                await send({
-                    "type": "http.response.body",
-                    "body": body,
-                })
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": 503,
+                        "headers": [
+                            (b"content-type", b"application/json"),
+                            (b"retry-after", b"3600"),
+                        ],
+                    }
+                )
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": body,
+                    }
+                )
                 return
 
         await self.app(scope, receive, send)

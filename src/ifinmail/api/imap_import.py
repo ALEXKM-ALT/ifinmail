@@ -131,11 +131,7 @@ def _do_import(user_id: int, db_factory):
         imported = 0
 
         existing_ids = {
-            r[0]
-            for r in db.query(Message.message_id)
-            .filter(Message.mailbox_id == cfg.user.mailbox.id)
-            .all()
-            if r[0]
+            r[0] for r in db.query(Message.message_id).filter(Message.mailbox_id == cfg.user.mailbox.id).all() if r[0]
         }
 
         mailbox = cfg.user.mailbox

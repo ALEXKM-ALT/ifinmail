@@ -120,15 +120,17 @@ def list_orgs(
     for m in memberships:
         org = m.organization
         member_count = db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).count()
-        orgs.append({
-            "id": org.id,
-            "name": org.name,
-            "email": org.email,
-            "role": m.role,
-            "member_count": member_count,
-            "max_users": org.max_users,
-            "created_at": org.created_at.isoformat() if org.created_at else "",
-        })
+        orgs.append(
+            {
+                "id": org.id,
+                "name": org.name,
+                "email": org.email,
+                "role": m.role,
+                "member_count": member_count,
+                "max_users": org.max_users,
+                "created_at": org.created_at.isoformat() if org.created_at else "",
+            }
+        )
     return orgs
 
 
@@ -138,10 +140,14 @@ def get_org(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
     org = membership.organization
@@ -174,11 +180,15 @@ def update_org(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-        OrganizationMember.role == "owner",
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+            OrganizationMember.role == "owner",
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the owner can update the organization")
     org = membership.organization
@@ -202,10 +212,14 @@ def invite_member(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can invite members")
     org = membership.organization
@@ -213,19 +227,28 @@ def invite_member(
     if current_count >= org.max_users:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization user limit reached")
 
-    existing = db.query(OrganizationMember).join(User).filter(
-        OrganizationMember.organization_id == org.id,
-        User.email == req.email,
-    ).first()
+    existing = (
+        db.query(OrganizationMember)
+        .join(User)
+        .filter(
+            OrganizationMember.organization_id == org.id,
+            User.email == req.email,
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already a member")
 
-    existing_invite = db.query(OrganizationInvite).filter(
-        OrganizationInvite.organization_id == org.id,
-        OrganizationInvite.email == req.email,
-        OrganizationInvite.accepted == 0,
-        OrganizationInvite.expires_at > datetime.now(UTC),
-    ).first()
+    existing_invite = (
+        db.query(OrganizationInvite)
+        .filter(
+            OrganizationInvite.organization_id == org.id,
+            OrganizationInvite.email == req.email,
+            OrganizationInvite.accepted == 0,
+            OrganizationInvite.expires_at > datetime.now(UTC),
+        )
+        .first()
+    )
     if existing_invite:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invite already sent to this email")
 
@@ -240,8 +263,15 @@ def invite_member(
         )
         db.add(member)
         db.commit()
-        fire_notification(target.id, "org.invite", {"organization_id": org.id, "organization_name": org.name, "role": req.role})
-        fire_webhook(target.id, "org.member.added", {"organization_id": org.id, "organization_name": org.name, "role": req.role}, db)
+        fire_notification(
+            target.id, "org.invite", {"organization_id": org.id, "organization_name": org.name, "role": req.role}
+        )
+        fire_webhook(
+            target.id,
+            "org.member.added",
+            {"organization_id": org.id, "organization_name": org.name, "role": req.role},
+            db,
+        )
         _sync_org_aliases(db, org.id)
         return {"message": f"{req.email} invited", "user_id": target.id, "invited": True}
 
@@ -301,19 +331,29 @@ def accept_invite(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    invite = db.query(OrganizationInvite).filter(
-        OrganizationInvite.token == token,
-        OrganizationInvite.accepted == 0,
-        OrganizationInvite.expires_at > datetime.now(UTC),
-    ).first()
+    invite = (
+        db.query(OrganizationInvite)
+        .filter(
+            OrganizationInvite.token == token,
+            OrganizationInvite.accepted == 0,
+            OrganizationInvite.expires_at > datetime.now(UTC),
+        )
+        .first()
+    )
     if not invite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid or expired invite token")
     if invite.email != user.email:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This invite was sent to a different email address")
-    existing = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == invite.organization_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="This invite was sent to a different email address"
+        )
+    existing = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == invite.organization_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if existing:
         invite.accepted = 1
         db.commit()
@@ -329,9 +369,17 @@ def accept_invite(
     invite.accepted = 1
     db.commit()
     org = db.query(Organization).filter(Organization.id == invite.organization_id).first()
-    fire_notification(user.id, "org.invite.accepted", {"organization_id": invite.organization_id, "organization_name": org.name if org else None})
+    fire_notification(
+        user.id,
+        "org.invite.accepted",
+        {"organization_id": invite.organization_id, "organization_name": org.name if org else None},
+    )
     _sync_org_aliases(db, invite.organization_id)
-    return {"message": "Invitation accepted", "organization_id": invite.organization_id, "organization_name": org.name if org else None}
+    return {
+        "message": "Invitation accepted",
+        "organization_id": invite.organization_id,
+        "organization_name": org.name if org else None,
+    }
 
 
 @router.get("/{org_id}/member-contacts")
@@ -341,22 +389,27 @@ def org_member_contacts(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
-    query = db.query(User).join(OrganizationMember, OrganizationMember.user_id == User.id).filter(
-        OrganizationMember.organization_id == org_id,
+    query = (
+        db.query(User)
+        .join(OrganizationMember, OrganizationMember.user_id == User.id)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+        )
     )
     if q:
         query = query.filter(User.email.ilike(f"%{q}%") | User.first_name.ilike(f"%{q}%"))
     users = query.all()
-    return [
-        {"email": u.email, "name": f"{u.first_name or ''} {u.last_name or ''}".strip() or None}
-        for u in users
-    ]
+    return [{"email": u.email, "name": f"{u.first_name or ''} {u.last_name or ''}".strip() or None} for u in users]
 
 
 @router.get("/{org_id}/contacts")
@@ -365,10 +418,14 @@ def list_org_contacts(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
     contacts = db.query(OrgContact).filter(OrgContact.organization_id == org_id).all()
@@ -385,10 +442,14 @@ def add_org_contact(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
     contact = OrgContact(organization_id=org_id, email=req.email, name=req.name, created_by=user.id)
@@ -404,10 +465,14 @@ def delete_org_contact(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can delete contacts")
     contact = db.query(OrgContact).filter(OrgContact.id == contact_id, OrgContact.organization_id == org_id).first()
@@ -424,18 +489,26 @@ def remove_member(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can remove members")
     if user_id == user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove yourself")
-    target = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user_id,
-    ).first()
+    target = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user_id,
+        )
+        .first()
+    )
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     if target.role == "owner":
@@ -454,14 +527,21 @@ def leave_org(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a member")
     if membership.role == "owner":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner cannot leave. Transfer ownership first or delete the org")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Owner cannot leave. Transfer ownership first or delete the org",
+        )
     db.delete(membership)
     db.commit()
     _sync_org_aliases(db, org_id)
@@ -474,22 +554,30 @@ def delete_org(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-        OrganizationMember.role == "owner",
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+            OrganizationMember.role == "owner",
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the owner can delete the organization")
     org = membership.organization
-    member_ids = [m.user_id for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()]
+    member_ids = [
+        m.user_id for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == org.id).all()
+    ]
     org_name = org.name
     db.query(OrgSharedInboxNote).filter(
         OrgSharedInboxNote.shared_inbox_message_id.in_(
             db.query(OrgSharedInboxMessage.id).filter(OrgSharedInboxMessage.organization_id == org.id)
         )
     ).delete(synchronize_session=False)
-    db.query(OrgSharedInboxMessage).filter(OrgSharedInboxMessage.organization_id == org.id).delete(synchronize_session=False)
+    db.query(OrgSharedInboxMessage).filter(OrgSharedInboxMessage.organization_id == org.id).delete(
+        synchronize_session=False
+    )
     db.query(OrgEmailNote).filter(OrgEmailNote.organization_id == org.id).delete(synchronize_session=False)
     db.query(OrgEmailAssignment).filter(OrgEmailAssignment.organization_id == org.id).delete(synchronize_session=False)
     db.query(OrgContact).filter(OrgContact.organization_id == org.id).delete(synchronize_session=False)
@@ -506,6 +594,7 @@ def delete_org(
 
 # ── Shared Inbox ──
 
+
 @router.get("/{org_id}/inbox")
 def org_shared_inbox(
     org_id: int,
@@ -514,14 +603,20 @@ def org_shared_inbox(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
-    member_ids = [m.user_id for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == org_id).all()]
+    member_ids = [
+        m.user_id for m in db.query(OrganizationMember).filter(OrganizationMember.organization_id == org_id).all()
+    ]
     mailboxes = db.query(Mailbox).filter(Mailbox.user_id.in_(member_ids)).all()
     if not mailboxes:
         return {"items": [], "total": 0}
@@ -529,7 +624,14 @@ def org_shared_inbox(
 
     total = db.query(Message).filter(Message.mailbox_id.in_(mb_ids)).count()
     # Deduplicate by message_id, take latest
-    msgs = db.query(Message).filter(Message.mailbox_id.in_(mb_ids)).order_by(Message.created_at.desc()).offset(offset).limit(limit * 2).all()
+    msgs = (
+        db.query(Message)
+        .filter(Message.mailbox_id.in_(mb_ids))
+        .order_by(Message.created_at.desc())
+        .offset(offset)
+        .limit(limit * 2)
+        .all()
+    )
     seen = set()
     unique = []
     for m in msgs:
@@ -563,6 +665,7 @@ def org_shared_inbox(
 
 # ── Email Assignment ──
 
+
 class AssignRequest(BaseModel):
     user_id: int
 
@@ -575,24 +678,36 @@ def assign_email(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can assign emails")
 
-    target = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == req.user_id,
-    ).first()
+    target = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == req.user_id,
+        )
+        .first()
+    )
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found in this org")
 
-    existing = db.query(OrgEmailAssignment).filter(
-        OrgEmailAssignment.organization_id == org_id,
-        OrgEmailAssignment.message_id == message_id,
-    ).first()
+    existing = (
+        db.query(OrgEmailAssignment)
+        .filter(
+            OrgEmailAssignment.organization_id == org_id,
+            OrgEmailAssignment.message_id == message_id,
+        )
+        .first()
+    )
     if existing:
         existing.assigned_to = req.user_id
         existing.assigned_by = user.id
@@ -615,17 +730,25 @@ def unassign_email(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can unassign emails")
 
-    assignment = db.query(OrgEmailAssignment).filter(
-        OrgEmailAssignment.organization_id == org_id,
-        OrgEmailAssignment.message_id == message_id,
-    ).first()
+    assignment = (
+        db.query(OrgEmailAssignment)
+        .filter(
+            OrgEmailAssignment.organization_id == org_id,
+            OrgEmailAssignment.message_id == message_id,
+        )
+        .first()
+    )
     if assignment:
         db.delete(assignment)
         db.commit()
@@ -639,17 +762,25 @@ def get_assignment(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
-    assignment = db.query(OrgEmailAssignment).filter(
-        OrgEmailAssignment.organization_id == org_id,
-        OrgEmailAssignment.message_id == message_id,
-    ).first()
+    assignment = (
+        db.query(OrgEmailAssignment)
+        .filter(
+            OrgEmailAssignment.organization_id == org_id,
+            OrgEmailAssignment.message_id == message_id,
+        )
+        .first()
+    )
     if not assignment:
         return {"assigned": False}
     assignee = db.query(User).filter(User.id == assignment.assigned_to).first()
@@ -663,6 +794,7 @@ def get_assignment(
 
 # ── Internal Notes ──
 
+
 class NoteRequest(BaseModel):
     note: str
 
@@ -675,10 +807,14 @@ def add_email_note(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
     if not req.note.strip():
@@ -697,17 +833,26 @@ def list_email_notes(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
-    notes = db.query(OrgEmailNote).filter(
-        OrgEmailNote.organization_id == org_id,
-        OrgEmailNote.message_id == message_id,
-    ).order_by(OrgEmailNote.created_at.desc()).all()
+    notes = (
+        db.query(OrgEmailNote)
+        .filter(
+            OrgEmailNote.organization_id == org_id,
+            OrgEmailNote.message_id == message_id,
+        )
+        .order_by(OrgEmailNote.created_at.desc())
+        .all()
+    )
     return [
         {
             "id": n.id,
@@ -722,6 +867,7 @@ def list_email_notes(
 
 # ── Role Management ──
 
+
 class ChangeRoleRequest(BaseModel):
     role: str
 
@@ -735,20 +881,30 @@ def change_member_role(
     user: User = Depends(get_current_user),
 ):
     if req.role not in ("owner", "admin", "member"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role. Must be owner, admin, or member")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role. Must be owner, admin, or member"
+        )
 
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-        OrganizationMember.role == "owner",
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+            OrganizationMember.role == "owner",
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the owner can change roles")
 
-    target = db.query(OrganizationMember).filter(
-        OrganizationMember.id == member_id,
-        OrganizationMember.organization_id == org_id,
-    ).first()
+    target = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.id == member_id,
+            OrganizationMember.organization_id == org_id,
+        )
+        .first()
+    )
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     if target.role == "owner":
@@ -761,6 +917,7 @@ def change_member_role(
 
 # ── Transfer Ownership ──
 
+
 @router.post("/{org_id}/transfer/{user_id}")
 def transfer_ownership(
     org_id: int,
@@ -768,20 +925,28 @@ def transfer_ownership(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-        OrganizationMember.role == "owner",
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+            OrganizationMember.role == "owner",
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the owner can transfer ownership")
     if user_id == user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot transfer ownership to yourself")
 
-    target = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user_id,
-    ).first()
+    target = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user_id,
+        )
+        .first()
+    )
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
 
@@ -805,10 +970,14 @@ def list_shared_inbox(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
@@ -845,23 +1014,36 @@ def get_shared_inbox_message(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
-    notes = db.query(OrgSharedInboxNote).filter(
-        OrgSharedInboxNote.shared_inbox_message_id == msg.id,
-    ).order_by(OrgSharedInboxNote.created_at.desc()).all()
+    notes = (
+        db.query(OrgSharedInboxNote)
+        .filter(
+            OrgSharedInboxNote.shared_inbox_message_id == msg.id,
+        )
+        .order_by(OrgSharedInboxNote.created_at.desc())
+        .all()
+    )
 
     return {
         "id": msg.id,
@@ -902,24 +1084,36 @@ def assign_shared_inbox_message(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can assign messages")
 
-    target = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == req.user_id,
-    ).first()
+    target = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == req.user_id,
+        )
+        .first()
+    )
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
@@ -929,17 +1123,26 @@ def assign_shared_inbox_message(
     if msg.status == "pending":
         msg.status = "assigned"
     db.commit()
-    fire_notification(req.user_id, "org.shared_inbox.assigned", {
-        "organization_id": org_id,
-        "message_id": msg_id,
-        "subject": msg.subject,
-        "assigned_by": user.email,
-    })
-    fire_webhook(req.user_id, "org.shared_inbox.assigned", {
-        "organization_id": org_id,
-        "message_id": msg_id,
-        "subject": msg.subject,
-    }, db)
+    fire_notification(
+        req.user_id,
+        "org.shared_inbox.assigned",
+        {
+            "organization_id": org_id,
+            "message_id": msg_id,
+            "subject": msg.subject,
+            "assigned_by": user.email,
+        },
+    )
+    fire_webhook(
+        req.user_id,
+        "org.shared_inbox.assigned",
+        {
+            "organization_id": org_id,
+            "message_id": msg_id,
+            "subject": msg.subject,
+        },
+        db,
+    )
     return {"message": "Assigned", "user_id": req.user_id, "status": msg.status}
 
 
@@ -950,17 +1153,25 @@ def unassign_shared_inbox_message(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership or membership.role not in ("owner", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners/admins can unassign messages")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
@@ -972,11 +1183,15 @@ def unassign_shared_inbox_message(
         msg.status = "pending"
     db.commit()
     if prev_assignee:
-        fire_notification(prev_assignee, "org.shared_inbox.unassigned", {
-            "organization_id": org_id,
-            "message_id": msg_id,
-            "subject": msg.subject,
-        })
+        fire_notification(
+            prev_assignee,
+            "org.shared_inbox.unassigned",
+            {
+                "organization_id": org_id,
+                "message_id": msg_id,
+                "subject": msg.subject,
+            },
+        )
     return {"message": "Unassigned", "status": msg.status}
 
 
@@ -991,17 +1206,25 @@ def update_shared_inbox_status(
     if req.status not in ("pending", "assigned", "resolved"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status")
 
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
@@ -1015,16 +1238,25 @@ def update_shared_inbox_status(
         msg.resolved_at = None
     db.commit()
     if req.status == "resolved":
-        fire_notification(user.id, "org.shared_inbox.resolved", {
-            "organization_id": org_id,
-            "message_id": msg_id,
-            "subject": msg.subject,
-        })
-        fire_webhook(user.id, "org.shared_inbox.resolved", {
-            "organization_id": org_id,
-            "message_id": msg_id,
-            "subject": msg.subject,
-        }, db)
+        fire_notification(
+            user.id,
+            "org.shared_inbox.resolved",
+            {
+                "organization_id": org_id,
+                "message_id": msg_id,
+                "subject": msg.subject,
+            },
+        )
+        fire_webhook(
+            user.id,
+            "org.shared_inbox.resolved",
+            {
+                "organization_id": org_id,
+                "message_id": msg_id,
+                "subject": msg.subject,
+            },
+            db,
+        )
     return {"message": "Status changed to " + req.status, "status": msg.status}
 
 
@@ -1040,19 +1272,27 @@ def reply_shared_inbox_message(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
     if not req.body_text.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reply body cannot be empty")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
@@ -1080,11 +1320,16 @@ def reply_shared_inbox_message(
         msg.resolved_at = datetime.now(UTC)
 
     db.commit()
-    fire_webhook(user.id, "org.shared_inbox.resolved", {
-        "organization_id": org_id,
-        "message_id": msg_id,
-        "reply_id": sent_msg.id,
-    }, db)
+    fire_webhook(
+        user.id,
+        "org.shared_inbox.resolved",
+        {
+            "organization_id": org_id,
+            "message_id": msg_id,
+            "reply_id": sent_msg.id,
+        },
+        db,
+    )
     return {"message": "Reply sent", "id": sent_msg.id, "status": msg.status}
 
 
@@ -1100,19 +1345,27 @@ def add_shared_inbox_note(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
     if not req.note.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Note cannot be empty")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
@@ -1122,15 +1375,24 @@ def add_shared_inbox_note(
     members = db.query(OrganizationMember).filter(OrganizationMember.organization_id == org_id).all()
     for m in members:
         if m.user_id != user.id:
-            fire_notification(m.user_id, "org.shared_inbox.note_added", {
-                "organization_id": org_id,
-                "message_id": msg_id,
-                "by_user": user.email,
-            })
-    fire_webhook(user.id, "org.shared_inbox.note_added", {
-        "organization_id": org_id,
-        "message_id": msg_id,
-    }, db)
+            fire_notification(
+                m.user_id,
+                "org.shared_inbox.note_added",
+                {
+                    "organization_id": org_id,
+                    "message_id": msg_id,
+                    "by_user": user.email,
+                },
+            )
+    fire_webhook(
+        user.id,
+        "org.shared_inbox.note_added",
+        {
+            "organization_id": org_id,
+            "message_id": msg_id,
+        },
+        db,
+    )
     return {"message": "Note added", "note_id": note.id}
 
 
@@ -1141,23 +1403,36 @@ def list_shared_inbox_notes(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member")
 
-    msg = db.query(OrgSharedInboxMessage).filter(
-        OrgSharedInboxMessage.id == msg_id,
-        OrgSharedInboxMessage.organization_id == org_id,
-    ).first()
+    msg = (
+        db.query(OrgSharedInboxMessage)
+        .filter(
+            OrgSharedInboxMessage.id == msg_id,
+            OrgSharedInboxMessage.organization_id == org_id,
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
-    notes = db.query(OrgSharedInboxNote).filter(
-        OrgSharedInboxNote.shared_inbox_message_id == msg.id,
-    ).order_by(OrgSharedInboxNote.created_at.desc()).all()
+    notes = (
+        db.query(OrgSharedInboxNote)
+        .filter(
+            OrgSharedInboxNote.shared_inbox_message_id == msg.id,
+        )
+        .order_by(OrgSharedInboxNote.created_at.desc())
+        .all()
+    )
     return [
         {
             "id": n.id,
@@ -1176,15 +1451,21 @@ def send_org_test_email(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    membership = db.query(OrganizationMember).filter(
-        OrganizationMember.organization_id == org_id,
-        OrganizationMember.user_id == user.id,
-    ).first()
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == org_id,
+            OrganizationMember.user_id == user.id,
+        )
+        .first()
+    )
     if not membership:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
     org = membership.organization
     if not org.email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No mailing list email set for this organization")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No mailing list email set for this organization"
+        )
 
     mailbox = db.query(Mailbox).filter(Mailbox.user_id == user.id).first()
     if not mailbox:
@@ -1251,16 +1532,25 @@ def send_org_test_email(
         db.flush()
         for m in members:
             if m.user_id != user.id:
-                fire_notification(m.user_id, "org.shared_inbox.new", {
-                    "organization_id": org.id,
-                    "message_id": shared.id,
-                    "from": user.email,
-                    "subject": subject,
-                })
-        fire_webhook(user.id, "org.shared_inbox.new", {
-            "organization_id": org.id,
-            "message_id": shared.id,
-        }, db)
+                fire_notification(
+                    m.user_id,
+                    "org.shared_inbox.new",
+                    {
+                        "organization_id": org.id,
+                        "message_id": shared.id,
+                        "from": user.email,
+                        "subject": subject,
+                    },
+                )
+        fire_webhook(
+            user.id,
+            "org.shared_inbox.new",
+            {
+                "organization_id": org.id,
+                "message_id": shared.id,
+            },
+            db,
+        )
 
     db.commit()
     return {"message": "Test email sent to mailing list", "shared_inbox_id": shared.id if first_msg_id else None}

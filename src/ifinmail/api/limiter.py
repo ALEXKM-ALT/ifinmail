@@ -1,3 +1,4 @@
+import os
 import time
 from collections.abc import Awaitable, Callable
 
@@ -67,8 +68,6 @@ user_generous = Depends(rate_limit(300, 60, "rl:user:generous", use_user=True))
 admin_strict = Depends(rate_limit(20, 60, "rl:admin:strict", use_user=True))
 
 
-import os
-
 
 class InMemoryRateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, times: int = 200, window: int = 60):
@@ -106,4 +105,3 @@ class InMemoryRateLimitMiddleware(BaseHTTPMiddleware):
         response.headers["X-RateLimit-Remaining"] = str(remaining - 1)
         response.headers["X-RateLimit-Reset"] = str(reset_at)
         return response
-

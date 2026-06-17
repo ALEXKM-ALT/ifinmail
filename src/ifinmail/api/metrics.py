@@ -4,10 +4,9 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import func as sa_func
-from sqlalchemy.orm import Session
 
 from ifinmail.api.database import SessionLocal
 from ifinmail.api.deps import get_redis
@@ -73,7 +72,12 @@ class Gauge:
 class Histogram:
     __slots__ = ("_name", "_help", "_buckets", "_counts", "_sum", "_lock")
 
-    def __init__(self, name: str, help_text: str, buckets: tuple[float, ...] = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)) -> None:
+    def __init__(
+        self,
+        name: str,
+        help_text: str,
+        buckets: tuple[float, ...] = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+    ) -> None:
         self._name = name
         self._help = help_text
         self._buckets = buckets
@@ -94,18 +98,20 @@ class Histogram:
             f"# HELP {self._name} {self._help}",
             f"# TYPE {self._name} histogram",
         ]
-        suffix = self._name.replace("_seconds", "")
+        self._name.replace("_seconds", "")
         with self._lock:
             for label_vals in sorted(set(list(self._counts.keys()) + list(self._sum.keys()))):
                 labels_str = ""
                 if label_vals:
-                    labels_str = ",".join(f'{k}="{v}"' for k, v in zip(("method", "path", "status"), label_vals, strict=False))
+                    labels_str = ",".join(
+                        f'{k}="{v}"' for k, v in zip(("method", "path", "status"), label_vals, strict=False)
+                    )
                 le = 0.0
                 for i, b in enumerate(self._buckets):
                     le += self._counts[label_vals][i]
-                    parts.append(f"{self._name}_bucket{{{labels_str},le=\"{b}\"}} {le}")
+                    parts.append(f'{self._name}_bucket{{{labels_str},le="{b}"}} {le}')
                 total = self._counts[label_vals][-1]
-                parts.append(f"{self._name}_bucket{{{labels_str},le=\"+Inf\"}} {total}")
+                parts.append(f'{self._name}_bucket{{{labels_str},le="+Inf"}} {total}')
                 parts.append(f"{self._name}_count{{{labels_str}}} {total}")
                 parts.append(f"{self._name}_sum{{{labels_str}}} {self._sum[label_vals]}")
         return "\n".join(parts) + "\n"
@@ -212,8 +218,8 @@ async def metrics():
         "",
         "# HELP ifinmail_up Database and Redis health (1=up, 0=down)",
         "# TYPE ifinmail_up gauge",
-        f"ifinmail_up{{component=\"database\"}} {db_ok}",
-        f"ifinmail_up{{component=\"redis\"}} {redis_ok}",
+        f'ifinmail_up{{component="database"}} {db_ok}',
+        f'ifinmail_up{{component="redis"}} {redis_ok}',
         "",
         http_requests_total.collect().rstrip(),
         http_request_duration_seconds.collect().rstrip(),

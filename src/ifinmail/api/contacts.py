@@ -64,13 +64,14 @@ def list_contacts(
     query = db.query(Contact).filter(Contact.user_id == user.id)
     if search:
         like = f"%{search}%"
-        query = query.filter(
-            or_(Contact.email.ilike(like), Contact.name.ilike(like))
-        )
-    total = query.count()
-    items = query.order_by(Contact.name.asc().nullslast(), Contact.email.asc()).offset(
-        (page - 1) * per_page
-    ).limit(per_page).all()
+        query = query.filter(or_(Contact.email.ilike(like), Contact.name.ilike(like)))
+    query.count()
+    items = (
+        query.order_by(Contact.name.asc().nullslast(), Contact.email.asc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
 
     # Compute engagement scores
     mailbox = db.query(Message).filter(Message.mailbox_id == user.mailbox.id).first()
@@ -120,10 +121,14 @@ def create_contact(
 ):
     if not req.email or "@" not in req.email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
-    existing = db.query(Contact).filter(
-        Contact.user_id == user.id,
-        Contact.email == req.email,
-    ).first()
+    existing = (
+        db.query(Contact)
+        .filter(
+            Contact.user_id == user.id,
+            Contact.email == req.email,
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Contact already exists")
     contact = Contact(user_id=user.id, email=req.email, name=req.name, notes=req.notes)
@@ -172,11 +177,15 @@ def update_contact(
     if req.email is not None:
         if "@" not in req.email:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
-        dup = db.query(Contact).filter(
-            Contact.user_id == user.id,
-            Contact.email == req.email,
-            Contact.id != contact_id,
-        ).first()
+        dup = (
+            db.query(Contact)
+            .filter(
+                Contact.user_id == user.id,
+                Contact.email == req.email,
+                Contact.id != contact_id,
+            )
+            .first()
+        )
         if dup:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in contacts")
         contact.email = req.email
@@ -253,10 +262,14 @@ def import_contacts_csv(
         if not email or "@" not in email:
             skipped += 1
             continue
-        existing = db.query(Contact).filter(
-            Contact.user_id == user.id,
-            Contact.email == email,
-        ).first()
+        existing = (
+            db.query(Contact)
+            .filter(
+                Contact.user_id == user.id,
+                Contact.email == email,
+            )
+            .first()
+        )
         if existing:
             skipped += 1
             continue
@@ -325,29 +338,31 @@ def contact_engagement_detail(
     for d in deliveries:
         subject = d.message.subject if d.message else ""
         tracking = db.query(TrackingEvent).filter(TrackingEvent.delivery_id == d.id).all()
-        delivery_list.append(DeliveryEvent(
-            id=d.id,
-            recipient=d.recipient,
-            status=d.status,
-            subject=subject,
-            opened_at=d.opened_at.isoformat() if d.opened_at else None,
-            clicked_at=d.clicked_at.isoformat() if d.clicked_at else None,
-            sent_at=d.created_at.isoformat() if d.created_at else "",
-            tracking_events=[
-                {
-                    "event_type": e.event_type,
-                    "timestamp": e.timestamp.isoformat() if e.timestamp else "",
-                    "ip_address": e.ip_address,
-                    "city": e.city,
-                    "country": e.country,
-                    "device_type": e.device_type,
-                    "os": e.os,
-                    "browser": e.browser,
-                    "clicked_url": e.clicked_url,
-                }
-                for e in tracking
-            ],
-        ))
+        delivery_list.append(
+            DeliveryEvent(
+                id=d.id,
+                recipient=d.recipient,
+                status=d.status,
+                subject=subject,
+                opened_at=d.opened_at.isoformat() if d.opened_at else None,
+                clicked_at=d.clicked_at.isoformat() if d.clicked_at else None,
+                sent_at=d.created_at.isoformat() if d.created_at else "",
+                tracking_events=[
+                    {
+                        "event_type": e.event_type,
+                        "timestamp": e.timestamp.isoformat() if e.timestamp else "",
+                        "ip_address": e.ip_address,
+                        "city": e.city,
+                        "country": e.country,
+                        "device_type": e.device_type,
+                        "os": e.os,
+                        "browser": e.browser,
+                        "clicked_url": e.clicked_url,
+                    }
+                    for e in tracking
+                ],
+            )
+        )
 
     return ContactEngagementResponse(
         contact_id=contact.id,
@@ -435,10 +450,7 @@ def get_group(
     return {
         "id": group.id,
         "name": group.name,
-        "members": [
-            {"id": c.id, "email": c.email, "name": c.name}
-            for c in members
-        ],
+        "members": [{"id": c.id, "email": c.email, "name": c.name} for c in members],
         "member_count": len(members),
         "created_at": group.created_at.isoformat() if group.created_at else None,
     }
@@ -488,10 +500,14 @@ def add_group_members(
         contact = db.query(Contact).filter(Contact.id == cid, Contact.user_id == user.id).first()
         if not contact:
             continue
-        existing = db.query(ContactGroupMember).filter(
-            ContactGroupMember.group_id == group.id,
-            ContactGroupMember.contact_id == cid,
-        ).first()
+        existing = (
+            db.query(ContactGroupMember)
+            .filter(
+                ContactGroupMember.group_id == group.id,
+                ContactGroupMember.contact_id == cid,
+            )
+            .first()
+        )
         if existing:
             continue
         db.add(ContactGroupMember(group_id=group.id, contact_id=cid))
