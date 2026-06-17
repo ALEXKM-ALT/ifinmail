@@ -178,18 +178,23 @@ function $$(sel) { return document.querySelectorAll(sel); }
 
 function showView(name) {
   ["loginView", "inboxView", "messageView", "composeView", "settingsView", "adminView", "sandboxView", "dashboardView", "teamsView"].forEach(id => {
-    document.getElementById(id).style.display = id === name + "View" ? "block" : "none";
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === name + "View" ? "block" : "none";
   });
 }
 
 function render() {
   if (!state.token) {
     showView("login");
-    $("#sidebar").innerHTML = "";
+    const sb = document.getElementById("sidebar");
+    if (sb) sb.innerHTML = "";
     return;
   }
   renderSidebar();
-  document.getElementById("inboxView").innerHTML = document.getElementById("inboxTmpl").innerHTML;
+  const inboxView = document.getElementById("inboxView");
+  const inboxTmpl = document.getElementById("inboxTmpl");
+  if (!inboxView || !inboxTmpl) return;
+  inboxView.innerHTML = inboxTmpl.innerHTML;
   showView("inbox");
   if (state.unifiedView) {
     fetchUnifiedMessages();
@@ -208,8 +213,11 @@ function render() {
 function renderSidebar() {
   const tmpl = document.getElementById("sidebarTmpl");
   if (!tmpl) return;
-  $("#sidebar").innerHTML = tmpl.innerHTML;
-  document.getElementById("userEmail").textContent = state.email;
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
+  sidebar.innerHTML = tmpl.innerHTML;
+  const userEmail = document.getElementById("userEmail");
+  if (userEmail) userEmail.textContent = state.email;
 
   const accList = document.getElementById("accountsListSidebar");
   if (accList) {
@@ -2643,7 +2651,9 @@ function setupScrollSentinel() {
   const sentinel = document.createElement("div");
   sentinel.id = "scrollSentinel";
   sentinel.style.height = "1px";
-  document.getElementById("messageList").after(sentinel);
+  const msgList = document.getElementById("messageList");
+  if (!msgList) return;
+  msgList.after(sentinel);
 
   _sentinelObserver = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting && state.hasMore && !state.loading) {
@@ -2714,7 +2724,10 @@ async function renderAttachments() {
 function renderMessageView() {
   const msg = state.currentMsg;
   if (!msg) return;
-  document.getElementById("messageView").innerHTML = document.getElementById("messageViewTmpl").innerHTML;
+  const mv = document.getElementById("messageView");
+  const mvt = document.getElementById("messageViewTmpl");
+  if (!mv || !mvt) return;
+  mv.innerHTML = mvt.innerHTML;
   showView("message");
 
   document.getElementById("msgSubject").textContent = msg.subject || "(no subject)";
@@ -2915,7 +2928,10 @@ let _composeAttachmentIds = [];
 let _composeEditId = null;
 
 async function showCompose(mode, msg) {
-  document.getElementById("composeView").innerHTML = document.getElementById("composeTmpl").innerHTML;
+  const cv = document.getElementById("composeView");
+  const ct = document.getElementById("composeTmpl");
+  if (!cv || !ct) return;
+  cv.innerHTML = ct.innerHTML;
   showView("compose");
   _composeAttachmentIds = [];
   _composeEditId = null;
@@ -3130,6 +3146,7 @@ async function handleComposeSubmit(e) {
   if (_composing) return;
   _composing = true;
   const btn = e.target.querySelector("button[type=submit]");
+  if (!btn) { _composing = false; return; }
   const orig = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Sending...";
@@ -4614,11 +4631,13 @@ function formatSize(bytes) {
 
 // ── Init ──
 
+let _ws = null;
 function connectWS() {
   if (!state.token || state.token === "undefined") return;
+  if (_ws) { _ws.onclose = null; _ws.close(); _ws = null; }
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const ws = new WebSocket(`${proto}//${window.location.host}/ws?token=${state.token}`);
-  ws.onmessage = (e) => {
+  _ws = new WebSocket(`${proto}//${window.location.host}/ws?token=${state.token}`);
+  _ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
       if (msg.event === "new_mail") {
@@ -4634,7 +4653,7 @@ function connectWS() {
       }
     } catch {}
   };
-  ws.onclose = (e) => {
+  _ws.onclose = (e) => {
     if (e.code === 4001) {
       clearAuth();
       render();

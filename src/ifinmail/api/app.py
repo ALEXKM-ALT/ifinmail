@@ -524,8 +524,9 @@ async def health():
         r = _get_redis()
         if r is None:
             r = get_redis()
-        r.ping()
-        redis_ok = True
+        if r:
+            r.ping()
+            redis_ok = True
     except Exception:
         pass
 
