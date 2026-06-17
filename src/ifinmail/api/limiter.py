@@ -68,7 +68,6 @@ user_generous = Depends(rate_limit(300, 60, "rl:user:generous", use_user=True))
 admin_strict = Depends(rate_limit(20, 60, "rl:admin:strict", use_user=True))
 
 
-
 class InMemoryRateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, times: int = 200, window: int = 60):
         super().__init__(app)

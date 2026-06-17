@@ -129,8 +129,7 @@ def _fallback_local_response(prompt: str) -> dict:
     return {
         "subject": "[Subject would appear here]",
         "body": (
-            "[Email body would appear here. Set OPENAI_API_KEY"
-            " in environment to enable AI-powered email generation.]"
+            "[Email body would appear here. Set OPENAI_API_KEY in environment to enable AI-powered email generation.]"
         ),
     }
 
