@@ -1,1 +1,0 @@
-"""devices — api.py placeholder."""

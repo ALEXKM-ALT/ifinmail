@@ -1,1 +1,0 @@
-"""dns — hooks.py placeholder."""

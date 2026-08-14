@@ -1,1 +1,0 @@
-"""devices — assistant.py placeholder."""

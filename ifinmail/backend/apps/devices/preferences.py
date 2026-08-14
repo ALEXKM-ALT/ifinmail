@@ -1,1 +1,0 @@
-"""devices — preferences.py placeholder."""

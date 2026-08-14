@@ -1,6 +1,0 @@
-# Postfix PostgreSQL virtual aliases lookup
-user = postfix
-password = __POSTFIX_DB_PASSWORD__
-hosts = postgres
-dbname = ifinmail
-query = SELECT destination FROM aliases WHERE source = '%s' AND domain_id = (SELECT id FROM domains WHERE name = '%d')

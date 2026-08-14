@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IFINMAIL - Create Account</title>
+<link rel="icon" type="image/jpeg" href="../assets/icon.jpg"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#575f67",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#424655",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#141d23",
+                        "surface-container-low": "#f2f3ff",
+                        "on-tertiary-fixed-variant": "#454748",
+                        "surface-variant": "#e1e2ee",
+                        "tertiary-fixed-dim": "#c5c7c8",
+                        "inverse-surface": "#2d3039",
+                        "on-primary-fixed": "#001946",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#dbe4ed",
+                        "primary-container": "#0d6efd",
+                        "primary-fixed": "#dae2ff",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#5c5e60",
+                        "on-secondary-container": "#5b646b",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "inverse-primary": "#b1c5ff",
+                        "tertiary-container": "#757778",
+                        "inverse-on-surface": "#eff0fc",
+                        "on-primary-fixed-variant": "#00419e",
+                        "secondary-container": "#d8e1ea",
+                        "surface-container-high": "#e6e7f3",
+                        "surface-tint": "#0057ce",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#ffffff",
+                        "surface-dim": "#d8d9e5",
+                        "tertiary-fixed": "#e1e3e4",
+                        "primary": "#0057cd",
+                        "surface-container-highest": "#e1e2ee",
+                        "on-tertiary-fixed": "#191c1d",
+                        "surface-bright": "#faf8ff",
+                        "background": "#faf8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#bfc8d0",
+                        "surface": "#faf8ff",
+                        "outline": "#727787",
+                        "on-secondary-fixed-variant": "#3f484f",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191b24",
+                        "outline-variant": "#c2c6d8",
+                        "on-primary-container": "#ffffff",
+                        "surface-container": "#ecedf9",
+                        "on-background": "#191b24"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-padding": "24px",
+                        "stack-md": "24px",
+                        "gutter": "16px",
+                        "base": "8px",
+                        "stack-lg": "40px",
+                        "stack-sm": "12px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "label-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Base styles from guidance */
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+        }
+
+        /* Input transition for focus state as per guidance */
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--tw-ring-color) !important;
+        }
+
+        /* Custom scrollbar for web view */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #faf8ff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d8e1ea;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background h-full w-full text-on-surface antialiased flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Ambient background layer -->
+<div class="absolute inset-0 z-0 opacity-5 pointer-events-none" style="background-image: url('../assets/icon.jpg'); background-size: cover; background-position: center;"></div>
+<!-- Main Content Container (Mobile First) -->
+<main class="w-full max-w-[480px] px-container-padding py-8 flex flex-col justify-center h-full z-10 overflow-y-auto">
+<!-- Header / Logo Area -->
+<header class="w-full flex flex-col items-center justify-center mb-[40px] mt-8">
+<!-- TopAppBar simulation (Standalone context) -->
+<div class="flex items-center gap-2 mb-6">
+<img alt="IFINMAIL" class="rounded-full shadow-sm" src="../assets/icon.jpg" style="width: 32px; height: 32px; object-fit: cover;"/>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">IFINMAIL</h1>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface text-center">Create your account</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 text-center">Join the secure enterprise network.</p>
+</header>
+<!-- Form Area -->
+<form class="w-full flex flex-col gap-stack-md" id="create-form">
+<!-- Full Name Input -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-lg text-label-lg text-on-surface" for="fullName">Full Name</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">person</span>
+</div>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:ring-primary transition-colors" id="fullName" name="fullName" placeholder="Jane Doe" required="" type="text"/>
+</div>
+</div>
+<!-- Email Input -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-lg text-label-lg text-on-surface" for="email">Email Address</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">mail</span>
+</div>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:ring-primary transition-colors" id="email" name="email" placeholder="jane@company.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-lg text-label-lg text-on-surface" for="password">Password</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">lock</span>
+</div>
+<input class="w-full pl-10 pr-12 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:ring-primary transition-colors" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Confirm Password Input -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-lg text-label-lg text-on-surface" for="confirmPassword">Confirm Password</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">lock</span>
+</div>
+<input class="w-full pl-10 pr-12 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:ring-primary transition-colors" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required="" type="password"/>
+<button aria-label="Toggle confirm password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Terms Checkbox -->
+<div class="flex items-start gap-3 mt-2">
+<div class="flex items-center h-5">
+<input class="w-5 h-5 text-primary border-outline-variant rounded focus:ring-primary bg-surface-container-lowest cursor-pointer" id="terms" name="terms" required="" type="checkbox"/>
+</div>
+<div class="text-sm">
+<label class="font-body-md text-body-md text-on-surface-variant cursor-pointer" for="terms">
+                        I agree to the <a class="font-label-lg text-label-lg text-primary hover:underline underline-offset-4" href="#">Terms of Service</a> and <a class="font-label-lg text-label-lg text-primary hover:underline underline-offset-4" href="#">Privacy Policy</a>
+</label>
+</div>
+</div>
+<!-- Error / Success -->
+<div class="hidden text-sm text-on-error-container bg-error-container rounded-lg px-3 py-2" id="error-box"></div>
+<div class="hidden text-sm text-[#1b5e20] bg-[#c8e6c9] rounded-lg px-3 py-2" id="success-box"></div>
+<!-- Primary Action Button -->
+<button class="w-full mt-4 bg-primary text-on-primary h-12 rounded-lg font-label-lg text-label-lg uppercase tracking-wider flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:opacity-90 active:scale-[0.98] transition-all duration-150" id="create-btn" type="submit">
+                CREATE ACCOUNT
+            </button>
+</form>
+<!-- Footer / Secondary Action -->
+<footer class="w-full mt-stack-md text-center pb-8">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Already have an account?
+                <a class="font-label-lg text-label-lg text-primary hover:underline underline-offset-4 ml-1" href="signin.html">Sign in</a>
+</p>
+</footer>
+</main>
+<script src="../js/mail-data.js"></script>
+<script src="js/shared.js"></script>
+<script>
+        // Simple interactivity for password toggles
+        document.querySelectorAll('button[aria-label^="Toggle"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const icon = this.querySelector('.material-symbols-outlined');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.textContent = 'visibility_off';
+                } else {
+                    input.type = 'password';
+                    icon.textContent = 'visibility';
+                }
+            });
+        });
+
+        const M = window.IFINMAIL_MOBILE;
+        const errorBox = document.getElementById('error-box');
+        const successBox = document.getElementById('success-box');
+
+        document.getElementById('create-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorBox.classList.add('hidden');
+            successBox.classList.add('hidden');
+
+            const name = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+
+            if (!name) { errorBox.textContent = 'Please enter your full name.'; errorBox.classList.remove('hidden'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorBox.textContent = 'Please enter a valid email address.'; errorBox.classList.remove('hidden'); return; }
+            if (password.length < 8) { errorBox.textContent = 'Password must be at least 8 characters.'; errorBox.classList.remove('hidden'); return; }
+            if (password !== confirm) { errorBox.textContent = 'Passwords do not match.'; errorBox.classList.remove('hidden'); return; }
+            if (!terms) { errorBox.textContent = 'You must agree to the Terms of Service.'; errorBox.classList.remove('hidden'); return; }
+
+            const users = M.getCreatedUsers();
+            if (users.some(function(u) { return u.email === email; })) {
+                errorBox.textContent = 'An account with this email already exists.';
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            users.push({ name: name, email: email, password: password, createdAt: new Date().toISOString() });
+            M.mSave(M.KEYS.users, users);
+
+            successBox.textContent = 'Account created. Redirecting to sign in...';
+            successBox.classList.remove('hidden');
+            setTimeout(function() {
+                window.location.href = 'signin.html?email=' + encodeURIComponent(email);
+            }, 1200);
+        });
+
+        const prefilled = new URLSearchParams(window.location.search).get('email');
+        if (prefilled) document.getElementById('email').value = prefilled;
+    </script>
+</body></html>

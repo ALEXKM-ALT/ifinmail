@@ -1,1 +1,0 @@
-"""mail — verifications.py placeholder."""

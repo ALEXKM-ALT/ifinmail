@@ -1,1 +1,0 @@
-"""devices — web.py placeholder."""

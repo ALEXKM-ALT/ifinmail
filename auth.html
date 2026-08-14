@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFINMAIL - Sign In</title>
+    <link rel="icon" type="image/jpeg" href="assets/icon.jpg">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card" id="signin-card">
+            <div class="auth-logo">
+                <div class="logo-icon">✉</div>
+                <h1>IFINMAIL</h1>
+                <p class="tagline">Secure. Private. Yours.</p>
+            </div>
+            
+            <form id="signin-form" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="alex@example.com" required autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input">
+                        <input type="password" id="password" name="password" placeholder="••••••••••••••••" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" id="toggle-password" aria-label="Show password">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-link" id="forgot-link">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="signin-btn">
+                    <span class="btn-text">SIGN IN</span>
+                    <span class="btn-loader" style="display:none;">
+                        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4" stroke-linecap="round"></circle>
+                        </svg>
+                    </span>
+                </button>
+                
+                <div class="error-message" id="signin-error" style="display:none;"></div>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="#" id="create-account-link">Create account</a></p>
+                <p class="mobile-link"><a href="mobile/signin.html">Use the mobile app</a></p>
+            </div>
+        </div>
+        
+        <div class="auth-card hidden" id="forgot-card">
+            <div class="auth-logo">
+                <div class="logo-icon">✉</div>
+                <h1>IFINMAIL</h1>
+                <p class="tagline">Reset your password</p>
+            </div>
+            
+            <form id="forgot-form" class="auth-form">
+                <div class="form-group">
+                    <label for="forgot-email">Enter your email address</label>
+                    <input type="email" id="forgot-email" name="forgot-email" placeholder="alex@example.com" required autocomplete="email">
+                </div>
+                
+                <button type="submit" class="btn-primary" id="forgot-btn">
+                    <span class="btn-text">SEND RESET LINK</span>
+                    <span class="btn-loader" style="display:none;">
+                        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4" stroke-linecap="round"></circle>
+                        </svg>
+                    </span>
+                </button>
+                
+                <div class="success-message" id="forgot-success" style="display:none;">
+                    If an account exists with that email, a password reset link has been sent.
+                </div>
+                
+                <div class="error-message" id="forgot-error" style="display:none;"></div>
+            </form>
+            
+            <div class="auth-footer">
+                <a href="#" class="back-link" id="back-to-signin">← Back to sign in</a>
+            </div>
+        </div>
+        
+        <div class="auth-card hidden" id="twofactor-card">
+            <div class="auth-logo">
+                <div class="logo-icon">✉</div>
+                <h1>IFINMAIL</h1>
+                <p class="tagline">Verify your identity</p>
+            </div>
+            
+            <form id="twofactor-form" class="auth-form">
+                <p class="twofactor-instruction">Enter the 6-digit code sent to your email</p>
+                
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" data-index="0" class="otp-input" inputmode="numeric" autocomplete="one-time-code">
+                    <input type="text" maxlength="1" data-index="1" class="otp-input" inputmode="numeric">
+                    <input type="text" maxlength="1" data-index="2" class="otp-input" inputmode="numeric">
+                    <input type="text" maxlength="1" data-index="3" class="otp-input" inputmode="numeric">
+                    <input type="text" maxlength="1" data-index="4" class="otp-input" inputmode="numeric">
+                    <input type="text" maxlength="1" data-index="5" class="otp-input" inputmode="numeric">
+                </div>
+                
+                <button type="submit" class="btn-primary" id="twofactor-btn">
+                    <span class="btn-text">VERIFY</span>
+                    <span class="btn-loader" style="display:none;">
+                        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4" stroke-linecap="round"></circle>
+                        </svg>
+                    </span>
+                </button>
+                
+                <div class="resend-section">
+                    <p>Didn't receive the code? <a href="#" id="resend-code">Resend code</a></p>
+                    <p class="countdown" id="countdown" style="display:none;">Resend in <span id="countdown-timer">30</span>s</p>
+                </div>
+                
+                <div class="error-message" id="twofactor-error" style="display:none;"></div>
+            </form>
+        </div>
+        
+        <div class="auth-card hidden" id="create-card">
+            <div class="auth-logo">
+                <div class="logo-icon">✉</div>
+                <h1>IFINMAIL</h1>
+                <p class="tagline">Create your IFINMAIL account</p>
+            </div>
+            
+            <form id="create-form" class="auth-form create-account-form">
+                <div class="form-group">
+                    <label for="create-name">Full name</label>
+                    <input type="text" id="create-name" name="create-name" placeholder="e.g. Alex Mwangi" required autocomplete="name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-email">Email address</label>
+                    <input type="email" id="create-email" name="create-email" placeholder="alex@example.com" required autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-password">Password</label>
+                    <div class="password-input">
+                        <input type="password" id="create-password" name="create-password" placeholder="At least 8 characters" required autocomplete="new-password">
+                        <button type="button" class="toggle-password" data-toggle-target="create-password" aria-label="Show password">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-confirm">Confirm password</label>
+                    <div class="password-input">
+                        <input type="password" id="create-confirm" name="create-confirm" placeholder="Confirm your password" required autocomplete="new-password">
+                        <button type="button" class="toggle-password" data-toggle-target="create-confirm" aria-label="Show password">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="create-terms" required>
+                        <span class="checkmark"></span>
+                        <span class="terms-text">I agree to the <a href="#">Terms of Service</a></span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="create-btn">
+                    <span class="btn-text">CREATE ACCOUNT</span>
+                    <span class="btn-loader" style="display:none;">
+                        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4" stroke-linecap="round"></circle>
+                        </svg>
+                    </span>
+                </button>
+                
+                <div class="error-message" id="create-error" style="display:none;"></div>
+                <div class="success-message" id="create-success" style="display:none;"></div>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="#" id="back-to-signin-create">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+</body>
+</html>

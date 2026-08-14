@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IFINMAIL - Email Viewer</title>
+<link rel="icon" type="image/jpeg" href="../assets/icon.jpg"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#e1e2ee",
+                      "on-primary-container": "#ffffff",
+                      "surface-container-low": "#f2f3ff",
+                      "surface": "#faf8ff",
+                      "primary-fixed": "#dae2ff",
+                      "primary": "#0057cd",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "secondary": "#575f67",
+                      "primary-container": "#0d6efd",
+                      "background": "#faf8ff",
+                      "inverse-primary": "#b1c5ff",
+                      "surface-variant": "#e1e2ee",
+                      "secondary-fixed": "#dbe4ed",
+                      "secondary-fixed-dim": "#bfc8d0",
+                      "error": "#ba1a1a",
+                      "on-tertiary-container": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "inverse-surface": "#2d3039",
+                      "surface-bright": "#faf8ff",
+                      "on-surface": "#191b24",
+                      "on-primary-fixed": "#001946",
+                      "on-primary-fixed-variant": "#00419e",
+                      "outline": "#727787",
+                      "surface-tint": "#0057ce",
+                      "on-primary": "#ffffff",
+                      "surface-container": "#ecedf9",
+                      "error-container": "#ffdad6",
+                      "surface-dim": "#d8d9e5",
+                      "outline-variant": "#c2c6d8",
+                      "surface-container-high": "#e6e7f3",
+                      "secondary-container": "#d8e1ea",
+                      "on-tertiary-fixed-variant": "#454748",
+                      "on-secondary-fixed-variant": "#3f484f",
+                      "on-background": "#191b24",
+                      "inverse-on-surface": "#eff0fc",
+                      "tertiary-container": "#757778",
+                      "on-secondary-container": "#5b646b",
+                      "tertiary-fixed": "#e1e3e4",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed": "#141d23",
+                      "on-error": "#ffffff",
+                      "on-surface-variant": "#424655",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#c5c7c8",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#191c1d",
+                      "tertiary": "#5c5e60"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "stack-sm": "12px",
+                      "stack-lg": "40px",
+                      "gutter": "16px",
+                      "stack-md": "24px",
+                      "container-padding": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Hanken Grotesk"],
+                      "body-md": ["Hanken Grotesk"],
+                      "label-sm": ["Hanken Grotesk"],
+                      "body-lg": ["Hanken Grotesk"],
+                      "label-lg": ["Hanken Grotesk"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "headline-lg-mobile": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-background text-primary dark:text-inverse-primary docked full-width top-0 flex justify-between items-center px-container-padding h-16 w-full z-10">
+<div class="flex items-center gap-gutter">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100 text-on-surface-variant" id="back-btn" aria-label="Back">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+</div>
+<div class="flex items-center gap-base">
+<button aria-label="Archive" class="p-2 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100 text-on-surface-variant" id="archive-btn">
+<span class="material-symbols-outlined">archive</span>
+</button>
+<button aria-label="Delete" class="p-2 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100 text-on-surface-variant" id="delete-btn">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button aria-label="Mark unread" class="p-2 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100 text-on-surface-variant" id="unread-btn">
+<span class="material-symbols-outlined">mark_email_unread</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto w-full max-w-4xl mx-auto bg-surface-container-lowest" id="main">
+<!-- Email Header Info -->
+<div class="p-container-padding pb-base">
+<div class="flex justify-between items-start mb-stack-sm gap-gutter">
+<h1 class="text-headline-md font-headline-md text-on-background break-words" id="subject">-</h1>
+<span class="inline-flex items-center justify-center px-2 py-1 rounded-full bg-surface-container text-on-surface-variant text-label-sm font-label-sm mt-1 shrink-0" id="label-chip">-</span>
+</div>
+<div class="flex items-start gap-gutter mt-stack-md">
+<div class="w-12 h-12 rounded-full flex items-center justify-center text-on-primary text-body-lg font-body-lg shrink-0" id="avatar">?</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline gap-2 flex-wrap">
+<h2 class="text-body-md font-body-md font-bold text-on-background truncate" id="sender-name">-</h2>
+<span class="text-label-sm font-label-sm text-on-surface-variant whitespace-nowrap" id="time">-</span>
+</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant truncate" id="recipients">to me</div>
+</div>
+</div>
+</div>
+<!-- Email Body -->
+<div class="px-container-padding py-stack-md text-body-md font-body-md text-on-surface leading-relaxed border-t border-outline-variant/20 mt-4">
+<p class="whitespace-pre-wrap" id="body">-</p>
+</div>
+<!-- Attachments -->
+<div class="px-container-padding pb-stack-lg" id="attachments-wrap">
+<h3 class="text-label-sm font-label-sm text-on-surface-variant mb-stack-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">attachment</span>
+                Attachments
+            </h3>
+<div class="flex flex-wrap gap-gutter" id="attachments"></div>
+</div>
+</main>
+<!-- Bottom Actions / Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant/20 p-container-padding flex gap-gutter w-full max-w-4xl mx-auto">
+<button class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-surface-container text-on-surface text-label-lg font-label-lg hover:bg-surface-container-high transition-colors active:scale-95" id="reply-btn">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">reply</span>
+            Reply
+        </button>
+<button class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-surface-container text-on-surface text-label-lg font-label-lg hover:bg-surface-container-high transition-colors active:scale-95" id="forward-btn">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">forward</span>
+            Forward
+        </button>
+</footer>
+<script src="../js/mail-data.js"></script>
+<script src="js/shared.js"></script>
+<script>
+(function() {
+    'use strict';
+    const M = window.IFINMAIL_MOBILE;
+    M.requireSession();
+
+    const id = new URLSearchParams(window.location.search).get('id');
+    const email = M.getEmailById(id);
+
+    if (!email) {
+        window.location.href = 'inbox.html';
+        return;
+    }
+
+    if (!email.read) {
+        email.read = true;
+        M.updateEmail(email);
+    }
+
+    const label = (email.labels || [])[0] || '';
+    const sender = email.folder === 'sent' ? (email.to.length ? email.to[0].name : 'You') : email.from.name;
+    const senderEmail = email.folder === 'sent' ? (email.to.length ? email.to[0].email : '') : email.from.email;
+
+    document.getElementById('subject').textContent = email.subject || '(no subject)';
+    document.getElementById('label-chip').textContent = label;
+    document.getElementById('label-chip').classList.toggle('hidden', !label);
+    const avatar = document.getElementById('avatar');
+    avatar.style.background = M.avatarColor(sender);
+    avatar.textContent = M.initials(sender);
+    document.getElementById('sender-name').textContent = sender;
+    document.getElementById('time').textContent = M.formatFullDate(email.date);
+    document.getElementById('recipients').textContent = 'to ' + email.to.map(function(r) { return r.email; }).join(', ');
+    document.getElementById('body').textContent = email.body;
+
+    if (email.attachments && email.attachments.length > 0) {
+        const wrap = document.getElementById('attachments');
+        email.attachments.forEach(function(att) {
+            const el = document.createElement('div');
+            el.className = 'flex items-center gap-3 p-3 rounded-xl border border-outline-variant/30 hover:bg-surface-container-lowest cursor-pointer transition-colors w-full sm:w-auto min-w-[200px]';
+            el.innerHTML = '<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">' +
+                '<span class="material-symbols-outlined">description</span></div>' +
+                '<div class="flex-1 overflow-hidden">' +
+                '<p class="text-label-lg font-label-lg text-on-surface truncate">' + M.escapeHtml(att.name) + '</p>' +
+                '<p class="text-label-sm font-label-sm text-on-surface-variant">' + M.escapeHtml(att.size) + '</p></div>';
+            wrap.appendChild(el);
+        });
+    } else {
+        document.getElementById('attachments-wrap').classList.add('hidden');
+    }
+
+    function goBack() { window.location.href = 'inbox.html'; }
+
+    document.getElementById('back-btn').addEventListener('click', goBack);
+
+    document.getElementById('archive-btn').addEventListener('click', function() {
+        M.moveEmail(email.id, 'archive');
+        goBack();
+    });
+
+    document.getElementById('delete-btn').addEventListener('click', function() {
+        if (email.folder === 'trash') {
+            const emails = M.getEmails().filter(function(e) { return e.id !== email.id; });
+            M.saveEmails(emails);
+        } else {
+            M.moveEmail(email.id, 'trash');
+        }
+        goBack();
+    });
+
+    document.getElementById('unread-btn').addEventListener('click', function() {
+        email.read = false;
+        M.updateEmail(email);
+        goBack();
+    });
+
+    document.getElementById('reply-btn').addEventListener('click', function() {
+        M.mSave(M.KEYS.composePrefill, {
+            to: email.from.email,
+            subject: (email.subject.indexOf('Re:') === 0 ? '' : 'Re: ') + email.subject,
+            body: '\n\nOn ' + M.formatFullDate(email.date) + ', ' + sender + ' <' + senderEmail + '> wrote:\n> ' + email.body.replace(/\n/g, '\n> ')
+        });
+        window.location.href = 'compose.html';
+    });
+
+    document.getElementById('forward-btn').addEventListener('click', function() {
+        M.mSave(M.KEYS.composePrefill, {
+            to: '',
+            subject: (email.subject.indexOf('Fwd:') === 0 ? '' : 'Fwd: ') + email.subject,
+            body: '\n\n---------- Forwarded message ----------\nFrom: ' + sender + ' <' + senderEmail + '>\nDate: ' + M.formatFullDate(email.date) + '\nSubject: ' + email.subject + '\n\n' + email.body
+        });
+        window.location.href = 'compose.html';
+    });
+})();
+</script>
+</body></html>

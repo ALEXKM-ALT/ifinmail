@@ -1,1 +1,0 @@
-"""dns — verifications.py placeholder."""

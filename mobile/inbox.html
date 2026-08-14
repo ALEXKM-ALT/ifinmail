@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IFINMAIL - Mobile Inbox</title>
+<link rel="icon" type="image/jpeg" href="../assets/icon.jpg"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e1e2ee",
+                        "on-primary-container": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "surface": "#faf8ff",
+                        "primary-fixed": "#dae2ff",
+                        "primary": "#0057cd",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "secondary": "#575f67",
+                        "primary-container": "#0d6efd",
+                        "background": "#faf8ff",
+                        "inverse-primary": "#b1c5ff",
+                        "surface-variant": "#e1e2ee",
+                        "secondary-fixed": "#dbe4ed",
+                        "secondary-fixed-dim": "#bfc8d0",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2d3039",
+                        "surface-bright": "#faf8ff",
+                        "on-surface": "#191b24",
+                        "on-primary-fixed": "#001946",
+                        "on-primary-fixed-variant": "#00419e",
+                        "outline": "#727787",
+                        "surface-tint": "#0057ce",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#ecedf9",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d8d9e5",
+                        "outline-variant": "#c2c6d8",
+                        "surface-container-high": "#e6e7f3",
+                        "secondary-container": "#d8e1ea",
+                        "on-tertiary-fixed-variant": "#454748",
+                        "on-secondary-fixed-variant": "#3f484f",
+                        "on-background": "#191b24",
+                        "inverse-on-surface": "#eff0fc",
+                        "tertiary-container": "#757778",
+                        "on-secondary-container": "#5b646b",
+                        "tertiary-fixed": "#e1e3e4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#141d23",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#424655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#c5c7c8",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#191c1d",
+                        "tertiary": "#5c5e60"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "stack-sm": "12px",
+                        "stack-lg": "40px",
+                        "gutter": "16px",
+                        "stack-md": "24px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-container-padding h-16 w-full bg-surface dark:bg-background border-b border-outline-variant/30 docked full-width top-0 z-10 shrink-0">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 duration-100 p-2 rounded-full flex items-center justify-center" id="nav-btn">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">IFINMAIL</h1>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 duration-100 p-2 rounded-full flex items-center justify-center" id="compose-btn" title="Compose">
+<span class="material-symbols-outlined" data-icon="edit_square">edit_square</span>
+</button>
+</header>
+<!-- Search Bar (visible on Search tab) -->
+<div class="hidden px-container-padding py-3 bg-surface border-b border-outline-variant/20 shrink-0" id="search-bar">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-10 py-2.5 bg-surface-container-low border border-outline-variant rounded-full font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary transition-colors" id="search-input" placeholder="Search mail..." type="text"/>
+<button class="hidden absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container-high" id="search-clear">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+<!-- Content Area (Scrollable) -->
+<main class="flex-1 overflow-y-auto pb-[72px]">
+<!-- Inbox Header Info -->
+<div class="px-container-padding py-stack-md flex justify-between items-end border-b border-outline-variant/20" id="inbox-header">
+<div>
+<h2 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">Inbox</h2>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1" id="message-count">0 messages</p>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors" id="refresh-btn" title="Refresh">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</div>
+<!-- Search Results Header -->
+<div class="hidden px-container-padding py-stack-md border-b border-outline-variant/20" id="search-header">
+<h2 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">Search</h2>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1" id="search-count">0 results</p>
+</div>
+<!-- Email List -->
+<div class="divide-y divide-outline-variant/20" id="email-list"></div>
+<!-- Empty State -->
+<div class="hidden px-container-padding py-16 text-center" id="empty-state">
+<span class="material-symbols-outlined text-[48px] text-outline block mx-auto mb-3">inbox</span>
+<p class="text-body-md font-body-md text-on-surface-variant">No messages here</p>
+</div>
+<!-- Contacts Tab -->
+<div class="hidden" id="contacts-tab">
+<div class="px-container-padding py-stack-md border-b border-outline-variant/20">
+<h2 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">Contacts</h2>
+</div>
+<div class="divide-y divide-outline-variant/20" id="contacts-list"></div>
+</div>
+<!-- Settings Tab -->
+<div class="hidden" id="settings-tab">
+<div class="px-container-padding py-stack-md border-b border-outline-variant/20">
+<h2 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">Settings</h2>
+</div>
+<div class="px-container-padding py-6 flex flex-col gap-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center text-label-lg font-label-lg shrink-0" id="settings-avatar">AM</div>
+<div class="flex-1 min-w-0">
+<p class="text-label-lg font-label-lg text-on-surface truncate" id="settings-name">-</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant truncate" id="settings-email">-</p>
+</div>
+</div>
+<div class="rounded-xl border border-outline-variant/30 divide-y divide-outline-variant/20">
+<a class="flex items-center gap-3 p-4 hover:bg-surface-container-low transition-colors" href="compose.html">
+<span class="material-symbols-outlined text-primary">edit_square</span>
+<span class="text-label-lg font-label-lg text-on-surface flex-1">Compose</span>
+</a>
+<a class="flex items-center gap-3 p-4 hover:bg-surface-container-low transition-colors" href="../index.html">
+<span class="material-symbols-outlined text-primary">monitor</span>
+<span class="text-label-lg font-label-lg text-on-surface flex-1">Open Desktop App</span>
+</a>
+<button class="flex items-center gap-3 p-4 w-full hover:bg-surface-container-low transition-colors text-left" id="sign-out-btn">
+<span class="material-symbols-outlined text-error">logout</span>
+<span class="text-label-lg font-label-lg text-error flex-1">Sign out</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center py-base px-gutter bg-surface-container border-t border-outline-variant/20 shadow-sm z-50 shrink-0">
+<!-- Active Tab: Inbox -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" data-tab="inbox">
+<span class="material-symbols-outlined text-[24px] mb-0.5" data-icon="inbox">inbox</span>
+<span class="text-[10px] font-medium">Inbox</span>
+</button>
+<!-- Tab: Search -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200 rounded-full" data-tab="search">
+<span class="material-symbols-outlined text-[24px] mb-0.5" data-icon="search">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</button>
+<!-- Tab: Contacts -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200 rounded-full" data-tab="contacts">
+<span class="material-symbols-outlined text-[24px] mb-0.5" data-icon="contact_page">contact_page</span>
+<span class="text-[10px] font-medium">Contacts</span>
+</button>
+<!-- Tab: Settings -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200 rounded-full" data-tab="settings">
+<span class="material-symbols-outlined text-[24px] mb-0.5" data-icon="settings">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</button>
+</nav>
+<script src="../js/mail-data.js"></script>
+<script src="js/shared.js"></script>
+<script>
+(function() {
+    'use strict';
+    const M = window.IFINMAIL_MOBILE;
+    M.requireSession();
+
+    const session = M.getSession();
+    const listEl = document.getElementById('email-list');
+    const emptyEl = document.getElementById('empty-state');
+    const countEl = document.getElementById('message-count');
+    const searchCountEl = document.getElementById('search-count');
+    const inboxHeader = document.getElementById('inbox-header');
+    const searchHeader = document.getElementById('search-header');
+    const searchBar = document.getElementById('search-bar');
+    const searchInput = document.getElementById('search-input');
+    const searchClear = document.getElementById('search-clear');
+    const contactsTab = document.getElementById('contacts-tab');
+    const settingsTab = document.getElementById('settings-tab');
+    const navBtns = document.querySelectorAll('[data-tab]');
+
+    let activeTab = 'inbox';
+
+    function currentFolderEmails() {
+        return M.getEmails()
+            .filter(function(e) { return e.folder === 'inbox'; })
+            .sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    }
+
+    function rowHtml(email) {
+        const sender = email.from.name;
+        const hasAttachment = email.attachments && email.attachments.length > 0;
+        let labelsHtml = '';
+        (email.labels || []).forEach(function(label) {
+            labelsHtml += '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#4CAF50]/10 text-[#4CAF50] uppercase tracking-wider">' + M.escapeHtml(label) + '</span>';
+        });
+        return '<div class="p-container-padding flex gap-4 hover:bg-surface-container-low transition-colors cursor-pointer' +
+            (email.read ? ' opacity-70' : ' bg-surface-container-lowest') + '" data-id="' + email.id + '">' +
+            '<div class="w-10 h-10 rounded-full text-white flex items-center justify-center text-label-lg font-label-lg shrink-0" style="background:' + M.avatarColor(sender) + '">' + M.escapeHtml(M.initials(sender)) + '</div>' +
+            '<div class="flex-1 min-w-0">' +
+            '<div class="flex justify-between items-baseline mb-1">' +
+            '<span class="text-label-lg font-label-lg text-on-surface truncate pr-2">' + M.escapeHtml(sender) + '</span>' +
+            '<span class="text-label-sm font-label-sm text-on-surface-variant shrink-0 flex items-center gap-1">' +
+            (hasAttachment ? '<span class="material-symbols-outlined text-[16px]">attachment</span>' : '') +
+            M.escapeHtml(M.formatTime(email.date)) + '</span>' +
+            '</div>' +
+            '<div class="text-label-sm font-label-sm font-semibold text-on-surface truncate mb-1">' + M.escapeHtml(email.subject || '(no subject)') + '</div>' +
+            '<p class="text-body-md font-body-md text-on-surface-variant truncate text-sm">' + M.escapeHtml(email.preview || '') + '</p>' +
+            (labelsHtml ? '<div class="mt-2 flex gap-2">' + labelsHtml + '</div>' : '') +
+            '</div></div>';
+    }
+
+    function renderInbox() {
+        const emails = currentFolderEmails();
+        countEl.textContent = emails.length + (emails.length === 1 ? ' message' : ' messages');
+        if (emails.length === 0) {
+            listEl.innerHTML = '';
+            emptyEl.querySelector('p').textContent = 'No messages here';
+            emptyEl.classList.remove('hidden');
+        } else {
+            emptyEl.classList.add('hidden');
+            listEl.innerHTML = emails.map(rowHtml).join('');
+        }
+        bindRows();
+    }
+
+    function renderSearch() {
+        const query = searchInput.value.trim().toLowerCase();
+        const emails = query
+            ? M.getEmails().filter(function(e) {
+                  return (e.subject || '').toLowerCase().indexOf(query) !== -1 ||
+                      (e.preview || '').toLowerCase().indexOf(query) !== -1 ||
+                      (e.body || '').toLowerCase().indexOf(query) !== -1 ||
+                      e.from.name.toLowerCase().indexOf(query) !== -1 ||
+                      e.from.email.toLowerCase().indexOf(query) !== -1 ||
+                      (e.labels || []).some(function(l) { return l.toLowerCase().indexOf(query) !== -1; });
+              }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); })
+            : [];
+        searchCountEl.textContent = emails.length + (emails.length === 1 ? ' result' : ' results');
+        if (emails.length === 0) {
+            listEl.innerHTML = '';
+            emptyEl.classList.remove('hidden');
+            emptyEl.querySelector('p').textContent = query ? 'No results found' : 'Type to search your mail';
+        } else {
+            emptyEl.classList.add('hidden');
+            listEl.innerHTML = emails.map(rowHtml).join('');
+        }
+        bindRows();
+    }
+
+    function renderContacts() {
+        const contacts = M.getContacts();
+        const el = document.getElementById('contacts-list');
+        el.innerHTML = contacts.map(function(c) {
+            return '<div class="p-container-padding flex gap-4 hover:bg-surface-container-low transition-colors cursor-pointer">' +
+                '<div class="w-10 h-10 rounded-full text-white flex items-center justify-center text-label-lg font-label-lg shrink-0" style="background:' + M.avatarColor(c.name) + '">' + M.escapeHtml(M.initials(c.name)) + '</div>' +
+                '<div class="flex-1 min-w-0">' +
+                '<div class="text-label-lg font-label-lg text-on-surface truncate">' + M.escapeHtml(c.name) + '</div>' +
+                '<div class="text-label-sm font-label-sm text-on-surface-variant truncate">' + M.escapeHtml(c.email) + '</div>' +
+                '</div></div>';
+        }).join('') || '<p class="p-container-padding text-on-surface-variant">No contacts</p>';
+    }
+
+    function showTab(tab) {
+        activeTab = tab;
+        navBtns.forEach(function(btn) {
+            const isActive = btn.dataset.tab === tab;
+            btn.classList.toggle('bg-primary-container', isActive);
+            btn.classList.toggle('text-on-primary-container', isActive);
+            btn.classList.toggle('text-on-surface-variant', !isActive);
+        });
+        inboxHeader.classList.toggle('hidden', tab !== 'inbox');
+        searchHeader.classList.toggle('hidden', tab !== 'search');
+        searchBar.classList.toggle('hidden', tab !== 'search');
+        contactsTab.classList.toggle('hidden', tab !== 'contacts');
+        settingsTab.classList.toggle('hidden', tab !== 'settings');
+        if (tab === 'inbox') { renderInbox(); }
+        else if (tab === 'search') { searchInput.focus(); renderSearch(); }
+        else if (tab === 'contacts') { renderContacts(); }
+        else if (tab === 'settings') {
+            document.getElementById('settings-name').textContent = session.name;
+            document.getElementById('settings-email').textContent = session.email;
+            document.getElementById('settings-avatar').textContent = M.initials(session.name);
+        }
+    }
+
+    function bindRows() {
+        listEl.querySelectorAll('[data-id]').forEach(function(row) {
+            row.addEventListener('click', function() {
+                window.location.href = 'viewer.html?id=' + encodeURIComponent(row.dataset.id);
+            });
+        });
+    }
+
+    navBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() { showTab(btn.dataset.tab); });
+    });
+
+    document.getElementById('compose-btn').addEventListener('click', function() {
+        window.location.href = 'compose.html';
+    });
+    document.getElementById('refresh-btn').addEventListener('click', function() {
+        if (activeTab === 'search') renderSearch(); else renderInbox();
+    });
+    searchInput.addEventListener('input', function() {
+        searchClear.classList.toggle('hidden', !searchInput.value);
+        renderSearch();
+    });
+    searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        searchClear.classList.add('hidden');
+        renderSearch();
+    });
+    document.getElementById('sign-out-btn').addEventListener('click', function() {
+        localStorage.removeItem(M.KEYS.session);
+        window.location.href = 'signin.html';
+    });
+    document.getElementById('nav-btn').addEventListener('click', function() {
+        window.location.href = 'signin.html';
+    });
+
+    showTab('inbox');
+})();
+</script>
+</body></html>

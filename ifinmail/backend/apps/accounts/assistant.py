@@ -1,1 +1,0 @@
-"""accounts — assistant.py placeholder."""

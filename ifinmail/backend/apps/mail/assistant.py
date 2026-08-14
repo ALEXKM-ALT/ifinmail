@@ -1,1 +1,0 @@
-"""mail — assistant.py placeholder."""

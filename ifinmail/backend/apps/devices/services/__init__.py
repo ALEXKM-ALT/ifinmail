@@ -1,1 +1,0 @@
-"""Device service layer (placeholder)."""

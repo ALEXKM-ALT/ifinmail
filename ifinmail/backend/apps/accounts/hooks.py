@@ -1,1 +1,0 @@
-"""accounts — hooks.py placeholder."""
