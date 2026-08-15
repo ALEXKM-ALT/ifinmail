@@ -29,6 +29,8 @@
         composeAttachments: []
     };
 
+    let composeSession = 0;
+
     const emailBodyEl = document.getElementById('compose-body');
 
     const elements = {
@@ -561,6 +563,10 @@
         if (selectAll) {
             selectAll.checked = emails.length > 0 && emails.every(function(e) { return state.selected.has(e.id); });
         }
+        emails.forEach(function(email) {
+            const input = document.querySelector('.row-checkbox input[data-id="' + email.id + '"]');
+            if (input) input.checked = state.selected.has(email.id);
+        });
     }
 
     function getEmail(id) {
@@ -758,6 +764,7 @@
     /* ───────────── Compose ───────────── */
 
     function openCompose(prefill) {
+        composeSession++;
         elements.composeTo.value = prefill && prefill.to ? prefill.to : '';
         elements.composeCc.value = '';
         elements.composeBcc.value = '';
@@ -772,6 +779,7 @@
     }
 
     function openDraft(email) {
+        composeSession++;
         elements.composeTo.value = email.to.map(function(r) { return r.email; }).join(', ');
         elements.composeCc.value = email.cc.map(function(r) { return r.email; }).join(', ');
         elements.composeBcc.value = email.bcc.map(function(r) { return r.email; }).join(', ');
@@ -786,6 +794,7 @@
     }
 
     function closeCompose() {
+        composeSession++;
         const hasContent = elements.composeTo.value.trim() || elements.composeSubject.value.trim() || emailBodyEl.value.trim();
         if (hasContent) {
             saveDraft();
@@ -866,6 +875,7 @@
         });
         elements.composeClose.addEventListener('click', closeCompose);
         elements.composeDiscard.addEventListener('click', function() {
+            composeSession++;
             if (state.composeDraftId) {
                 state.emails = state.emails.filter(function(e) { return e.id !== state.composeDraftId; });
                 persistEmails();
@@ -915,17 +925,20 @@
             }
             const subject = elements.composeSubject.value.trim() || '(no subject)';
             const body = emailBodyEl.value;
+            const draftId = state.composeDraftId;
+            const session = composeSession;
 
             setLoading(elements.composeSend, true);
             setTimeout(function() {
                 setLoading(elements.composeSend, false);
+                if (session !== composeSession) return;
 
                 const to = toRaw.split(',').map(function(s) { return s.trim(); })
                     .filter(Boolean)
                     .map(function(addr) { return { name: addr.split('@')[0], email: addr }; });
 
-                if (state.composeDraftId) {
-                    state.emails = state.emails.filter(function(e) { return e.id !== state.composeDraftId; });
+                if (draftId) {
+                    state.emails = state.emails.filter(function(e) { return e.id !== draftId; });
                 }
 
                 const sent = {
