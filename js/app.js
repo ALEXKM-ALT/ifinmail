@@ -269,9 +269,10 @@
     };
 
     function renderView(view, label) {
+        const viewChanged = view !== state.currentView || (label || null) !== (state.currentLabel || null);
         state.currentView = view;
         state.currentLabel = label || null;
-        state.selected.clear();
+        if (viewChanged) state.selected.clear();
         updateNavActive();
         updateBadges();
 
@@ -357,7 +358,7 @@
         let html = '';
         html += '<div class="view">';
 
-        html += '<div class="email-toolbar hidden" id="email-toolbar">';
+        html += '<div class="email-toolbar' + (state.selected.size === 0 ? ' hidden' : '') + '" id="email-toolbar">';
         html += '<label class="toolbar-select">';
         html += '<input type="checkbox" id="select-all" aria-label="Select all">';
         html += '</label>';
@@ -370,7 +371,7 @@
             html += '<button class="toolbar-action" data-action="snooze">' + ICONS.snooze + '<span>Snooze</span></button>';
         }
         html += '<button class="toolbar-action" data-action="star">' + ICONS.star + '<span>Star</span></button>';
-        html += '<span class="toolbar-count" id="toolbar-count"></span>';
+        html += '<span class="toolbar-count" id="toolbar-count">' + (state.selected.size > 0 ? state.selected.size + ' selected' : '') + '</span>';
         html += '</div>';
 
         html += '<div class="list-header">';
@@ -599,7 +600,7 @@
             updateBadges();
         }
         state.viewingId = id;
-        state.selected.clear();
+        if (!preview) state.selected.clear();
 
         const isMobileView = isMobile();
         const target = isMobileView ? elements.mainContent : elements.detailContent;
@@ -864,7 +865,23 @@
             openCompose();
         });
         elements.composeClose.addEventListener('click', closeCompose);
-        elements.composeDiscard.addEventListener('click', closeCompose);
+        elements.composeDiscard.addEventListener('click', function() {
+            if (state.composeDraftId) {
+                state.emails = state.emails.filter(function(e) { return e.id !== state.composeDraftId; });
+                persistEmails();
+            }
+            elements.composeTo.value = '';
+            elements.composeCc.value = '';
+            elements.composeBcc.value = '';
+            elements.composeSubject.value = '';
+            emailBodyEl.value = '';
+            state.composeDraftId = null;
+            state.composeAttachments = [];
+            renderComposeAttachments();
+            elements.composeModal.classList.add('hidden');
+            if (state.currentView === 'drafts') renderView('drafts');
+            toast('Draft discarded');
+        });
         elements.composeModal.addEventListener('click', function(e) {
             if (e.target === elements.composeModal) closeCompose();
         });
@@ -998,7 +1015,7 @@
 
     function doSearch() {
         const query = elements.searchInput.value.trim();
-        if (!query) return;
+        if (!query && !state.searchFilters) return;
         state.searchQuery = query;
 
         if (state.recentSearches.indexOf(query) === -1) {
@@ -1215,6 +1232,7 @@
             }
         });
         elements.filtersReset.addEventListener('click', function() {
+            state.searchFilters = null;
             document.querySelectorAll('#search-filters-modal input[type="text"], #search-filters-modal input[type="checkbox"], #search-filters-modal select')
                 .forEach(function(el) {
                     if (el.type === 'checkbox') el.checked = false;
@@ -1674,6 +1692,7 @@
         if (sidebarHelp) {
             sidebarHelp.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 closeAllDropdowns();
                 toggleDropdown(elements.helpDropdown);
             });
